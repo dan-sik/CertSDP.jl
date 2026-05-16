@@ -4,15 +4,19 @@ All notable changes to CertSDP.jl are documented here.
 
 ## v1.0.0 - 2026-05-14
 
-First v1.0 release for exact replay of supported SDP/SOS certificates.
+First v1.0 release of the post-solver exact replay layer for numerical SDP/SOS
+certificates. CertSDP turns solver candidates into data-only JSON artifacts that
+can be checked independently by strict rational or supported algebraic replay.
 
 ### Release Significance
 
-- Establishes CertSDP as a post-solver exact replay layer rather than a
-  numerical SDP solver.
-- Records public evidence for strict verifier replay, expected rejection, and
-  rational-rounding failure cases.
-- Freezes the v1.0 API and JSON artifact boundary for reproducible research.
+- Establishes CertSDP as a certificate protocol and strict verifier for
+  replayable SDP/SOS research artifacts, not a numerical SDP solver.
+- Records public evidence for strict verifier replay, expected rejection,
+  fake-certificate controls, imported workflows, and rational-rounding failure
+  cases.
+- Freezes the v1.0 API and JSON artifact boundary for reproducible research,
+  reviewers, CI checks, and archival replay bundles.
 
 ### Added
 

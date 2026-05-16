@@ -2,7 +2,7 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "name": "CertSDP.jl",
-  "description": "Exact replay layer for semidefinite programming and sum-of-squares certificate workflows.",
+  "description": "Post-solver exact replay layer for numerical semidefinite-programming and sum-of-squares certificate workflows.",
   "codeRepository": "https://github.com/fang251440/CertSDP.jl",
   "issueTracker": "https://github.com/fang251440/CertSDP.jl/issues",
   "softwareHelp": "https://github.com/fang251440/CertSDP.jl#readme",
