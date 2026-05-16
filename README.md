@@ -224,12 +224,24 @@ minimal failure pattern.
 ## Current Validation Snapshot
 
 CertSDP ships one public validation suite. It is a reproducible evidence
-contract, not a showcase gallery and not a solver-speed leaderboard. The rows
-below count fixtures under `benchmarks/validation/`.
+contract, not a showcase gallery and not a solver-speed leaderboard. The point is
+to show which hard cases survive strict replay and which fake or invalid cases
+are rejected.
 
-Current `v1.0` tracked report:
+Evidence cases in the tracked `v1.0` report:
 
-| Evidence | Current result |
+| Evidence case | What it demonstrates | Representative validation rows |
+| --- | --- | --- |
+| Degenerate algebraic SDP where rational rounding fails | Bounded rational rounding can fail first, while exact algebraic replay still certifies the solution. | `validation__algebraic_direct_degree6_dim20`, `validation__algebraic_certifier_quartic_dim10_n2`, `validation__algebraic_sqrt2_unique` |
+| Full numerical-to-exact workflow | Numerical search is only candidate generation; acceptance comes later from strict exact verification. | `validation__workflow_solve_certify_sqrt2_random_objective` |
+| Imported modeling workflows | SDPA, JuMP/MOI, and SumOfSquares-style exports can enter the same certificate/replay protocol. | `validation__workflow_sdpa_import_multiblock`, `validation__workflow_jump_moi_extract_multiblock_dim48`, `validation__workflow_sumofsquares_extracted_sos` |
+| Multi-block and rank-sensitive PSD replay | Blockwise exact PSD proofs cover shared-variable block SDPs, rank-deficient faces, and weakly feasible examples. | `validation__multiblock_dense_dim60_n20`, `validation__mixed_blocks_sqrt2_total22`, `validation__rank_deficient_kernel_3x3`, `validation__weakly_feasible_common_kernel_3x3` |
+| Exact SOS Gram replay | Gram coefficient matching and PSD proof replay are checked exactly, including non-diagonal Gram structure. | `validation__sos_x2_plus_1`, `validation__sos_xy_square_nondiagonal` |
+| Negative controls | Fake certificates, stale hashes, and invalid approximations are expected to fail with structured diagnostics. | `validation__fake_rational_solution_rejected`, `validation__fake_sos_gram_rejected`, `validation__invalid_approximation_rejected` |
+
+Current release metrics:
+
+| Release evidence | v1.0 result |
 | --- | ---: |
 | Public validation instances | 18 |
 | Suite status | passed |
@@ -239,11 +251,6 @@ Current `v1.0` tracked report:
 | Solve -> diagnose -> certify workflows passed | 1 |
 | Strict verifier timing | total 7.5194s, max 2.5881s, min 0.0013s |
 | Certificate sizes | 15 certificates, total 2480.93 KiB, max 1314.53 KiB |
-
-The report includes positive certificates, expected rejection rows, fake
-certificate controls, invalid approximation rejection, imported SDPA/JuMP/MOI
-workflows, SumOfSquares-style extraction, and rational-rounding failures that
-are certified by exact algebraic replay.
 
 Run the validation contract from the repository root:
 
