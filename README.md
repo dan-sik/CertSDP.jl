@@ -8,10 +8,9 @@
 
 **Exact replay for SDP and SOS certificates.**
 
-CertSDP.jl is a research-grade verification layer for semidefinite programming
-and sum-of-squares workflows. It turns solver candidates, Gram matrices, and
-supported algebraic solutions into data-only JSON certificates that can be
-replayed independently with exact rational or algebraic arithmetic.
+CertSDP.jl turns numerical or symbolic SDP/SOS candidates into portable,
+data-only JSON certificates that can be replayed independently with exact
+rational or supported algebraic arithmetic.
 
 ```text
 A solver finds a candidate. CertSDP makes it replayable.
@@ -32,8 +31,12 @@ matrices are not portable proofs. They can fail on exactly the cases that matter
 for rigorous research: degenerate feasible points, rank-deficient PSD faces,
 weak feasibility, and algebraic coordinates such as `sqrt(2)`.
 
-CertSDP focuses on the transition from "the solver found something plausible"
-to "this claim can be replayed exactly":
+CertSDP focuses on the next question after search:
+
+```text
+Can this SDP/SOS claim be checked again, exactly,
+without trusting the original solver run?
+```
 
 | Workflow state | Risk | CertSDP response |
 | --- | --- | --- |
@@ -56,7 +59,7 @@ to "this claim can be replayed exactly":
 | Tool class | Role |
 | --- | --- |
 | JuMP / MathOptInterface / SumOfSquares.jl / SOSTOOLS | Model or export SDP/SOS problems. |
-| MOSEK / Clarabel / Hypatia / SCS | Find numerical candidates. |
+| MOSEK / Clarabel / Hypatia / SCS / SDPA | Find numerical candidates. |
 | `msolve` / Sage | Optionally propose algebraic candidates. |
 | CertSDP.jl | Verify exact replayable certificate artifacts. |
 
@@ -80,6 +83,8 @@ Expected verifier result:
 [OK] PSD verified over QQ
 [OK] certificate accepted
 ```
+
+This path uses exact rational data and no optional backend.
 
 The same path through the Julia API:
 
@@ -116,10 +121,10 @@ Strict replay recomputes the accepted obligations from certificate data:
 | Trusted by strict replay | Not trusted as proof |
 | --- | --- |
 | v1.0 certificate data and canonical hashes | Solver success flags |
-| Exact arithmetic in `QQ` or supported `QQ(alpha)` | Floating-point eigenvalues or residuals |
+| Exact arithmetic in `QQ` or supported `QQ(alpha)` | Floating-point residuals or eigenvalues |
 | Root isolation by rational intervals | Raw `msolve`, Sage, or solver logs |
 | Exact substitution and coefficient matching | Cached backend artifacts |
-| PSD proof replay by accepted exact methods | Approximate equalities or rounded diagnostics |
+| PSD proof replay by accepted exact methods | Approximate equalities, rounded diagnostics, or rank guesses |
 
 Design rule:
 
@@ -198,8 +203,9 @@ julia --project scripts/run_validation.jl
 
 See [benchmarks/VALIDATION_REPORT.md](benchmarks/VALIDATION_REPORT.md) and
 [docs/validation.md](docs/validation.md). Certified rows must pass strict
-verification. Strict replay does not use `msolve`, numerical solver output,
-backend logs, or solver-specific artifacts as proof.
+verification. A passing solver log is not a passing certificate; strict replay
+does not use `msolve`, numerical solver output, backend logs, or solver-specific
+artifacts as proof.
 
 ## Showcases
 
@@ -241,7 +247,8 @@ reproducibility workflows. It is not:
 - an infeasibility prover;
 - a verifier for arbitrary floating-point model output without exact
   reconstruction;
-- an automatic proof engine for every SDP/SOS hierarchy instance.
+- an automatic proof engine for every SDP/SOS hierarchy instance;
+- a promise that every numerical SDP result can be certified.
 
 Current boundaries are documented in [API stability](docs/API_STABILITY.md),
 [Certificate format](docs/certificate_format.md), and
