@@ -1,0 +1,10 @@
+{
+    "certsdp_version": "0.1",
+    "approximate_solution": {
+        "type": "xhat",
+        "precision_bits": 256,
+        "xhat": [
+            "1.4142135623730950488016887242096980785696718753769"
+        ]
+    }
+}

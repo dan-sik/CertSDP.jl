@@ -1,0 +1,17 @@
+{
+    "pack_level": "validation",
+    "workflow": "lmi_algebraic",
+    "category": "irrational",
+    "strategy": "algebraic_incidence",
+    "backend": "msolve",
+    "backend_requirement": "msolve",
+    "expected_status": "certified",
+    "groups": [
+        "full"
+    ],
+    "certificate_type": "algebraic_psd_certificate",
+    "expected_runtime_seconds": 120,
+    "memory_expectation_mb": 2048,
+    "max_time_seconds": 120,
+    "size_hint": ""
+}

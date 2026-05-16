@@ -1,0 +1,18 @@
+{
+    "pack_level": "validation",
+    "workflow": "lmi_rational",
+    "category": "rank_deficient",
+    "strategy": "rational",
+    "backend": "none",
+    "backend_requirement": "none",
+    "expected_status": "certified",
+    "groups": [
+        "ci",
+        "full"
+    ],
+    "certificate_type": "rational_psd_certificate",
+    "expected_runtime_seconds": 30,
+    "memory_expectation_mb": 512,
+    "max_time_seconds": 30,
+    "size_hint": ""
+}

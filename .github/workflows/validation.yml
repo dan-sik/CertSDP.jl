@@ -1,0 +1,21 @@
+name: Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validation:
+    name: Public validation suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+      - uses: julia-actions/cache@v2
+      - name: Run validation suite
+        run: julia --project scripts/run_validation.jl --out benchmarks/ci-validation-report.md --generated-dir benchmarks/generated

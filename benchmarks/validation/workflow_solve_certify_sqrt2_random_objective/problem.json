@@ -1,0 +1,71 @@
+{
+    "certsdp_problem_version": "1.0",
+    "type": "lmi_feasibility",
+    "field": "QQ",
+    "variables": [
+        "x"
+    ],
+    "matrix_size": 4,
+    "A0": [
+        [
+            "0",
+            "1",
+            "0",
+            "0"
+        ],
+        [
+            "1",
+            "0",
+            "0",
+            "0"
+        ],
+        [
+            "0",
+            "0",
+            "2",
+            "0"
+        ],
+        [
+            "0",
+            "0",
+            "0",
+            "1"
+        ]
+    ],
+    "A": [
+        {
+            "var": "x",
+            "matrix": [
+                [
+                    "1",
+                    "0",
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "1/2",
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0",
+                    "0",
+                    "1"
+                ],
+                [
+                    "0",
+                    "0",
+                    "1",
+                    "0"
+                ]
+            ]
+        }
+    ],
+    "metadata": {
+        "created_by": "CertSDP.jl",
+        "schema": "problem_v1"
+    },
+    "hash": "sha256:47b3bc3ebb3b7de8f58d42e6e4cd4d20ed3b1ec34445e13448d3bd51c8eca99c"
+}

@@ -1,0 +1,10 @@
+"CertSDP SDPA example: single PSD block"
+2 = mDIM
+1 = nBLOCK
+2 = bLOCKsTRUCT
+1, -2
+0 1 1 1 -1
+0 1 2 2 -1
+1 1 1 1 1
+1 1 1 2 1/2
+2 1 2 2 3

@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If CertSDP.jl helps your research, please cite the software and the method paper listed here."
+title: "CertSDP.jl: exact replay for SDP and SOS certificates"
+type: software
+authors:
+  - name: "CertSDP contributors"
+version: "1.0.0"
+date-released: "2026-05-14"
+license: "Apache-2.0"
+repository-code: "https://github.com/fang251440/CertSDP.jl"
+url: "https://github.com/fang251440/CertSDP.jl"
+abstract: >-
+  CertSDP.jl is an exact replay layer for semidefinite programming and
+  sum-of-squares workflows. Numerical solvers and algebraic backends may
+  construct candidates, but acceptance is by exact verifier replay over
+  rational and supported algebraic data.
+keywords:
+  - semidefinite programming
+  - sum-of-squares
+  - exact certification
+  - rational arithmetic
+  - algebraic certificates
+  - Julia
+references:
+  - type: article
+    authors:
+      - family-names: Kolmogorov
+        given-names: Vladimir
+      - family-names: Naldi
+        given-names: Simone
+      - family-names: Zapata
+        given-names: Jeferson
+    title: "Certifying Solutions of Degenerate Semidefinite Programs"
+    journal: "SIAM Journal on Optimization"
+    year: 2025
+    volume: 35
+    issue: 3
+    start: 1630
+    end: 1654
+    doi: "10.1137/24M1664691"

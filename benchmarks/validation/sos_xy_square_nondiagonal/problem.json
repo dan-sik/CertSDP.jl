@@ -1,0 +1,99 @@
+{
+    "certsdp_problem_version": "1.0",
+    "sos_problem": {
+        "type": "sos_gram_feasibility",
+        "field": "QQ",
+        "variables": [
+            "x",
+            "y"
+        ],
+        "basis": [
+            [
+                1,
+                0
+            ],
+            [
+                0,
+                1
+            ]
+        ],
+        "polynomial": [
+            {
+                "exponents": [
+                    2,
+                    0
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    1,
+                    1
+                ],
+                "coefficient": "2"
+            },
+            {
+                "exponents": [
+                    0,
+                    2
+                ],
+                "coefficient": "1"
+            }
+        ],
+        "lmi_problem": {
+            "type": "lmi_feasibility",
+            "field": "QQ",
+            "matrix_size": 2,
+            "num_variables": 3,
+            "vars": [
+                "q1_1",
+                "q1_2",
+                "q2_2"
+            ],
+            "A0": [
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ]
+            ],
+            "A": [
+                [
+                    [
+                        "1",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0"
+                    ]
+                ],
+                [
+                    [
+                        "0",
+                        "1"
+                    ],
+                    [
+                        "1",
+                        "0"
+                    ]
+                ],
+                [
+                    [
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "1"
+                    ]
+                ]
+            ],
+            "hash": "sha256:bd74dfb1da57ed241ab466afa749b0eb73aa8922c0a72e5b1e00f0f6312e3c6e"
+        },
+        "hash": "sha256:38013eb97b2e125f430fd80157654632ba7d51fed9eca3c655455bb07524bf0b"
+    }
+}

@@ -1,0 +1,42 @@
+{
+    "algebraic_solution": {
+        "type": "rur",
+        "minimal_polynomial": "t^2 - 2",
+        "root_interval": [
+            "1",
+            "2"
+        ],
+        "coordinates": {
+            "x1": "t",
+            "x2": "2"
+        }
+    },
+    "rounding_xhat": [
+        "1.414213562373095048801688724209698",
+        "2.0"
+    ],
+    "block_proofs": [
+        {
+            "field": "algebraic",
+            "method": "schur_zero",
+            "pivot_block": [
+                1
+            ]
+        },
+        {
+            "field": "rational",
+            "method": "ldl",
+            "pivot_block": null
+        },
+        {
+            "field": "facial",
+            "method": "schur_zero",
+            "pivot_block": [
+                1,
+                2,
+                3,
+                4
+            ]
+        }
+    ]
+}

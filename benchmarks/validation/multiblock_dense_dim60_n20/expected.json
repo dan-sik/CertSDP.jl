@@ -1,0 +1,31 @@
+{
+    "groups": [
+        "validation"
+    ],
+    "block_count": 4,
+    "variable_count": 20,
+    "pack_level": "validation",
+    "construction_type": "generated_dense_multiblock",
+    "scale_index": 60,
+    "backend": "none",
+    "benchmark_family": "multi_block_sdp",
+    "workflow": "lmi_rational",
+    "psd_method": "ldl",
+    "expected_status": "certified",
+    "rational_rounding_baseline": "success",
+    "size_hint": "blocks=4, total_dim=60, n=20",
+    "rounding_denominator_bound": 1024,
+    "scaling_family": "multi_block_sdp",
+    "backend_requirement": "none",
+    "memory_expectation_mb": 4096,
+    "strategy": "blockwise_ldl",
+    "algebraic_degree": 1,
+    "category": "multi_block_sdp_validation",
+    "max_time_seconds": 240,
+    "expected_rank": 60,
+    "timeout_seconds": 240,
+    "failure_type": "",
+    "source": "Generated multi-block validation fixture with exact rational PSD replay",
+    "expected_runtime_seconds": 240,
+    "certificate_type": "block_rational_psd_certificate"
+}

@@ -1,0 +1,46 @@
+{
+    "certsdp_version": "0.1",
+    "problem": {
+        "type": "lmi_feasibility",
+        "field": "QQ",
+        "matrix_size": 2,
+        "num_variables": 2,
+        "vars": [
+            "x",
+            "y"
+        ],
+        "A0": [
+            [
+                "1",
+                "0"
+            ],
+            [
+                "0",
+                "2/3"
+            ]
+        ],
+        "A": [
+            [
+                [
+                    "0",
+                    "3/5"
+                ],
+                [
+                    "3/5",
+                    "0"
+                ]
+            ],
+            [
+                [
+                    "-2",
+                    "0"
+                ],
+                [
+                    "0",
+                    "1/7"
+                ]
+            ]
+        ],
+        "hash": "sha256:745ec8b3f1ded539fb9b1d18ea40cc39cac8e5d338db4eda1b906793af9c303e"
+    }
+}

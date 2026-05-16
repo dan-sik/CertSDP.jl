@@ -1,0 +1,23 @@
+{
+    "certsdp_version": "0.1",
+    "solution": {
+        "type": "rational_gram_matrix",
+        "gram_matrix": [
+            [
+                "1",
+                "1",
+                "0"
+            ],
+            [
+                "1",
+                "2",
+                "1"
+            ],
+            [
+                "0",
+                "1",
+                "1"
+            ]
+        ]
+    }
+}

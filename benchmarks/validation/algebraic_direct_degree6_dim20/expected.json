@@ -1,0 +1,34 @@
+{
+    "groups": [
+        "validation"
+    ],
+    "block_count": 1,
+    "variable_count": 2,
+    "pack_level": "validation",
+    "pivot_block": [
+        1
+    ],
+    "construction_type": "algebraic_direct",
+    "scale_index": 20,
+    "backend": "none",
+    "benchmark_family": "direct_algebraic",
+    "workflow": "lmi_algebraic_direct",
+    "psd_method": "schur_zero",
+    "expected_status": "certified",
+    "rational_rounding_baseline": "fails",
+    "size_hint": "20x20, n=2",
+    "rounding_denominator_bound": 1024,
+    "scaling_family": "algebraic_incidence",
+    "backend_requirement": "none",
+    "memory_expectation_mb": 2048,
+    "strategy": "direct_algebraic_ldl",
+    "algebraic_degree": 6,
+    "category": "algebraic_sdp_validation",
+    "max_time_seconds": 180,
+    "expected_rank": 1,
+    "timeout_seconds": 180,
+    "failure_type": "",
+    "source": "Generated direct algebraic exact certificate fixture",
+    "expected_runtime_seconds": 180,
+    "certificate_type": "algebraic_psd_certificate"
+}

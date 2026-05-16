@@ -1,0 +1,112 @@
+{
+    "certsdp_version": "0.1",
+    "certificate_type": "rational_psd_certificate",
+    "problem": {
+        "type": "lmi_feasibility",
+        "field": "QQ",
+        "matrix_size": 2,
+        "num_variables": 2,
+        "vars": [
+            "x",
+            "y"
+        ],
+        "A0": [
+            [
+                "1",
+                "0"
+            ],
+            [
+                "0",
+                "1"
+            ]
+        ],
+        "A": [
+            [
+                [
+                    "1",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ]
+            ],
+            [
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "1"
+                ]
+            ]
+        ],
+        "hash": "sha256:b044c3954229e79020decdd6495393b8e828e100c3f87c736b3d94ff37f0319f"
+    },
+    "solution": {
+        "type": "rational",
+        "x": [
+            "-5",
+            "1/3"
+        ]
+    },
+    "psd_proof": {
+        "method": "principal_minors",
+        "substituted_matrix": [
+            [
+                "3/2",
+                "0"
+            ],
+            [
+                "0",
+                "4/3"
+            ]
+        ],
+        "data": {
+            "principal_minors": [
+                {
+                    "indices": [
+                        1
+                    ],
+                    "determinant": "3/2"
+                },
+                {
+                    "indices": [
+                        2
+                    ],
+                    "determinant": "4/3"
+                },
+                {
+                    "indices": [
+                        1,
+                        2
+                    ],
+                    "determinant": "2"
+                }
+            ]
+        },
+        "principal_minors": [
+            {
+                "indices": [
+                    1
+                ],
+                "determinant": "3/2"
+            },
+            {
+                "indices": [
+                    2
+                ],
+                "determinant": "4/3"
+            },
+            {
+                "indices": [
+                    1,
+                    2
+                ],
+                "determinant": "2"
+            }
+        ]
+    },
+    "hash": "sha256:fd7d0fc7ecb750dc41e9cf9c8c090eac1f1814de57d6ac88d0394a83022eefbb"
+}

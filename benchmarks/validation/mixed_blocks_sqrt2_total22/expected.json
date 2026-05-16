@@ -1,0 +1,30 @@
+{
+    "groups": [
+        "validation"
+    ],
+    "block_count": 3,
+    "variable_count": 2,
+    "pack_level": "validation",
+    "construction_type": "mixed_multiblock_exact_report",
+    "scale_index": 22,
+    "backend": "none",
+    "benchmark_family": "mixed_multiblock",
+    "workflow": "mixed_block_algebraic",
+    "expected_status": "certified",
+    "rational_rounding_baseline": "success",
+    "size_hint": "blocks=3, total_dim=22, n=2",
+    "rounding_denominator_bound": 1024,
+    "scaling_family": "mixed_multiblock",
+    "backend_requirement": "none",
+    "memory_expectation_mb": 2048,
+    "strategy": "mixed_block_exact_report",
+    "algebraic_degree": 2,
+    "category": "mixed_multi_block_validation",
+    "max_time_seconds": 120,
+    "expected_rank": 9,
+    "timeout_seconds": 120,
+    "failure_type": "",
+    "source": "Generated mixed algebraic/rational/facial block validation fixture",
+    "expected_runtime_seconds": 120,
+    "certificate_type": "mixed_block_algebraic_certificate_report"
+}

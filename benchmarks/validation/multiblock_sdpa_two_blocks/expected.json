@@ -1,0 +1,15 @@
+{
+    "pack_level": "validation",
+    "workflow": "lmi_rational",
+    "category": "multi_block",
+    "strategy": "blockwise_rational",
+    "backend": "none",
+    "backend_requirement": "none",
+    "expected_status": "certified",
+    "groups": ["ci", "full"],
+    "certificate_type": "block_rational_psd_certificate",
+    "expected_runtime_seconds": 30,
+    "memory_expectation_mb": 256,
+    "max_time_seconds": 30,
+    "size_hint": "blocks=2, total_dim=3, n=2"
+}

@@ -1,0 +1,32 @@
+{
+    "certsdp_problem_version": "1.0",
+    "type": "lmi_feasibility",
+    "field": "QQ",
+    "variables": [
+    ],
+    "matrix_size": 3,
+    "A0": [
+        [
+            "1",
+            "0",
+            "0"
+        ],
+        [
+            "0",
+            "1",
+            "0"
+        ],
+        [
+            "0",
+            "0",
+            "0"
+        ]
+    ],
+    "A": [
+    ],
+    "metadata": {
+        "created_by": "CertSDP.jl",
+        "schema": "problem_v1"
+    },
+    "hash": "sha256:4691aeb0580d6767d4cef1883205b90eb232fb3aeef01e02a3e3cd38245a1e52"
+}

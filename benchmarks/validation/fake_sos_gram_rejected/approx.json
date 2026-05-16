@@ -1,0 +1,312 @@
+{
+    "certsdp_certificate_version": "1.0",
+    "certificate_type": "sos_gram_certificate",
+    "problem_hash": "sha256:77cc4b8d239f49bf61f29e1270234cb3be1e3c17937528be803d848dc4fe2ece",
+    "sos_problem": {
+        "type": "sos_gram_feasibility",
+        "field": "QQ",
+        "variables": [
+            "x"
+        ],
+        "basis": [
+            [
+                0
+            ],
+            [
+                1
+            ]
+        ],
+        "polynomial": [
+            {
+                "exponents": [
+                    2
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    0
+                ],
+                "coefficient": "1"
+            }
+        ],
+        "lmi_problem": {
+            "type": "lmi_feasibility",
+            "field": "QQ",
+            "matrix_size": 2,
+            "num_variables": 3,
+            "vars": [
+                "q1_1",
+                "q1_2",
+                "q2_2"
+            ],
+            "A0": [
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ]
+            ],
+            "A": [
+                [
+                    [
+                        "1",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0"
+                    ]
+                ],
+                [
+                    [
+                        "0",
+                        "1"
+                    ],
+                    [
+                        "1",
+                        "0"
+                    ]
+                ],
+                [
+                    [
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "1"
+                    ]
+                ]
+            ],
+            "hash": "sha256:bd74dfb1da57ed241ab466afa749b0eb73aa8922c0a72e5b1e00f0f6312e3c6e"
+        },
+        "hash": "sha256:77cc4b8d239f49bf61f29e1270234cb3be1e3c17937528be803d848dc4fe2ece"
+    },
+    "solution": {
+        "type": "rational_gram_matrix",
+        "gram_matrix": [
+            [
+                "1",
+                "0"
+            ],
+            [
+                "0",
+                "1"
+            ]
+        ]
+    },
+    "coefficient_proof": {
+        "method": "exact_coefficient_matching",
+        "matches": [
+            {
+                "exponents": [
+                    2
+                ],
+                "target_coefficient": "1",
+                "gram_coefficient": "1",
+                "contributions": [
+                    {
+                        "basis_pair": [
+                            2,
+                            2
+                        ],
+                        "multiplier": 1,
+                        "gram_entry": "1",
+                        "contribution": "1"
+                    }
+                ]
+            },
+            {
+                "exponents": [
+                    0
+                ],
+                "target_coefficient": "1",
+                "gram_coefficient": "1",
+                "contributions": [
+                    {
+                        "basis_pair": [
+                            1,
+                            1
+                        ],
+                        "multiplier": 1,
+                        "gram_entry": "1",
+                        "contribution": "1"
+                    }
+                ]
+            }
+        ]
+    },
+    "decomposition": {
+        "type": "rational_squares",
+        "method": "diagonal_rational_square_root",
+        "squares": [
+            [
+                {
+                    "exponents": [
+                        0
+                    ],
+                    "coefficient": "1"
+                }
+            ],
+            [
+                {
+                    "exponents": [
+                        1
+                    ],
+                    "coefficient": "1"
+                }
+            ]
+        ]
+    },
+    "proof": {
+        "coefficient_matching": {
+            "method": "exact_coefficient_matching",
+            "status": "claimed",
+            "equations": 2
+        },
+        "psd": {
+            "method": "embedded_rational_psd_certificate",
+            "certificate_id": "sha256:fea46ef63885e2136373fb6a3e10f1ff72852e8ae6fed5c25cedf9fb0d03e46b"
+        }
+    },
+    "provenance": {
+        "certsdp_version": "1.0.0",
+        "julia_version": "1.12.6",
+        "schema_version": "1.0",
+        "source": "sos_gram_workflow"
+    },
+    "verification": {
+        "verifier_version": "1.0.0",
+        "verified_at_creation": null
+    },
+    "lmi_certificate": {
+        "certsdp_version": "0.1",
+        "certificate_type": "rational_psd_certificate",
+        "problem": {
+            "type": "lmi_feasibility",
+            "field": "QQ",
+            "matrix_size": 2,
+            "num_variables": 3,
+            "vars": [
+                "q1_1",
+                "q1_2",
+                "q2_2"
+            ],
+            "A0": [
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ]
+            ],
+            "A": [
+                [
+                    [
+                        "1",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0"
+                    ]
+                ],
+                [
+                    [
+                        "0",
+                        "1"
+                    ],
+                    [
+                        "1",
+                        "0"
+                    ]
+                ],
+                [
+                    [
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "1"
+                    ]
+                ]
+            ],
+            "hash": "sha256:bd74dfb1da57ed241ab466afa749b0eb73aa8922c0a72e5b1e00f0f6312e3c6e"
+        },
+        "solution": {
+            "type": "rational",
+            "x": [
+                "1",
+                "0",
+                "1"
+            ]
+        },
+        "psd_proof": {
+            "method": "principal_minors",
+            "substituted_matrix": [
+                [
+                    "1",
+                    "0"
+                ],
+                [
+                    "0",
+                    "1"
+                ]
+            ],
+            "data": {
+                "principal_minors": [
+                    {
+                        "indices": [
+                            1
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2
+                        ],
+                        "determinant": "1"
+                    }
+                ]
+            },
+            "principal_minors": [
+                {
+                    "indices": [
+                        1
+                    ],
+                    "determinant": "1"
+                },
+                {
+                    "indices": [
+                        2
+                    ],
+                    "determinant": "1"
+                },
+                {
+                    "indices": [
+                        1,
+                        2
+                    ],
+                    "determinant": "1"
+                }
+            ]
+        },
+        "hash": "sha256:fea46ef63885e2136373fb6a3e10f1ff72852e8ae6fed5c25cedf9fb0d03e46b"
+    },
+    "certificate_id": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "hash": "sha256:0ec92ddc54c678eb8a7e9caf604bff275604fa1bb8e93600d3519a24269ce499"
+}

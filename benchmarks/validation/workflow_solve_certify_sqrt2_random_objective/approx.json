@@ -1,0 +1,15 @@
+{
+    "solve_options": {
+        "solvers": [
+            "clarabel"
+        ],
+        "random_objective_trials": 3,
+        "trace_objective": "maximize",
+        "solver_attempts": 2,
+        "solver_retry_policy": "default",
+        "precision_bits": 256,
+        "random_seed": 29841,
+        "require_stable_rank": true,
+        "clarabel_max_iter": 300
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "certsdp_version": "0.1",
+    "approximate_solution": {
+        "type": "xhat",
+        "precision_bits": 256,
+        "xhat": [
+            "-2.511073890360348199999999999999999999999999999999999999999999999999999999999994",
+            "0"
+        ],
+        "solver_name": "user",
+        "solver_status": "user_supplied",
+        "objective_kind": "user",
+        "primal_residual": "1e-48",
+        "dual_residual": "1e-48",
+        "face_clarity": "clear",
+        "face_clarity_score": "4.99e15",
+        "rank_detection": {
+            "relative_tolerance": "1e-10",
+            "gap_threshold": "1e4",
+            "absolute_tolerance": null
+        },
+        "oracle_metadata": {
+            "approx_quality_report": "quartic incidence n2 challenge seed",
+            "rank_confidence": "high",
+            "eigengap": "4.99e15",
+            "residual": "1e-48"
+        }
+    }
+}

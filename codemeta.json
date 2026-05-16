@@ -1,0 +1,63 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "name": "CertSDP.jl",
+  "description": "Exact replay layer for semidefinite programming and sum-of-squares certificate workflows.",
+  "codeRepository": "https://github.com/fang251440/CertSDP.jl",
+  "issueTracker": "https://github.com/fang251440/CertSDP.jl/issues",
+  "softwareHelp": "https://github.com/fang251440/CertSDP.jl#readme",
+  "programmingLanguage": "Julia",
+  "runtimePlatform": "Julia 1.10 or newer",
+  "softwareVersion": "1.0.0",
+  "datePublished": "2026-05-14",
+  "license": "https://spdx.org/licenses/Apache-2.0.html",
+  "author": [
+    {
+      "@type": "Organization",
+      "name": "CertSDP contributors"
+    }
+  ],
+  "keywords": [
+    "semidefinite programming",
+    "sum-of-squares",
+    "exact certification",
+    "rational arithmetic",
+    "algebraic certificates",
+    "Julia"
+  ],
+  "applicationCategory": "Scientific/Engineering",
+  "operatingSystem": [
+    "macOS",
+    "Linux",
+    "Windows"
+  ],
+  "isPartOf": "CertSDP",
+  "referencePublication": {
+    "@type": "ScholarlyArticle",
+    "name": "Certifying Solutions of Degenerate Semidefinite Programs",
+    "author": [
+      {
+        "@type": "Person",
+        "givenName": "Vladimir",
+        "familyName": "Kolmogorov"
+      },
+      {
+        "@type": "Person",
+        "givenName": "Simone",
+        "familyName": "Naldi"
+      },
+      {
+        "@type": "Person",
+        "givenName": "Jeferson",
+        "familyName": "Zapata"
+      }
+    ],
+    "identifier": "https://doi.org/10.1137/24M1664691",
+    "datePublished": "2025"
+  },
+  "softwareRequirements": [
+    "Julia >= 1.10",
+    "Optional external msolve executable for algebraic candidate generation",
+    "Optional JuMP/MathOptInterface/SumOfSquares Julia packages for model extraction"
+  ]
+}

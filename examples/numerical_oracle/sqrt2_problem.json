@@ -1,0 +1,34 @@
+{
+    "certsdp_version": "0.1",
+    "problem": {
+        "type": "lmi_feasibility",
+        "field": "QQ",
+        "matrix_size": 2,
+        "num_variables": 1,
+        "vars": [
+            "x"
+        ],
+        "A0": [
+            [
+                "0",
+                "1"
+            ],
+            [
+                "1",
+                "0"
+            ]
+        ],
+        "A": [
+            [
+                [
+                    "1",
+                    "0"
+                ],
+                [
+                    "0",
+                    "1/2"
+                ]
+            ]
+        ]
+    }
+}
