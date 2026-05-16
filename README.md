@@ -1,3 +1,5 @@
+<div align="center">
+
 # CertSDP.jl
 
 [![CI](https://github.com/fang251440/CertSDP.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/fang251440/CertSDP.jl/actions/workflows/ci.yml)
@@ -8,30 +10,54 @@
 
 **Exact replay for SDP and SOS certificates.**
 
-CertSDP.jl turns numerical or symbolic SDP/SOS candidates into portable,
-data-only JSON certificates that can be replayed independently with exact
-rational or supported algebraic arithmetic.
+</div>
+
+---
+
+> CertSDP.jl turns numerical or symbolic SDP/SOS candidates into portable,
+> data-only JSON certificates that can be replayed independently with exact
+> rational or supported algebraic arithmetic.
 
 ```text
 A solver finds a candidate. CertSDP makes it replayable.
 ```
 
-CertSDP is not another large-scale SDP solver and not a replacement for MOSEK,
-Clarabel, Hypatia, SCS, JuMP, or SumOfSquares.jl. It is the smaller trusted
-layer after search: a certificate protocol plus a strict verifier for artifacts
-that should survive review, archival, CI, and downstream proof pipelines.
+**CertSDP is not another large-scale SDP solver** and not a replacement for
+MOSEK, Clarabel, Hypatia, SCS, JuMP, or SumOfSquares.jl. It is the smaller
+trusted layer after search: **a certificate protocol plus a strict verifier**
+for artifacts that should survive review, archival, CI, and downstream proof
+pipelines.
+
+## Contents
+
+- [Why CertSDP Exists](#why-certsdp-exists)
+- [At A Glance](#at-a-glance)
+- [Where CertSDP Fits](#where-certsdp-fits)
+- [Five-Minute Quickstart](#five-minute-quickstart)
+- [Strict Replay](#strict-replay)
+- [Supported Paths](#supported-paths)
+- [Signature Demo: Rational Rounding Fails](#signature-demo-rational-rounding-fails)
+- [Validation Evidence](#validation-evidence)
+- [Showcases](#showcases)
+- [Platform Support](#platform-support)
+- [Limits](#limits)
+- [Documentation](#documentation)
+- [Citation](#citation)
+- [License](#license)
+
+---
 
 ## Why CertSDP Exists
 
-A solver residual is not a proof, and a rounded Gram matrix is not a portable
-certificate.
+**A solver residual is not a proof, and a rounded Gram matrix is not a portable
+certificate.**
 
 Numerical SDP/SOS workflows are powerful, but solver residuals and rounded Gram
 matrices are not portable proofs. They can fail on exactly the cases that matter
 for rigorous research: degenerate feasible points, rank-deficient PSD faces,
 weak feasibility, and algebraic coordinates such as `sqrt(2)`.
 
-CertSDP focuses on the next question after search:
+CertSDP focuses on the **next question after search**:
 
 ```text
 Can this SDP/SOS claim be checked again, exactly,
@@ -44,6 +70,8 @@ without trusting the original solver run?
 | Rational rounding | Degenerate or algebraic solutions may not round to a valid rational point. | Certify over `QQ` or supported `QQ(alpha)` data. |
 | Backend artifact | Logs, caches, and proof fields can be stale or solver-specific. | Recompute trusted obligations in strict replay. |
 
+---
+
 ## At A Glance
 
 | Question | Answer |
@@ -54,6 +82,8 @@ without trusting the original solver run?
 | Optional tools | `msolve`, Sage/msolve, Clarabel, JuMP/MOI, and SumOfSquares.jl can help find or extract candidates. |
 | Evidence | A tracked validation report with accepted rows, rejection controls, rational-rounding failures, and imported workflows. |
 
+---
+
 ## Where CertSDP Fits
 
 | Tool class | Role |
@@ -63,9 +93,13 @@ without trusting the original solver run?
 | `msolve` / Sage | Optionally propose algebraic candidates. |
 | CertSDP.jl | Verify exact replayable certificate artifacts. |
 
+---
+
 ## Five-Minute Quickstart
 
-Requirements: Julia 1.10 or newer and a checkout of this repository.
+**Requirements:** Julia 1.10 or newer and a checkout of this repository.
+
+### Command Line
 
 ```bash
 julia --project -e 'using Pkg; Pkg.instantiate()'
@@ -77,7 +111,7 @@ bin/certsdp certify examples/rational_problem.json \
 bin/certsdp verify --strict /tmp/certsdp-rational-cert.json
 ```
 
-Expected verifier result:
+**Expected verifier result:**
 
 ```text
 [OK] PSD verified over QQ
@@ -85,6 +119,8 @@ Expected verifier result:
 ```
 
 This path uses exact rational data and no optional backend.
+
+### Julia API
 
 The same path through the Julia API:
 
@@ -104,11 +140,15 @@ verify(replay) || error("replay rejected")
 The public API is intentionally small and versioned. See
 [API stability](docs/API_STABILITY.md) before depending on internals.
 
+---
+
 ## Strict Replay
 
 `certify` may use numerical diagnostics, rank guesses, optional algebraic
 backends, caches, and heuristic candidate selection. `verify --strict` does not
 trust those inputs as proof.
+
+### Trusted Obligations
 
 Strict replay recomputes the accepted obligations from certificate data:
 
@@ -118,6 +158,8 @@ Strict replay recomputes the accepted obligations from certificate data:
 - algebraic root isolation by rational intervals;
 - certified signs and exact PSD proof replay.
 
+### Trust Boundary
+
 | Trusted by strict replay | Not trusted as proof |
 | --- | --- |
 | v1.0 certificate data and canonical hashes | Solver success flags |
@@ -126,11 +168,13 @@ Strict replay recomputes the accepted obligations from certificate data:
 | Exact substitution and coefficient matching | Cached backend artifacts |
 | PSD proof replay by accepted exact methods | Approximate equalities, rounded diagnostics, or rank guesses |
 
-Design rule:
+**Design rule:**
 
 ```text
 The certifier may be complicated. The verifier must remain small, exact, and auditable.
 ```
+
+---
 
 ## Supported Paths
 
@@ -145,6 +189,8 @@ optional JuMP/MOI and SumOfSquares.jl extraction, and optional `msolve` or
 Sage/msolve candidate generation. Optional numerical oracle: Clarabel can
 provide approximate seeds and diagnostics.
 
+### Example Commands
+
 | Path | Command |
 | --- | --- |
 | Rational LMI | `bin/certsdp certify examples/rational_problem.json --solution examples/rational_solution.json --out /tmp/certsdp-rational-cert.json` |
@@ -157,6 +203,8 @@ Verify any generated certificate with:
 ```bash
 bin/certsdp verify --strict <certificate.json>
 ```
+
+---
 
 ## Signature Demo: Rational Rounding Fails
 
@@ -182,6 +230,8 @@ trusted proof. Strict replay accepts only after root isolation, exact
 substitution, certified signs, and PSD proof replay. See
 [Why rational rounding fails](docs/why_rational_rounding_fails.md).
 
+---
+
 ## Validation Evidence
 
 CertSDP ships a public validation suite that is meant to be an evidence
@@ -193,6 +243,8 @@ contract, not a solver-speed leaderboard. The tracked v1.0 report records:
 - 4 rational-rounding failures certified by exact algebraic replay;
 - imported SDPA, JuMP/MOI, and SumOfSquares-style workflows;
 - fake-certificate and invalid-approximation rejection controls.
+
+### Run The Contract
 
 Run the validation contract from the repository root:
 
@@ -207,6 +259,8 @@ verification. A passing solver log is not a passing certificate; strict replay
 does not use `msolve`, numerical solver output, backend logs, or solver-specific
 artifacts as proof.
 
+---
+
 ## Showcases
 
 The showcase pack contains data artifacts for recognizable positive-polynomial
@@ -220,6 +274,8 @@ protocol, not as a benchmark.
 | Putinar / Schmuedgen | Compact-domain inequalities on boxes, disks, intervals, simplex faces, and annuli. |
 | SOSTOOLS bridge | Neutral SOSTOOLS-lite Gram exports converted into exact CertSDP certificates. |
 
+### Run Or Regenerate
+
 Run or regenerate the pack:
 
 ```bash
@@ -230,6 +286,8 @@ julia --project scripts/generate_showcase_pack.jl
 See [showcases/README.md](showcases/README.md) and
 [showcases/manifest.json](showcases/manifest.json).
 
+---
+
 ## Platform Support
 
 Linux and macOS run the full package, docs, and validation checks in CI.
@@ -237,10 +295,12 @@ Windows runs strict verifier smoke and docs syntax smoke. The core verifier
 should run anywhere Julia 1.10+ runs; optional backends depend on local
 installation.
 
+---
+
 ## Limits
 
 CertSDP targets exact certification for supported small-to-medium audit and
-reproducibility workflows. It is not:
+reproducibility workflows. **It is not:**
 
 - a generic large-scale SDP solver;
 - a replacement for numerical SDP/SOS modeling and solver stacks;
@@ -256,9 +316,11 @@ Current boundaries are documented in [API stability](docs/API_STABILITY.md),
 JuMP, SumOfSquares.jl, Clarabel, or Sage; optional backends are used around
 candidate generation and workflow integration.
 
+---
+
 ## Documentation
 
-Start with:
+**Start with:**
 
 - [Installation](docs/installation.md)
 - [Platform support](docs/platform_support.md)
@@ -273,12 +335,14 @@ Start with:
 - [Certificate format](docs/certificate_format.md)
 - [API reference](docs/api_reference.md)
 
-Build the local documentation site:
+**Build the local documentation site:**
 
 ```bash
 julia --project=docs -e 'using Pkg; Pkg.develop(path=pwd()); Pkg.instantiate()'
 julia --project=docs docs/make.jl
 ```
+
+---
 
 ## Citation
 
@@ -286,8 +350,8 @@ The repository includes software citation metadata in `CITATION.cff` and
 `codemeta.json`. It should not claim a registry entry or archived DOI until
 those external services accept the artifact.
 
-If CertSDP helps your research, cite this software and the paper that motivates
-the degenerate SDP certification workflow:
+If CertSDP helps your research, cite **this software** and the paper that
+motivates the degenerate SDP certification workflow:
 
 ```bibtex
 @software{CertSDPjl,
@@ -311,6 +375,8 @@ the degenerate SDP certification workflow:
   doi     = {10.1137/24M1664691}
 }
 ```
+
+---
 
 ## License
 
