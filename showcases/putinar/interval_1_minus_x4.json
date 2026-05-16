@@ -1,0 +1,126 @@
+{
+    "certsdp_certificate_version": "1.0",
+    "certificate_type": "positivstellensatz_certificate",
+    "problem_hash": "sha256:d82571547886fcde9dba16744732a2411153b206ec4618517e1714901a31f5b9",
+    "problem": {
+        "embedded": true,
+        "type": "positivstellensatz_claim",
+        "data": {
+            "certsdp_problem_version": "1.0",
+            "type": "positivstellensatz_claim",
+            "field": "QQ",
+            "variables": [
+                "x"
+            ],
+            "polynomial": [
+                {
+                    "exponents": [
+                        4
+                    ],
+                    "coefficient": "-1"
+                },
+                {
+                    "exponents": [
+                        0
+                    ],
+                    "coefficient": "1"
+                }
+            ],
+            "constraints": [
+                {
+                    "name": "unit_interval",
+                    "polynomial": [
+                        {
+                            "exponents": [
+                                2
+                            ],
+                            "coefficient": "-1"
+                        },
+                        {
+                            "exponents": [
+                                0
+                            ],
+                            "coefficient": "1"
+                        }
+                    ]
+                }
+            ],
+            "hash": "sha256:d82571547886fcde9dba16744732a2411153b206ec4618517e1714901a31f5b9"
+        }
+    },
+    "solution": {
+        "field": "QQ",
+        "representation": "sos_multipliers",
+        "terms": [
+            {
+                "name": "one_plus_x2_multiplier",
+                "constraint_product": [
+                    "unit_interval"
+                ],
+                "sos": {
+                    "method": "explicit_rational_squares",
+                    "squares": [
+                        [
+                            {
+                                "exponents": [
+                                    0
+                                ],
+                                "coefficient": "1"
+                            }
+                        ],
+                        [
+                            {
+                                "exponents": [
+                                    1
+                                ],
+                                "coefficient": "1"
+                            }
+                        ]
+                    ]
+                }
+            }
+        ]
+    },
+    "coefficient_proof": {
+        "method": "exact_coefficient_matching",
+        "identity": "target_equals_sos_constraint_assembly",
+        "matches": [
+            {
+                "exponents": [
+                    4
+                ],
+                "lhs_coefficient": "-1",
+                "rhs_coefficient": "-1"
+            },
+            {
+                "exponents": [
+                    0
+                ],
+                "lhs_coefficient": "1",
+                "rhs_coefficient": "1"
+            }
+        ]
+    },
+    "proof": {
+        "identity": {
+            "method": "exact_coefficient_matching",
+            "status": "claimed",
+            "equations": 2
+        },
+        "sos": {
+            "method": "explicit_rational_squares",
+            "multiplier_terms": 1
+        }
+    },
+    "provenance": {
+        "certsdp_version": "1.0.0",
+        "julia_version": "1.12.6",
+        "schema_version": "1.0",
+        "source": "putinar_showcase"
+    },
+    "verification": {
+        "verifier_version": "1.0.0",
+        "verified_at_creation": null
+    },
+    "certificate_id": "sha256:3244d76118e6d934e59ebec784cd21fd5d1b25d9ac7adec4b99bdda74b7ec95c"
+}

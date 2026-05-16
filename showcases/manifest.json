@@ -1,0 +1,386 @@
+{
+    "showcase_manifest_version": "1.0",
+    "generated_by": "scripts/generate_showcase_pack.jl",
+    "verifier_boundary": "strict exact replay only; solver logs and floating-point residuals are not trusted",
+    "total_artifacts": 21,
+    "certificate_artifacts": 16,
+    "sostools_pipeline_artifacts": 5,
+    "groups": [
+        {
+            "id": "non_sos_classics",
+            "title": "Nonnegative but non-polynomial-SOS classics",
+            "description": "Motzkin, Choi-Lam, and Robinson-family artifacts replay exact positive-polynomial certificates over rational data."
+        },
+        {
+            "id": "hilbert17",
+            "title": "Hilbert 17 rational-function SOS protocol",
+            "description": "Data-only numerator_sos / denominator_sos certificates; strict verification checks SOS blocks and one polynomial identity."
+        },
+        {
+            "id": "putinar",
+            "title": "Putinar and Schmuedgen compact-domain certificates",
+            "description": "Constrained polynomial inequalities encoded as SOS multipliers attached to named constraint products."
+        },
+        {
+            "id": "sostools",
+            "title": "SOSTOOLS-style exact replay bridge",
+            "description": "Neutral SOSTOOLS-lite Gram exports converted into CertSDP certificates and independently replayed."
+        }
+    ],
+    "artifacts": [
+        {
+            "kind": "certificate",
+            "group": "non_sos_classics",
+            "title": "Motzkin affine Hilbert-17 certificate",
+            "path": "showcases/non_sos_classics/motzkin_affine_rational_function_sos.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "M(x,y) >= 0, nonnegative but not polynomial SOS",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "numerator_squares": 4,
+            "denominator_squares": 1,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/non_sos_classics/motzkin_affine_rational_function_sos.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "legacy_aliases",
+            "title": "Motzkin affine Hilbert-17 certificate",
+            "path": "showcases/motzkin/motzkin_rational_function_sos.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "M(x,y) >= 0, nonnegative but not polynomial SOS",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "numerator_squares": 4,
+            "denominator_squares": 1,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/motzkin/motzkin_rational_function_sos.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "non_sos_classics",
+            "title": "Homogeneous Motzkin ternary sextic",
+            "path": "showcases/non_sos_classics/motzkin_homogeneous_rational_function_sos.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "homogeneous Motzkin form >= 0, outside polynomial SOS",
+            "variables": [
+                "x",
+                "y",
+                "z"
+            ],
+            "numerator_squares": 4,
+            "denominator_squares": 1,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/non_sos_classics/motzkin_homogeneous_rational_function_sos.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "non_sos_classics",
+            "title": "Choi-Lam cyclic sextic denominator SOS",
+            "path": "showcases/non_sos_classics/choi_lam_cyclic_sextic_rational_function_sos.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "Choi-Lam cyclic sextic >= 0, non-SOS form certified after multiplying by x^2+y^2+z^2",
+            "variables": [
+                "x",
+                "y",
+                "z"
+            ],
+            "numerator_squares": 9,
+            "denominator_squares": 3,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/non_sos_classics/choi_lam_cyclic_sextic_rational_function_sos.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "non_sos_classics",
+            "title": "Choi-Lam quaternary quartic denominator SOS",
+            "path": "showcases/non_sos_classics/choi_lam_quartic_rational_function_sos.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "Choi-Lam quartic >= 0, non-SOS form certified with a rational-function SOS identity",
+            "variables": [
+                "w",
+                "x",
+                "y",
+                "z"
+            ],
+            "numerator_squares": 15,
+            "denominator_squares": 6,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/non_sos_classics/choi_lam_quartic_rational_function_sos.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "non_sos_classics",
+            "title": "Robinson-family beta=1/8 SOS threshold replay",
+            "path": "showcases/non_sos_classics/robinson_threshold_perturbation_rational_sos.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "Robinson ternary sextic plus the exact 1/8 diagonal perturbation at the SOS threshold",
+            "variables": [
+                "x",
+                "y",
+                "z"
+            ],
+            "numerator_squares": 6,
+            "denominator_squares": 1,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/non_sos_classics/robinson_threshold_perturbation_rational_sos.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "hilbert17",
+            "title": "Minimal univariate rational-function SOS",
+            "path": "showcases/hilbert17/x2_plus_1_minimal.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "x^2+1 >= 0 with denominator_sos * p == numerator_sos",
+            "variables": [
+                "x"
+            ],
+            "numerator_squares": 1,
+            "denominator_squares": 2,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/hilbert17/x2_plus_1_minimal.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "hilbert17",
+            "title": "Dense denominator protocol control",
+            "path": "showcases/hilbert17/dense_denominator_protocol.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "(1+x^2+y^2+z^2)^2 >= 0 replayed through a nontrivial rational-function SOS denominator",
+            "variables": [
+                "x",
+                "y",
+                "z"
+            ],
+            "numerator_squares": 4,
+            "denominator_squares": 4,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/hilbert17/dense_denominator_protocol.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "hilbert17",
+            "title": "Motzkin affine Hilbert-17 certificate",
+            "path": "showcases/hilbert17/motzkin_affine_hilbert17.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "M(x,y) >= 0, nonnegative but not polynomial SOS",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "numerator_squares": 4,
+            "denominator_squares": 1,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/hilbert17/motzkin_affine_hilbert17.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "hilbert17",
+            "title": "Choi-Lam cyclic sextic denominator SOS",
+            "path": "showcases/hilbert17/choi_lam_cyclic_sextic_hilbert17.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "Choi-Lam cyclic sextic >= 0, non-SOS form certified after multiplying by x^2+y^2+z^2",
+            "variables": [
+                "x",
+                "y",
+                "z"
+            ],
+            "numerator_squares": 9,
+            "denominator_squares": 3,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/hilbert17/choi_lam_cyclic_sextic_hilbert17.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "hilbert17",
+            "title": "Choi-Lam quaternary quartic denominator SOS",
+            "path": "showcases/hilbert17/choi_lam_quartic_hilbert17.json",
+            "certificate_type": "rational_function_sos_certificate",
+            "claim": "Choi-Lam quartic >= 0, non-SOS form certified with a rational-function SOS identity",
+            "variables": [
+                "w",
+                "x",
+                "y",
+                "z"
+            ],
+            "numerator_squares": 15,
+            "denominator_squares": 6,
+            "exact_check": "denominator * polynomial == numerator_sos",
+            "command": "bin/certsdp verify --strict showcases/hilbert17/choi_lam_quartic_hilbert17.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "putinar",
+            "title": "Box Putinar certificate for 1 - x^2 y^2",
+            "path": "showcases/putinar/box_1_minus_x2y2.json",
+            "certificate_type": "positivstellensatz_certificate",
+            "claim": "-1 <= x,y <= 1 implies 1 - x^2 y^2 >= 0",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "constraints": 2,
+            "multiplier_terms": 2,
+            "exact_check": "target == sum sos_multiplier * constraint_product",
+            "command": "bin/certsdp verify --strict showcases/putinar/box_1_minus_x2y2.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "putinar",
+            "title": "Unit disk Putinar certificate",
+            "path": "showcases/putinar/unit_disk_1_minus_x2y2.json",
+            "certificate_type": "positivstellensatz_certificate",
+            "claim": "x^2 + y^2 <= 1 implies 1 - x^2 y^2 >= 0",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "constraints": 1,
+            "multiplier_terms": 2,
+            "exact_check": "target == sum sos_multiplier * constraint_product",
+            "command": "bin/certsdp verify --strict showcases/putinar/unit_disk_1_minus_x2y2.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "putinar",
+            "title": "Interval Putinar certificate for 1 - x^4",
+            "path": "showcases/putinar/interval_1_minus_x4.json",
+            "certificate_type": "positivstellensatz_certificate",
+            "claim": "-1 <= x <= 1 implies 1 - x^4 >= 0",
+            "variables": [
+                "x"
+            ],
+            "constraints": 1,
+            "multiplier_terms": 1,
+            "exact_check": "target == sum sos_multiplier * constraint_product",
+            "command": "bin/certsdp verify --strict showcases/putinar/interval_1_minus_x4.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "putinar",
+            "title": "Simplex Schmuedgen product certificate",
+            "path": "showcases/putinar/simplex_edge_product.json",
+            "certificate_type": "positivstellensatz_certificate",
+            "claim": "x >= 0, y >= 0, x+y <= 1 implies x(1-x-y) >= 0",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "constraints": 3,
+            "multiplier_terms": 1,
+            "exact_check": "target == sum sos_multiplier * constraint_product",
+            "command": "bin/certsdp verify --strict showcases/putinar/simplex_edge_product.json"
+        },
+        {
+            "kind": "certificate",
+            "group": "putinar",
+            "title": "Annulus Schmuedgen product certificate",
+            "path": "showcases/putinar/annulus_product_barrier.json",
+            "certificate_type": "positivstellensatz_certificate",
+            "claim": "1 <= x^2+y^2 <= 4 implies (x^2+y^2-1)(4-x^2-y^2) >= 0",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "constraints": 2,
+            "multiplier_terms": 1,
+            "exact_check": "target == sum sos_multiplier * constraint_product",
+            "command": "bin/certsdp verify --strict showcases/putinar/annulus_product_barrier.json"
+        },
+        {
+            "kind": "sostools_lite_pipeline",
+            "group": "sostools",
+            "title": "SOSTOOLS-lite positive polynomial replay",
+            "source_path": "showcases/sostools/sostools_lite_xy_square.json",
+            "problem_path": "showcases/sostools/sostools_lite_xy_square_sos_gram.json",
+            "solution_path": "showcases/sostools/sostools_lite_xy_square_gram_solution.json",
+            "certificate_path": "showcases/sostools/sostools_lite_xy_square_cert.json",
+            "certificate_type": "sos_gram_certificate",
+            "claim": "p=(x+y)^2 exported as an exact Gram candidate",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "basis_size": 2,
+            "exact_check": "v'Qv coefficient match + exact rational PSD replay",
+            "command": "bin/certsdp convert-sostools showcases/sostools/sostools_lite_xy_square.json --problem-out /tmp/sostools_lite_xy_square_sos_gram.json --solution-out /tmp/sostools_lite_xy_square_gram_solution.json --cert-out /tmp/sostools_lite_xy_square_cert.json"
+        },
+        {
+            "kind": "sostools_lite_pipeline",
+            "group": "sostools",
+            "title": "Rank-one positive polynomial decomposition",
+            "source_path": "showcases/sostools/sostools_lite_rank1_positive_polynomial.json",
+            "problem_path": "showcases/sostools/sostools_lite_rank1_positive_polynomial_sos_gram.json",
+            "solution_path": "showcases/sostools/sostools_lite_rank1_positive_polynomial_gram_solution.json",
+            "certificate_path": "showcases/sostools/sostools_lite_rank1_positive_polynomial_cert.json",
+            "certificate_type": "sos_gram_certificate",
+            "claim": "p=(1+x+y+z)^2 from a rank-one Gram matrix",
+            "variables": [
+                "x",
+                "y",
+                "z"
+            ],
+            "basis_size": 4,
+            "exact_check": "v'Qv coefficient match + exact rational PSD replay",
+            "command": "bin/certsdp convert-sostools showcases/sostools/sostools_lite_rank1_positive_polynomial.json --problem-out /tmp/sostools_lite_rank1_positive_polynomial_sos_gram.json --solution-out /tmp/sostools_lite_rank1_positive_polynomial_gram_solution.json --cert-out /tmp/sostools_lite_rank1_positive_polynomial_cert.json"
+        },
+        {
+            "kind": "sostools_lite_pipeline",
+            "group": "sostools",
+            "title": "Lyapunov decay SOS replay",
+            "source_path": "showcases/sostools/sostools_lite_lyapunov_decay.json",
+            "problem_path": "showcases/sostools/sostools_lite_lyapunov_decay_sos_gram.json",
+            "solution_path": "showcases/sostools/sostools_lite_lyapunov_decay_gram_solution.json",
+            "certificate_path": "showcases/sostools/sostools_lite_lyapunov_decay_cert.json",
+            "certificate_type": "sos_gram_certificate",
+            "claim": "-dV/dt = 2x^2 + 4y^2 for a linear stable system",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "basis_size": 2,
+            "exact_check": "v'Qv coefficient match + exact rational PSD replay",
+            "command": "bin/certsdp convert-sostools showcases/sostools/sostools_lite_lyapunov_decay.json --problem-out /tmp/sostools_lite_lyapunov_decay_sos_gram.json --solution-out /tmp/sostools_lite_lyapunov_decay_gram_solution.json --cert-out /tmp/sostools_lite_lyapunov_decay_cert.json"
+        },
+        {
+            "kind": "sostools_lite_pipeline",
+            "group": "sostools",
+            "title": "Polynomial optimization bound replay",
+            "source_path": "showcases/sostools/sostools_lite_quartic_bound.json",
+            "problem_path": "showcases/sostools/sostools_lite_quartic_bound_sos_gram.json",
+            "solution_path": "showcases/sostools/sostools_lite_quartic_bound_gram_solution.json",
+            "certificate_path": "showcases/sostools/sostools_lite_quartic_bound_cert.json",
+            "certificate_type": "sos_gram_certificate",
+            "claim": "x^4 + y^4 + x^2 + y^2 + 1 >= 1-style Gram replay",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "basis_size": 5,
+            "exact_check": "v'Qv coefficient match + exact rational PSD replay",
+            "command": "bin/certsdp convert-sostools showcases/sostools/sostools_lite_quartic_bound.json --problem-out /tmp/sostools_lite_quartic_bound_sos_gram.json --solution-out /tmp/sostools_lite_quartic_bound_gram_solution.json --cert-out /tmp/sostools_lite_quartic_bound_cert.json"
+        },
+        {
+            "kind": "sostools_lite_pipeline",
+            "group": "sostools",
+            "title": "Dense cross-term quartic Gram replay",
+            "source_path": "showcases/sostools/sostools_lite_dense_cross_quartic.json",
+            "problem_path": "showcases/sostools/sostools_lite_dense_cross_quartic_sos_gram.json",
+            "solution_path": "showcases/sostools/sostools_lite_dense_cross_quartic_gram_solution.json",
+            "certificate_path": "showcases/sostools/sostools_lite_dense_cross_quartic_cert.json",
+            "certificate_type": "sos_gram_certificate",
+            "claim": "p=(x^2+xy+y^2)^2 with dense Gram coupling",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "basis_size": 3,
+            "exact_check": "v'Qv coefficient match + exact rational PSD replay",
+            "command": "bin/certsdp convert-sostools showcases/sostools/sostools_lite_dense_cross_quartic.json --problem-out /tmp/sostools_lite_dense_cross_quartic_sos_gram.json --solution-out /tmp/sostools_lite_dense_cross_quartic_gram_solution.json --cert-out /tmp/sostools_lite_dense_cross_quartic_cert.json"
+        }
+    ]
+}

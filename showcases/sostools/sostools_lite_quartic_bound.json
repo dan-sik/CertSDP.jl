@@ -1,0 +1,107 @@
+{
+    "source_format": "sostools_lite",
+    "variables": [
+        "x",
+        "y"
+    ],
+    "basis": [
+        [
+            0,
+            0
+        ],
+        [
+            1,
+            0
+        ],
+        [
+            0,
+            1
+        ],
+        [
+            2,
+            0
+        ],
+        [
+            0,
+            2
+        ]
+    ],
+    "polynomial": [
+        {
+            "exponents": [
+                0,
+                0
+            ],
+            "coefficient": "1"
+        },
+        {
+            "exponents": [
+                2,
+                0
+            ],
+            "coefficient": "1"
+        },
+        {
+            "exponents": [
+                0,
+                2
+            ],
+            "coefficient": "1"
+        },
+        {
+            "exponents": [
+                4,
+                0
+            ],
+            "coefficient": "1"
+        },
+        {
+            "exponents": [
+                0,
+                4
+            ],
+            "coefficient": "1"
+        }
+    ],
+    "gram_matrix": [
+        [
+            "1",
+            "0",
+            "0",
+            "0",
+            "0"
+        ],
+        [
+            "0",
+            "1",
+            "0",
+            "0",
+            "0"
+        ],
+        [
+            "0",
+            "0",
+            "1",
+            "0",
+            "0"
+        ],
+        [
+            "0",
+            "0",
+            "0",
+            "1",
+            "0"
+        ],
+        [
+            "0",
+            "0",
+            "0",
+            "0",
+            "1"
+        ]
+    ],
+    "metadata": {
+        "exporter_contract": "SOSTOOLS searches; CertSDP certifies exact Gram replay.",
+        "claim": "x^4 + y^4 + x^2 + y^2 + 1 >= 1-style Gram replay"
+    }
+}

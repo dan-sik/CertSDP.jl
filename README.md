@@ -6,13 +6,15 @@
 [![Julia 1.10+](https://img.shields.io/badge/Julia-1.10%2B-9558B2)](Project.toml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-**Exact replay for numerical SDP/SOS certificates.**
+**Exact replay for SDP/SOS certificates, Hilbert-17 rational SOS identities,
+and Positivstellensatz proofs.**
 
-CertSDP.jl turns SDP/SOS solver candidates into data-only JSON certificates
-that can be independently verified with exact arithmetic.
+CertSDP.jl is the verification layer after numerical or symbolic SDP/SOS
+search. It turns solver candidates into data-only JSON certificates that can be
+replayed independently with exact rational or algebraic arithmetic.
 
-Numerical solvers are excellent at finding candidates. CertSDP sits after the
-solver and asks a narrower question:
+Solvers are excellent at search. CertSDP asks the smaller, more auditable
+question that should survive outside the solver process:
 
 ```text
 Can this SDP/SOS claim be replayed exactly?
@@ -22,13 +24,17 @@ The strict verifier recomputes the trusted obligations: problem hashes, exact
 LMI substitution, rational or algebraic arithmetic, certified sign tests, PSD
 proof replay, and SOS coefficient matching. Solver logs, backend artifacts,
 floating-point eigenvalues, and approximate equalities are diagnostics, not
-proof.
+proof objects.
 
+> SOSTOOLS, SumOfSquares.jl, JuMP, MOSEK, Clarabel, and algebraic backends
+> search. CertSDP certifies the replay artifact.
+>
 > A solver finds a candidate. CertSDP makes it replayable.
 
 ## Why CertSDP Exists
 
-A solver residual is not a proof.
+A solver residual is not a proof, and a rounded Gram matrix is not a portable
+certificate.
 
 Many SDP/SOS workflows begin numerically: JuMP or SumOfSquares.jl builds a
 model, a solver finds a feasible-looking point or Gram matrix, and the result is
@@ -36,8 +42,9 @@ then used inside a paper, proof, or reproducibility artifact. Rational rounding
 can fail when the true solution is degenerate, rank-deficient, lies on a PSD
 face, or has algebraic coordinates such as `sqrt(2)`.
 
-CertSDP is not another large-scale SDP solver. It is the exact verification
-layer after one.
+CertSDP is not another large-scale SDP solver. It is a certificate protocol and
+strict verifier for the point where a numerical search result becomes something
+a reviewer, collaborator, CI job, or proof assistant pipeline can replay.
 
 ## Where CertSDP Fits
 
@@ -45,6 +52,7 @@ layer after one.
 | --- | --- |
 | JuMP / MathOptInterface | Model optimization problems |
 | SumOfSquares.jl | Build SOS and Gram SDP formulations |
+| SOSTOOLS | MATLAB SOS modeling and solver orchestration |
 | MOSEK / Clarabel / Hypatia / SCS | Find numerical SDP or conic candidates |
 | `msolve` / Sage | Optionally propose algebraic candidates |
 | CertSDP.jl | Verify exact SDP/SOS certificate artifacts |
@@ -114,31 +122,34 @@ bin/certsdp verify --strict /tmp/certsdp-algebraic-cert.json
 verification accepts the certificate only after root isolation, exact
 substitution, certified signs, and PSD proof replay.
 
-## Showcases: Small Mathematical Replays
+## Showcases: Research-Grade Pack
 
-The validation suite is the evidence contract. The showcases are different:
-they are compact, inspectable demos meant to show what exact replay looks like
-on recognizable polynomial certificates. They live under `showcases/` and are
-not counted in the validation table below.
+The validation suite is the release evidence contract. The showcase pack is the
+public mathematical demo: 21 data artifacts that exercise the same strict
+verifier on recognizable positive-polynomial certificate families.
 
-| Showcase | What to look for |
+| Showcase track | What it demonstrates |
 | --- | --- |
-| Motzkin rational-function SOS | A nonnegative polynomial outside plain SOS, accepted through an exact rational-function SOS identity. |
-| Hilbert 17-style rational SOS | The same rational-function certificate shape in a tiny one-variable artifact. |
-| Putinar/Schmuedgen-style assembly | SOS multipliers attached to named constraints on a box. |
-| SOSTOOLS-lite replay | A neutral external Gram shape converted into a CertSDP certificate and then replayed. |
+| Non-SOS classics | Motzkin affine/homogeneous forms, Choi-Lam cyclic sextic, Choi-Lam quartic, and a Robinson-family SOS-threshold perturbation. |
+| Hilbert 17 rational SOS | `numerator_sos`, `denominator_sos`, and one exact identity: `denominator * p == numerator`. |
+| Putinar / Schmuedgen | Compact-domain inequalities on a box, disk, interval, simplex face, and annulus using SOS multipliers over named constraints. |
+| SOSTOOLS bridge | SOSTOOLS-lite Gram exports for positive decomposition, Lyapunov decay, polynomial bounds, and dense cross-term Gram replay. |
 
-Run the prebuilt showcase certificates:
+Run the full pack, including regenerated SOSTOOLS-lite conversions:
 
 ```bash
-bin/certsdp verify --strict showcases/motzkin/motzkin_rational_function_sos.json
-bin/certsdp verify --strict showcases/hilbert17/x2_plus_1_rational_function_sos.json
-bin/certsdp verify --strict showcases/putinar/box_1_minus_x2y2.json
-bin/certsdp verify --strict showcases/sostools/xy_square_cert.json
+julia --project showcases/verify_all.jl
 ```
 
-See [showcases/README.md](showcases/README.md) for the identities and the
-SOSTOOLS-lite conversion command.
+Regenerate every showcase artifact from CertSDP constructors:
+
+```bash
+julia --project scripts/generate_showcase_pack.jl
+```
+
+See [showcases/README.md](showcases/README.md) and
+[showcases/manifest.json](showcases/manifest.json) for the identities, file
+paths, and per-artifact verification commands.
 
 ## Current Validation Snapshot
 

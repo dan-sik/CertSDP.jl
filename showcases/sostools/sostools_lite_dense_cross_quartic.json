@@ -6,33 +6,51 @@
     ],
     "basis": [
         [
-            1,
+            2,
             0
         ],
         [
-            0,
+            1,
             1
+        ],
+        [
+            0,
+            2
         ]
     ],
     "polynomial": [
         {
             "exponents": [
-                2,
+                4,
                 0
             ],
             "coefficient": "1"
         },
         {
             "exponents": [
-                1,
+                3,
                 1
             ],
             "coefficient": "2"
         },
         {
             "exponents": [
-                0,
+                2,
                 2
+            ],
+            "coefficient": "3"
+        },
+        {
+            "exponents": [
+                1,
+                3
+            ],
+            "coefficient": "2"
+        },
+        {
+            "exponents": [
+                0,
+                4
             ],
             "coefficient": "1"
         }
@@ -40,15 +58,22 @@
     "gram_matrix": [
         [
             "1",
+            "1",
             "1"
         ],
         [
+            "1",
+            "1",
+            "1"
+        ],
+        [
+            "1",
             "1",
             "1"
         ]
     ],
     "metadata": {
         "exporter_contract": "SOSTOOLS searches; CertSDP certifies exact Gram replay.",
-        "claim": "p=(x+y)^2 exported as an exact Gram candidate"
+        "claim": "p=(x^2+xy+y^2)^2 with dense Gram coupling"
     }
 }

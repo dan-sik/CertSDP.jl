@@ -1,0 +1,1522 @@
+{
+    "certsdp_certificate_version": "1.0",
+    "certificate_type": "sos_gram_certificate",
+    "problem_hash": "sha256:17bdf22a4eef22d5d0fdcae70d85241a3edd123c7d201591b86848a0de05db90",
+    "sos_problem": {
+        "type": "sos_gram_feasibility",
+        "field": "QQ",
+        "variables": [
+            "x",
+            "y"
+        ],
+        "basis": [
+            [
+                0,
+                0
+            ],
+            [
+                1,
+                0
+            ],
+            [
+                0,
+                1
+            ],
+            [
+                2,
+                0
+            ],
+            [
+                0,
+                2
+            ]
+        ],
+        "polynomial": [
+            {
+                "exponents": [
+                    4,
+                    0
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    0,
+                    4
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    2,
+                    0
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    0,
+                    2
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    0,
+                    0
+                ],
+                "coefficient": "1"
+            }
+        ],
+        "hash": "sha256:17bdf22a4eef22d5d0fdcae70d85241a3edd123c7d201591b86848a0de05db90"
+    },
+    "solution": {
+        "type": "rational_gram_matrix",
+        "gram_matrix": [
+            [
+                "1",
+                "0",
+                "0",
+                "0",
+                "0"
+            ],
+            [
+                "0",
+                "1",
+                "0",
+                "0",
+                "0"
+            ],
+            [
+                "0",
+                "0",
+                "1",
+                "0",
+                "0"
+            ],
+            [
+                "0",
+                "0",
+                "0",
+                "1",
+                "0"
+            ],
+            [
+                "0",
+                "0",
+                "0",
+                "0",
+                "1"
+            ]
+        ]
+    },
+    "coefficient_proof": {
+        "method": "exact_coefficient_matching",
+        "matches": [
+            {
+                "exponents": [
+                    4,
+                    0
+                ],
+                "target_coefficient": "1",
+                "gram_coefficient": "1",
+                "contributions": [
+                    {
+                        "basis_pair": [
+                            4,
+                            4
+                        ],
+                        "multiplier": 1,
+                        "gram_entry": "1",
+                        "contribution": "1"
+                    }
+                ]
+            },
+            {
+                "exponents": [
+                    0,
+                    4
+                ],
+                "target_coefficient": "1",
+                "gram_coefficient": "1",
+                "contributions": [
+                    {
+                        "basis_pair": [
+                            5,
+                            5
+                        ],
+                        "multiplier": 1,
+                        "gram_entry": "1",
+                        "contribution": "1"
+                    }
+                ]
+            },
+            {
+                "exponents": [
+                    2,
+                    0
+                ],
+                "target_coefficient": "1",
+                "gram_coefficient": "1",
+                "contributions": [
+                    {
+                        "basis_pair": [
+                            2,
+                            2
+                        ],
+                        "multiplier": 1,
+                        "gram_entry": "1",
+                        "contribution": "1"
+                    }
+                ]
+            },
+            {
+                "exponents": [
+                    0,
+                    2
+                ],
+                "target_coefficient": "1",
+                "gram_coefficient": "1",
+                "contributions": [
+                    {
+                        "basis_pair": [
+                            3,
+                            3
+                        ],
+                        "multiplier": 1,
+                        "gram_entry": "1",
+                        "contribution": "1"
+                    }
+                ]
+            },
+            {
+                "exponents": [
+                    0,
+                    0
+                ],
+                "target_coefficient": "1",
+                "gram_coefficient": "1",
+                "contributions": [
+                    {
+                        "basis_pair": [
+                            1,
+                            1
+                        ],
+                        "multiplier": 1,
+                        "gram_entry": "1",
+                        "contribution": "1"
+                    }
+                ]
+            }
+        ]
+    },
+    "decomposition": {
+        "type": "rational_squares",
+        "method": "exact_rational_ldl_square_pivots",
+        "squares": [
+            [
+                {
+                    "exponents": [
+                        0,
+                        0
+                    ],
+                    "coefficient": "1"
+                }
+            ],
+            [
+                {
+                    "exponents": [
+                        1,
+                        0
+                    ],
+                    "coefficient": "1"
+                }
+            ],
+            [
+                {
+                    "exponents": [
+                        0,
+                        1
+                    ],
+                    "coefficient": "1"
+                }
+            ],
+            [
+                {
+                    "exponents": [
+                        2,
+                        0
+                    ],
+                    "coefficient": "1"
+                }
+            ],
+            [
+                {
+                    "exponents": [
+                        0,
+                        2
+                    ],
+                    "coefficient": "1"
+                }
+            ]
+        ]
+    },
+    "proof": {
+        "coefficient_matching": {
+            "method": "exact_coefficient_matching",
+            "status": "claimed",
+            "equations": 5
+        },
+        "psd": {
+            "method": "embedded_rational_psd_certificate",
+            "certificate_id": "sha256:ae5cc44a093a98e220b910ac6d457740e7ed1825b2031a74d7ab806fd212e44d"
+        }
+    },
+    "provenance": {
+        "certsdp_version": "1.0.0",
+        "julia_version": "1.12.6",
+        "schema_version": "1.0",
+        "source": "sos_gram_workflow"
+    },
+    "verification": {
+        "verifier_version": "1.0.0",
+        "verified_at_creation": null
+    },
+    "lmi_certificate": {
+        "certsdp_certificate_version": "1.0",
+        "certificate_type": "rational_psd_certificate",
+        "certificate_id": "sha256:ae5cc44a093a98e220b910ac6d457740e7ed1825b2031a74d7ab806fd212e44d",
+        "problem_hash": "sha256:fbfbba6a6ccd222a3e423e563b66e4ae9b6596b0ff4c8a9c8b93203e3b845ac2",
+        "problem": {
+            "embedded": true,
+            "type": "lmi_feasibility",
+            "data": {
+                "certsdp_problem_version": "1.0",
+                "type": "lmi_feasibility",
+                "field": "QQ",
+                "variables": [
+                    "q1_1",
+                    "q1_2",
+                    "q2_2",
+                    "q1_3",
+                    "q2_3",
+                    "q3_3",
+                    "q1_4",
+                    "q2_4",
+                    "q3_4",
+                    "q4_4",
+                    "q1_5",
+                    "q2_5",
+                    "q3_5",
+                    "q4_5",
+                    "q5_5"
+                ],
+                "matrix_size": 5,
+                "A0": [
+                    [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ]
+                ],
+                "A": [
+                    {
+                        "var": "q1_1",
+                        "matrix": [
+                            [
+                                "1",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q1_2",
+                        "matrix": [
+                            [
+                                "0",
+                                "1",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "1",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q2_2",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "1",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q1_3",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "1",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "1",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q2_3",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "1",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "1",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q3_3",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "1",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q1_4",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "1",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "1",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q2_4",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "1",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "1",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q3_4",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "1",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "1",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q4_4",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "1",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q1_5",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "1"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "1",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q2_5",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "1"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "1",
+                                "0",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q3_5",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "1"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "1",
+                                "0",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q4_5",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "1"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "1",
+                                "0"
+                            ]
+                        ]
+                    },
+                    {
+                        "var": "q5_5",
+                        "matrix": [
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "0",
+                                "0",
+                                "0",
+                                "1"
+                            ]
+                        ]
+                    }
+                ],
+                "metadata": {
+                    "created_by": "CertSDP.jl",
+                    "schema": "problem_v1"
+                },
+                "hash": "sha256:fbfbba6a6ccd222a3e423e563b66e4ae9b6596b0ff4c8a9c8b93203e3b845ac2"
+            }
+        },
+        "solution": {
+            "field": "QQ",
+            "representation": "coordinates",
+            "coordinates": {
+                "q1_1": "1",
+                "q1_2": "0",
+                "q2_2": "1",
+                "q1_3": "0",
+                "q2_3": "0",
+                "q3_3": "1",
+                "q1_4": "0",
+                "q2_4": "0",
+                "q3_4": "0",
+                "q4_4": "1",
+                "q1_5": "0",
+                "q2_5": "0",
+                "q3_5": "0",
+                "q4_5": "0",
+                "q5_5": "1"
+            }
+        },
+        "rank_profile": {
+            "status": "not_recorded",
+            "method": "not_recorded",
+            "pivot_block": [
+            ]
+        },
+        "proof": {
+            "linear_constraints": {
+                "method": "exact_substitution",
+                "status": "claimed"
+            },
+            "psd": {
+                "method": "principal_minors",
+                "substituted_matrix": [
+                    [
+                        "1",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "1",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0",
+                        "1",
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0",
+                        "0",
+                        "1",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1"
+                    ]
+                ],
+                "data": {
+                    "principal_minors": [
+                        {
+                            "indices": [
+                                1
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                2
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                2
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                3
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                3
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                2,
+                                3
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                2,
+                                3
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                4
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                4
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                2,
+                                4
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                2,
+                                4
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                3,
+                                4
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                3,
+                                4
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                2,
+                                3,
+                                4
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                2,
+                                3,
+                                4
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                2,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                2,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                3,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                3,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                2,
+                                3,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                2,
+                                3,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                4,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                4,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                2,
+                                4,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                2,
+                                4,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                3,
+                                4,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                3,
+                                4,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                2,
+                                3,
+                                4,
+                                5
+                            ],
+                            "determinant": "1"
+                        },
+                        {
+                            "indices": [
+                                1,
+                                2,
+                                3,
+                                4,
+                                5
+                            ],
+                            "determinant": "1"
+                        }
+                    ]
+                },
+                "principal_minors": [
+                    {
+                        "indices": [
+                            1
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            3
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            3
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2,
+                            3
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2,
+                            3
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            4
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            4
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2,
+                            4
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2,
+                            4
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            3,
+                            4
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            3,
+                            4
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2,
+                            3,
+                            4
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2,
+                            3,
+                            4
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            3,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            3,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2,
+                            3,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2,
+                            3,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            4,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            4,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2,
+                            4,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2,
+                            4,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            3,
+                            4,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            3,
+                            4,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            2,
+                            3,
+                            4,
+                            5
+                        ],
+                        "determinant": "1"
+                    },
+                    {
+                        "indices": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                        ],
+                        "determinant": "1"
+                    }
+                ]
+            }
+        },
+        "provenance": {
+            "certsdp_version": "1.0.0",
+            "schema_version": "1.0",
+            "julia_version": "1.12.6"
+        },
+        "verification": {
+            "verifier_version": "1.0.0",
+            "verified_at_creation": null
+        }
+    },
+    "certificate_id": "sha256:614925661d0d004f4a94e6e218cbec5ff894cd0c3947f6046cdbc4719d18fff3",
+    "hash": "sha256:614925661d0d004f4a94e6e218cbec5ff894cd0c3947f6046cdbc4719d18fff3"
+}

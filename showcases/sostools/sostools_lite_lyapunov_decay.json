@@ -20,13 +20,6 @@
                 2,
                 0
             ],
-            "coefficient": "1"
-        },
-        {
-            "exponents": [
-                1,
-                1
-            ],
             "coefficient": "2"
         },
         {
@@ -34,21 +27,21 @@
                 0,
                 2
             ],
-            "coefficient": "1"
+            "coefficient": "4"
         }
     ],
     "gram_matrix": [
         [
-            "1",
-            "1"
+            "2",
+            "0"
         ],
         [
-            "1",
-            "1"
+            "0",
+            "4"
         ]
     ],
     "metadata": {
         "exporter_contract": "SOSTOOLS searches; CertSDP certifies exact Gram replay.",
-        "claim": "p=(x+y)^2 exported as an exact Gram candidate"
+        "claim": "-dV/dt = 2x^2 + 4y^2 for a linear stable system"
     }
 }

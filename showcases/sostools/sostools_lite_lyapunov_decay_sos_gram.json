@@ -1,0 +1,38 @@
+{
+    "certsdp_problem_version": "1.0",
+    "sos_problem": {
+        "type": "sos_gram_feasibility",
+        "field": "QQ",
+        "variables": [
+            "x",
+            "y"
+        ],
+        "basis": [
+            [
+                1,
+                0
+            ],
+            [
+                0,
+                1
+            ]
+        ],
+        "polynomial": [
+            {
+                "exponents": [
+                    2,
+                    0
+                ],
+                "coefficient": "2"
+            },
+            {
+                "exponents": [
+                    0,
+                    2
+                ],
+                "coefficient": "4"
+            }
+        ],
+        "hash": "sha256:e35cb54e93d3d457e7e47d543a4b42253a2b739040fb8cba7fcd06085880fad9"
+    }
+}

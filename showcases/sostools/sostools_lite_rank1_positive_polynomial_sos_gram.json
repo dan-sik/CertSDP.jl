@@ -1,0 +1,117 @@
+{
+    "certsdp_problem_version": "1.0",
+    "sos_problem": {
+        "type": "sos_gram_feasibility",
+        "field": "QQ",
+        "variables": [
+            "x",
+            "y",
+            "z"
+        ],
+        "basis": [
+            [
+                0,
+                0,
+                0
+            ],
+            [
+                1,
+                0,
+                0
+            ],
+            [
+                0,
+                1,
+                0
+            ],
+            [
+                0,
+                0,
+                1
+            ]
+        ],
+        "polynomial": [
+            {
+                "exponents": [
+                    2,
+                    0,
+                    0
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    1,
+                    1,
+                    0
+                ],
+                "coefficient": "2"
+            },
+            {
+                "exponents": [
+                    1,
+                    0,
+                    1
+                ],
+                "coefficient": "2"
+            },
+            {
+                "exponents": [
+                    0,
+                    2,
+                    0
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    0,
+                    1,
+                    1
+                ],
+                "coefficient": "2"
+            },
+            {
+                "exponents": [
+                    0,
+                    0,
+                    2
+                ],
+                "coefficient": "1"
+            },
+            {
+                "exponents": [
+                    1,
+                    0,
+                    0
+                ],
+                "coefficient": "2"
+            },
+            {
+                "exponents": [
+                    0,
+                    1,
+                    0
+                ],
+                "coefficient": "2"
+            },
+            {
+                "exponents": [
+                    0,
+                    0,
+                    1
+                ],
+                "coefficient": "2"
+            },
+            {
+                "exponents": [
+                    0,
+                    0,
+                    0
+                ],
+                "coefficient": "1"
+            }
+        ],
+        "hash": "sha256:0736a7bbd84eb70fa70826b87c6fb6f88898ac0ab1f4e998da551f68e6d7ef02"
+    }
+}

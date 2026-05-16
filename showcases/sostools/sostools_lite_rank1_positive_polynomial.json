@@ -1,0 +1,142 @@
+{
+    "source_format": "sostools_lite",
+    "variables": [
+        "x",
+        "y",
+        "z"
+    ],
+    "basis": [
+        [
+            0,
+            0,
+            0
+        ],
+        [
+            1,
+            0,
+            0
+        ],
+        [
+            0,
+            1,
+            0
+        ],
+        [
+            0,
+            0,
+            1
+        ]
+    ],
+    "polynomial": [
+        {
+            "exponents": [
+                0,
+                0,
+                0
+            ],
+            "coefficient": "1"
+        },
+        {
+            "exponents": [
+                2,
+                0,
+                0
+            ],
+            "coefficient": "1"
+        },
+        {
+            "exponents": [
+                0,
+                2,
+                0
+            ],
+            "coefficient": "1"
+        },
+        {
+            "exponents": [
+                0,
+                0,
+                2
+            ],
+            "coefficient": "1"
+        },
+        {
+            "exponents": [
+                1,
+                0,
+                0
+            ],
+            "coefficient": "2"
+        },
+        {
+            "exponents": [
+                0,
+                1,
+                0
+            ],
+            "coefficient": "2"
+        },
+        {
+            "exponents": [
+                0,
+                0,
+                1
+            ],
+            "coefficient": "2"
+        },
+        {
+            "exponents": [
+                1,
+                1,
+                0
+            ],
+            "coefficient": "2"
+        },
+        {
+            "exponents": [
+                1,
+                0,
+                1
+            ],
+            "coefficient": "2"
+        },
+        {
+            "exponents": [
+                0,
+                1,
+                1
+            ],
+            "coefficient": "2"
+        }
+    ],
+    "gram_matrix": [
+        [
+            "1",
+            "1",
+            "1",
+            "1"
+        ],
+        [
+            "1",
+            "1",
+            "1",
+            "1"
+        ],
+        [
+            "1",
+            "1",
+            "1",
+            "1"
+        ],
+        [
+            "1",
+            "1",
+            "1",
+            "1"
+        ]
+    ],
+    "metadata": {
+        "exporter_contract": "SOSTOOLS searches; CertSDP certifies exact Gram replay.",
+        "claim": "p=(1+x+y+z)^2 from a rank-one Gram matrix"
+    }
+}

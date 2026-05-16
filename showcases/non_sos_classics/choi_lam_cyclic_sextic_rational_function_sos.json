@@ -1,0 +1,370 @@
+{
+    "certsdp_certificate_version": "1.0",
+    "certificate_type": "rational_function_sos_certificate",
+    "problem_hash": "sha256:405781540e431624ff85962bec1940891e54bbabd21202d6c49a79303dfacf65",
+    "problem": {
+        "embedded": true,
+        "type": "rational_function_sos_claim",
+        "data": {
+            "certsdp_problem_version": "1.0",
+            "type": "rational_function_sos_claim",
+            "field": "QQ",
+            "variables": [
+                "x",
+                "y",
+                "z"
+            ],
+            "polynomial": [
+                {
+                    "exponents": [
+                        4,
+                        2,
+                        0
+                    ],
+                    "coefficient": "1"
+                },
+                {
+                    "exponents": [
+                        2,
+                        2,
+                        2
+                    ],
+                    "coefficient": "-3"
+                },
+                {
+                    "exponents": [
+                        2,
+                        0,
+                        4
+                    ],
+                    "coefficient": "1"
+                },
+                {
+                    "exponents": [
+                        0,
+                        4,
+                        2
+                    ],
+                    "coefficient": "1"
+                }
+            ],
+            "hash": "sha256:405781540e431624ff85962bec1940891e54bbabd21202d6c49a79303dfacf65"
+        }
+    },
+    "solution": {
+        "field": "QQ",
+        "representation": "rational_function_sos",
+        "numerator_sos": {
+            "method": "explicit_rational_squares",
+            "squares": [
+                [
+                    {
+                        "exponents": [
+                            3,
+                            1,
+                            0
+                        ],
+                        "coefficient": "1"
+                    },
+                    {
+                        "exponents": [
+                            1,
+                            1,
+                            2
+                        ],
+                        "coefficient": "-1"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            2,
+                            1,
+                            1
+                        ],
+                        "coefficient": "-1"
+                    },
+                    {
+                        "exponents": [
+                            0,
+                            3,
+                            1
+                        ],
+                        "coefficient": "1"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            1,
+                            2,
+                            1
+                        ],
+                        "coefficient": "-1"
+                    },
+                    {
+                        "exponents": [
+                            1,
+                            0,
+                            3
+                        ],
+                        "coefficient": "1"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            2,
+                            2,
+                            0
+                        ],
+                        "coefficient": "1/2"
+                    },
+                    {
+                        "exponents": [
+                            2,
+                            0,
+                            2
+                        ],
+                        "coefficient": "-1/2"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            2,
+                            2,
+                            0
+                        ],
+                        "coefficient": "1/2"
+                    },
+                    {
+                        "exponents": [
+                            2,
+                            0,
+                            2
+                        ],
+                        "coefficient": "-1/2"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            2,
+                            2,
+                            0
+                        ],
+                        "coefficient": "-1/2"
+                    },
+                    {
+                        "exponents": [
+                            0,
+                            2,
+                            2
+                        ],
+                        "coefficient": "1/2"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            2,
+                            2,
+                            0
+                        ],
+                        "coefficient": "-1/2"
+                    },
+                    {
+                        "exponents": [
+                            0,
+                            2,
+                            2
+                        ],
+                        "coefficient": "1/2"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            2,
+                            0,
+                            2
+                        ],
+                        "coefficient": "1/2"
+                    },
+                    {
+                        "exponents": [
+                            0,
+                            2,
+                            2
+                        ],
+                        "coefficient": "-1/2"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            2,
+                            0,
+                            2
+                        ],
+                        "coefficient": "1/2"
+                    },
+                    {
+                        "exponents": [
+                            0,
+                            2,
+                            2
+                        ],
+                        "coefficient": "-1/2"
+                    }
+                ]
+            ]
+        },
+        "denominator_sos": {
+            "method": "explicit_rational_squares",
+            "squares": [
+                [
+                    {
+                        "exponents": [
+                            1,
+                            0,
+                            0
+                        ],
+                        "coefficient": "1"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            0,
+                            1,
+                            0
+                        ],
+                        "coefficient": "1"
+                    }
+                ],
+                [
+                    {
+                        "exponents": [
+                            0,
+                            0,
+                            1
+                        ],
+                        "coefficient": "1"
+                    }
+                ]
+            ]
+        }
+    },
+    "coefficient_proof": {
+        "method": "exact_coefficient_matching",
+        "identity": "denominator_times_target_equals_numerator",
+        "matches": [
+            {
+                "exponents": [
+                    6,
+                    2,
+                    0
+                ],
+                "lhs_coefficient": "1",
+                "rhs_coefficient": "1"
+            },
+            {
+                "exponents": [
+                    4,
+                    4,
+                    0
+                ],
+                "lhs_coefficient": "1",
+                "rhs_coefficient": "1"
+            },
+            {
+                "exponents": [
+                    4,
+                    2,
+                    2
+                ],
+                "lhs_coefficient": "-2",
+                "rhs_coefficient": "-2"
+            },
+            {
+                "exponents": [
+                    4,
+                    0,
+                    4
+                ],
+                "lhs_coefficient": "1",
+                "rhs_coefficient": "1"
+            },
+            {
+                "exponents": [
+                    2,
+                    4,
+                    2
+                ],
+                "lhs_coefficient": "-2",
+                "rhs_coefficient": "-2"
+            },
+            {
+                "exponents": [
+                    2,
+                    2,
+                    4
+                ],
+                "lhs_coefficient": "-2",
+                "rhs_coefficient": "-2"
+            },
+            {
+                "exponents": [
+                    2,
+                    0,
+                    6
+                ],
+                "lhs_coefficient": "1",
+                "rhs_coefficient": "1"
+            },
+            {
+                "exponents": [
+                    0,
+                    6,
+                    2
+                ],
+                "lhs_coefficient": "1",
+                "rhs_coefficient": "1"
+            },
+            {
+                "exponents": [
+                    0,
+                    4,
+                    4
+                ],
+                "lhs_coefficient": "1",
+                "rhs_coefficient": "1"
+            }
+        ]
+    },
+    "proof": {
+        "identity": {
+            "method": "exact_coefficient_matching",
+            "status": "claimed",
+            "equations": 9
+        },
+        "sos": {
+            "method": "explicit_rational_squares",
+            "numerator_squares": 9,
+            "denominator_squares": 3
+        }
+    },
+    "provenance": {
+        "certsdp_version": "1.0.0",
+        "julia_version": "1.12.6",
+        "schema_version": "1.0",
+        "source": "non_sos_classics_showcase"
+    },
+    "verification": {
+        "verifier_version": "1.0.0",
+        "verified_at_creation": null
+    },
+    "certificate_id": "sha256:e2afa0d1ee3cfbe4d65421bc0cef9171bf2e84bd8161be9992529482f7d31c08"
+}

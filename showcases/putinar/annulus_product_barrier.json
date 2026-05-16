@@ -1,0 +1,220 @@
+{
+    "certsdp_certificate_version": "1.0",
+    "certificate_type": "positivstellensatz_certificate",
+    "problem_hash": "sha256:162fd99a735c2be46e5064369907799031b318f12cdd469736dedf0a43ae3b0c",
+    "problem": {
+        "embedded": true,
+        "type": "positivstellensatz_claim",
+        "data": {
+            "certsdp_problem_version": "1.0",
+            "type": "positivstellensatz_claim",
+            "field": "QQ",
+            "variables": [
+                "x",
+                "y"
+            ],
+            "polynomial": [
+                {
+                    "exponents": [
+                        4,
+                        0
+                    ],
+                    "coefficient": "-1"
+                },
+                {
+                    "exponents": [
+                        2,
+                        2
+                    ],
+                    "coefficient": "-2"
+                },
+                {
+                    "exponents": [
+                        0,
+                        4
+                    ],
+                    "coefficient": "-1"
+                },
+                {
+                    "exponents": [
+                        2,
+                        0
+                    ],
+                    "coefficient": "5"
+                },
+                {
+                    "exponents": [
+                        0,
+                        2
+                    ],
+                    "coefficient": "5"
+                },
+                {
+                    "exponents": [
+                        0,
+                        0
+                    ],
+                    "coefficient": "-4"
+                }
+            ],
+            "constraints": [
+                {
+                    "name": "inner_radius",
+                    "polynomial": [
+                        {
+                            "exponents": [
+                                2,
+                                0
+                            ],
+                            "coefficient": "1"
+                        },
+                        {
+                            "exponents": [
+                                0,
+                                2
+                            ],
+                            "coefficient": "1"
+                        },
+                        {
+                            "exponents": [
+                                0,
+                                0
+                            ],
+                            "coefficient": "-1"
+                        }
+                    ]
+                },
+                {
+                    "name": "outer_radius",
+                    "polynomial": [
+                        {
+                            "exponents": [
+                                2,
+                                0
+                            ],
+                            "coefficient": "-1"
+                        },
+                        {
+                            "exponents": [
+                                0,
+                                2
+                            ],
+                            "coefficient": "-1"
+                        },
+                        {
+                            "exponents": [
+                                0,
+                                0
+                            ],
+                            "coefficient": "4"
+                        }
+                    ]
+                }
+            ],
+            "hash": "sha256:162fd99a735c2be46e5064369907799031b318f12cdd469736dedf0a43ae3b0c"
+        }
+    },
+    "solution": {
+        "field": "QQ",
+        "representation": "sos_multipliers",
+        "terms": [
+            {
+                "name": "annulus_product",
+                "constraint_product": [
+                    "inner_radius",
+                    "outer_radius"
+                ],
+                "sos": {
+                    "method": "explicit_rational_squares",
+                    "squares": [
+                        [
+                            {
+                                "exponents": [
+                                    0,
+                                    0
+                                ],
+                                "coefficient": "1"
+                            }
+                        ]
+                    ]
+                }
+            }
+        ]
+    },
+    "coefficient_proof": {
+        "method": "exact_coefficient_matching",
+        "identity": "target_equals_sos_constraint_assembly",
+        "matches": [
+            {
+                "exponents": [
+                    4,
+                    0
+                ],
+                "lhs_coefficient": "-1",
+                "rhs_coefficient": "-1"
+            },
+            {
+                "exponents": [
+                    2,
+                    2
+                ],
+                "lhs_coefficient": "-2",
+                "rhs_coefficient": "-2"
+            },
+            {
+                "exponents": [
+                    0,
+                    4
+                ],
+                "lhs_coefficient": "-1",
+                "rhs_coefficient": "-1"
+            },
+            {
+                "exponents": [
+                    2,
+                    0
+                ],
+                "lhs_coefficient": "5",
+                "rhs_coefficient": "5"
+            },
+            {
+                "exponents": [
+                    0,
+                    2
+                ],
+                "lhs_coefficient": "5",
+                "rhs_coefficient": "5"
+            },
+            {
+                "exponents": [
+                    0,
+                    0
+                ],
+                "lhs_coefficient": "-4",
+                "rhs_coefficient": "-4"
+            }
+        ]
+    },
+    "proof": {
+        "identity": {
+            "method": "exact_coefficient_matching",
+            "status": "claimed",
+            "equations": 6
+        },
+        "sos": {
+            "method": "explicit_rational_squares",
+            "multiplier_terms": 1
+        }
+    },
+    "provenance": {
+        "certsdp_version": "1.0.0",
+        "julia_version": "1.12.6",
+        "schema_version": "1.0",
+        "source": "schmuedgen_showcase"
+    },
+    "verification": {
+        "verifier_version": "1.0.0",
+        "verified_at_creation": null
+    },
+    "certificate_id": "sha256:dd27cc8ee2d97db32b27cc0fa0e50bc95176539f76fda77d7fd472f2e5a210b2"
+}
