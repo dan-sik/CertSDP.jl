@@ -14,28 +14,49 @@
 
 ---
 
-> CertSDP.jl turns numerical or symbolic SDP/SOS candidates into portable,
-> data-only JSON certificates that can be replayed independently with exact
-> rational or supported algebraic arithmetic.
+CertSDP.jl turns numerical or symbolic SDP/SOS candidates into portable,
+data-only JSON certificates that can be replayed independently with exact
+rational or supported algebraic arithmetic.
 
 ```text
 A solver finds a candidate. CertSDP makes it replayable.
 ```
 
-**CertSDP is not another large-scale SDP solver** and not a replacement for
-MOSEK, Clarabel, Hypatia, SCS, JuMP, or SumOfSquares.jl. It is the smaller
-trusted layer after search: **a certificate protocol plus a strict verifier**
-for artifacts that should survive review, archival, CI, and downstream proof
-pipelines.
+> **CertSDP is not another large-scale SDP solver** and not a replacement for
+> MOSEK, Clarabel, Hypatia, SCS, JuMP, or SumOfSquares.jl. It is the smaller
+> trusted layer after search: **a certificate protocol plus a strict verifier**
+> for artifacts that should survive review, archival, CI, and downstream proof
+> pipelines.
+
+## At A Glance
+
+**Position:** CertSDP.jl is the exact replay layer between mathematical search
+and durable mathematical evidence.
+
+```text
+solver output / Gram matrix / imported model
+        -> exact certificate
+        -> strict replay
+        -> paper, CI, archive, or proof pipeline
+```
+
+| You Have | CertSDP Produces |
+| --- | --- |
+| **Numerical SDP/SOS candidates** | Portable JSON certificates with exact replay obligations. |
+| **Rounded or symbolic Gram data** | SOS certificates checked by coefficient matching and exact PSD replay. |
+| **SDPA, JuMP/MOI, or SumOfSquares-style artifacts** | Data-only replay bundles that separate extraction from trust. |
+| **Algebraic candidates such as `sqrt(2)`** | Supported `QQ(alpha)` certificates with root isolation and certified signs. |
+
+**Core promise:** search can be heuristic; acceptance is exact.
 
 ## Contents
 
-- [Why CertSDP Exists](#why-certsdp-exists)
 - [At A Glance](#at-a-glance)
+- [Why CertSDP Exists](#why-certsdp-exists)
 - [Where CertSDP Fits](#where-certsdp-fits)
 - [Five-Minute Quickstart](#five-minute-quickstart)
 - [Strict Replay](#strict-replay)
-- [Supported Paths](#supported-paths)
+- [Supported Certificate Families](#supported-certificate-families)
 - [Signature Demo: Rational Rounding Fails](#signature-demo-rational-rounding-fails)
 - [Validation Evidence](#validation-evidence)
 - [Showcases](#showcases)
@@ -72,18 +93,6 @@ without trusting the original solver run?
 
 ---
 
-## At A Glance
-
-| Question | Answer |
-| --- | --- |
-| Input | Exact rational LMI/SOS problem data plus rational, algebraic, SDPA, JuMP/MOI, or SOS Gram candidates. |
-| Output | JSON certificates, structured failure reports, and replay bundles. |
-| Trusted core | `verify --strict`, which recomputes hashes, exact substitution, signs, PSD proofs, and SOS coefficient matching. |
-| Optional tools | `msolve`, Sage/msolve, Clarabel, JuMP/MOI, and SumOfSquares.jl can help find or extract candidates. |
-| Evidence | A tracked validation report with accepted rows, rejection controls, rational-rounding failures, and imported workflows. |
-
----
-
 ## Where CertSDP Fits
 
 | Tool class | Role |
@@ -92,6 +101,10 @@ without trusting the original solver run?
 | MOSEK / Clarabel / Hypatia / SCS / SDPA | Find numerical candidates. |
 | `msolve` / Sage | Optionally propose algebraic candidates. |
 | CertSDP.jl | Verify exact replayable certificate artifacts. |
+
+> **Use CertSDP.jl when** a solver result, Gram matrix, imported SDPA model, or
+> algebraic candidate should become a reproducible artifact for a paper,
+> reviewer, CI job, archive, or proof-assistant pipeline.
 
 ---
 
@@ -176,18 +189,43 @@ The certifier may be complicated. The verifier must remain small, exact, and aud
 
 ---
 
-## Supported Paths
+## Supported Certificate Families
 
-CertSDP currently covers rational LMI certificates over `QQ`, supported
-one-root algebraic certificates over `QQ(alpha)`, multi-block SDPA/JuMP-style
-problems, exact SOS Gram certificates, rational-function SOS certificates, and
-Putinar/Schmuedgen-style multiplier identities. Unsupported, malformed, or
-not-certified cases return structured failures rather than acceptance.
+### Core Verifier Support
 
-Workflow support includes JSON schemas, SDPA import/export, replay bundles,
-optional JuMP/MOI and SumOfSquares.jl extraction, and optional `msolve` or
-Sage/msolve candidate generation. Optional numerical oracle: Clarabel can
-provide approximate seeds and diagnostics.
+**Core verifier support includes:**
+
+- **Rational LMI certificates** over `QQ`;
+- **one-root algebraic LMI certificates** over supported `QQ(alpha)`
+  representations;
+- **multi-block SDP/LMI replay** with shared variables;
+- **PSD proof replay** by accepted exact methods:
+  - principal minors;
+  - Schur-zero replay;
+  - fraction-free determinants;
+  - LDL;
+  - pivoted LDL;
+  - blockwise replay;
+- **exact SOS Gram certificates** with coefficient matching;
+- **positive-polynomial schemas** for rational-function SOS and
+  Putinar/Schmuedgen-style multiplier identities;
+- **strict failure reports** for malformed, stale-hash, unsupported,
+  approximate, or not-certified inputs.
+
+### Workflow Support
+
+**Workflow support includes:**
+
+- **JSON schemas** for problems, certificates, and failure reports;
+- **SDPA sparse import/export**;
+- **replay bundles**;
+- optional **JuMP/MOI extraction**;
+- optional **SumOfSquares.jl extraction**;
+- optional **`msolve` or Sage/msolve candidate generation**;
+- optional **Clarabel numerical oracle** for approximate seeds and diagnostics.
+
+> Optional components help with search and extraction. **They are not trusted by
+> strict replay.**
 
 ### Example Commands
 
@@ -235,14 +273,16 @@ substitution, certified signs, and PSD proof replay. See
 ## Validation Evidence
 
 CertSDP ships a public validation suite that is meant to be an evidence
-contract, not a solver-speed leaderboard. The tracked v1.0 report records:
+contract, not a solver-speed leaderboard. The tracked v1.0 report includes
+strong cases such as:
 
-- 18 public validation instances;
-- 15 / 15 accepted certificates passing strict replay;
-- 3 expected rejection or structured-failure rows;
-- 4 rational-rounding failures certified by exact algebraic replay;
-- imported SDPA, JuMP/MOI, and SumOfSquares-style workflows;
-- fake-certificate and invalid-approximation rejection controls.
+| Case | Representative rows | What it exercises |
+| --- | --- | --- |
+| **Degenerate algebraic SDP** | `validation__algebraic_direct_degree6_dim20`, `validation__algebraic_certifier_quartic_dim10_n2`, `validation__algebraic_sqrt2_unique` | Incidence-style algebraic certification, exact root replay, and rational-rounding failure. |
+| **Mixed algebraic/rational block replay** | `validation__mixed_blocks_sqrt2_total22` | One algebraic block, one rational dense block, and one facial rank-deficient block, with exact proof method recorded block by block. |
+| **Large multi-block SDP replay** | `validation__multiblock_dense_dim60_n20`, `validation__workflow_jump_moi_extract_multiblock_dim48` | Shared-variable block replay, dense block data, and imported JuMP/MOI-style workflow artifacts. |
+| **SDPA and SOS imports** | `validation__workflow_sdpa_import_multiblock`, `validation__workflow_sumofsquares_extracted_sos`, `validation__sos_xy_square_nondiagonal` | Sparse SDPA import, exact Gram coefficient matching, non-diagonal Gram replay, and SOS extraction paths. |
+| **Negative controls** | `validation__fake_rational_solution_rejected`, `validation__fake_sos_gram_rejected`, `validation__invalid_approximation_rejected` | Rejection of fake certificates, stale hashes, and infeasible approximate candidates with structured diagnostics. |
 
 ### Run The Contract
 
