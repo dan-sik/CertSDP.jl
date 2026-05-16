@@ -523,9 +523,8 @@ end
 
 function _check_release_files!(checks, issues, repo)
     required = ["README.md", "LICENSE", "CHANGELOG.md", "CITATION.cff",
-                "codemeta.json", "NOTICE.md", "RELEASE_CHECKLIST.md",
-                "docs/validation.md", "docs/trust_model.md",
-                "docs/V1_RELEASE_READINESS.md"]
+                "codemeta.json", "NOTICE.md", "docs/validation.md",
+                "docs/trust_model.md", "docs/citation.md"]
     for path in required
         full = joinpath(repo, path)
         if isfile(full) && !isempty(strip(read(full, String)))

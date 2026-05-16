@@ -80,11 +80,6 @@ using TOML
         @test occursin("CompatHelper.main",
                        read(joinpath(repo_root, ".github", "workflows", "compathelper.yml"),
                             String))
-        @test isfile(joinpath(repo_root, "RELEASE_CHECKLIST.md"))
-        @test occursin("Apache-2.0 `LICENSE`",
-                       read(joinpath(repo_root, "RELEASE_CHECKLIST.md"), String))
-        @test isfile(joinpath(repo_root, "docs", "V1_RELEASE_READINESS.md"))
-        @test isfile(joinpath(repo_root, "docs", "release_path.md"))
     end
 
     @testset "public source tree has no local residue" begin
@@ -167,15 +162,13 @@ using TOML
         @test occursin("Where CertSDP Fits", readme)
         @test occursin("Current Validation Snapshot", readme)
         @test occursin("Signature Demo", readme)
+        @test occursin("Showcases", readme)
         @test occursin("Platform Support", readme)
         @test occursin("generic large-scale SDP solver", readme)
         @test occursin("Limitations", readme)
         @test occursin("Why CertSDP Exists", readme)
-        @test occursin("Release And Citation", readme)
+        @test occursin("Citation", readme)
         @test occursin("infeasibility", lowercase(readme))
-        @test occursin("TagBot", readme)
-        @test occursin("CompatHelper", readme)
-        @test occursin("Zenodo", readme)
         @test occursin("scripts/run_validation.jl", readme)
         @test occursin("API_STABILITY", readme)
         @test occursin("License", readme)

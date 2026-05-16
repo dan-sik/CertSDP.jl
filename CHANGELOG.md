@@ -39,8 +39,8 @@ First v1.0 release for exact replay of supported SDP/SOS certificates.
 - Reproducible validation suite covering rational, rank-deficient,
   weakly feasible, algebraic, imported, SOS, solve-diagnose-certify,
   adversarial rejection, and structured failure workflows.
-- Replay tooling: `certsdp doctor`, `explain`, `bundle`, `replay`,
-  release audit scripts, and fresh-checkout reproducibility drill.
+- Replay tooling: `certsdp doctor`, `explain`, `bundle`, `replay`, validation
+  reporting, and fresh-checkout reproducibility checks.
 - Local documentation build with installation, quickstart, LMI/SOS tutorials,
   SDPA/JuMP/MOI guides, backend guide, trust model, validation contract,
   certificate schema, diagnostics, performance notes, and citation guidance.

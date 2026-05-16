@@ -61,14 +61,13 @@ For workflows:
 For trust, evidence, and reference:
 
 1. [Trust model](trust_model.md)
-2. [Public narrative](public_narrative.md)
-3. [Validation](validation.md)
-4. [Benchmarks](benchmarks.md)
-5. [Performance](performance.md)
-6. [Certificate format](certificate_format.md)
-7. [API reference](api_reference.md)
-8. [API stability](API_STABILITY.md)
-9. [Schema v1.0](SCHEMA_V1.md)
+2. [Validation](validation.md)
+3. [Benchmarks](benchmarks.md)
+4. [Performance](performance.md)
+5. [Certificate format](certificate_format.md)
+6. [API reference](api_reference.md)
+7. [API stability](API_STABILITY.md)
+8. [Schema v1.0](SCHEMA_V1.md)
 
 ## Good Fits
 

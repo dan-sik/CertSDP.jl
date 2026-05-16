@@ -62,7 +62,7 @@ problem export that should become a replayable artifact.
   blockwise PSD proof replay.
 - Exact SOS Gram certificates with coefficient matching and JSON/text/LaTeX/
   Sage/Julia decomposition export.
-- Positive-polynomial showcase certificates for rational-function SOS and
+- Positive-polynomial certificate schemas for rational-function SOS and
   Putinar/Schmüdgen-style SOS multiplier identities.
 - SDPA sparse import/export.
 - Optional JuMP/MOI and SumOfSquares.jl extraction.
@@ -114,10 +114,37 @@ bin/certsdp verify --strict /tmp/certsdp-algebraic-cert.json
 verification accepts the certificate only after root isolation, exact
 substitution, certified signs, and PSD proof replay.
 
+## Showcases: Small Mathematical Replays
+
+The validation suite is the evidence contract. The showcases are different:
+they are compact, inspectable demos meant to show what exact replay looks like
+on recognizable polynomial certificates. They live under `showcases/` and are
+not counted in the validation table below.
+
+| Showcase | What to look for |
+| --- | --- |
+| Motzkin rational-function SOS | A nonnegative polynomial outside plain SOS, accepted through an exact rational-function SOS identity. |
+| Hilbert 17-style rational SOS | The same rational-function certificate shape in a tiny one-variable artifact. |
+| Putinar/Schmuedgen-style assembly | SOS multipliers attached to named constraints on a box. |
+| SOSTOOLS-lite replay | A neutral external Gram shape converted into a CertSDP certificate and then replayed. |
+
+Run the prebuilt showcase certificates:
+
+```bash
+bin/certsdp verify --strict showcases/motzkin/motzkin_rational_function_sos.json
+bin/certsdp verify --strict showcases/hilbert17/x2_plus_1_rational_function_sos.json
+bin/certsdp verify --strict showcases/putinar/box_1_minus_x2y2.json
+bin/certsdp verify --strict showcases/sostools/xy_square_cert.json
+```
+
+See [showcases/README.md](showcases/README.md) for the identities and the
+SOSTOOLS-lite conversion command.
+
 ## Current Validation Snapshot
 
 CertSDP ships one public validation suite. It is a reproducible evidence
-contract, not a solver-speed leaderboard.
+contract, not a showcase gallery and not a solver-speed leaderboard.
+The rows below count fixtures under `benchmarks/validation/`.
 
 Current `v1.0` tracked report:
 
@@ -171,9 +198,6 @@ integration:
 | Algebraic LMI | `bin/certsdp certify examples/algebraic_problem.json --solution examples/algebraic_approx.json --out /tmp/certsdp-algebraic-cert.json --timeout 300` |
 | SOS Gram | `bin/certsdp certify-sos examples/sos/gram_x2_plus_1.json --solution examples/sos/gram_x2_plus_1_solution.json --out /tmp/certsdp-sos-cert.json` |
 | Multi-block SDPA | `bin/certsdp certify examples/sdpa/two_blocks.dat-s --solution examples/multiblock/sdpa_two_blocks_solution.json --out /tmp/certsdp-two-blocks-cert.json` |
-| Motzkin rational-function SOS | `bin/certsdp verify --strict showcases/motzkin/motzkin_rational_function_sos.json` |
-| Putinar-style constrained inequality | `bin/certsdp verify --strict showcases/putinar/box_1_minus_x2y2.json` |
-| SOSTOOLS-lite replay | `bin/certsdp convert-sostools showcases/sostools/sostools_lite_xy_square.json --cert-out /tmp/certsdp-sostools-cert.json` |
 
 Verify any generated certificate with:
 
@@ -253,7 +277,6 @@ Start here:
 - [SOS tutorial](docs/sos_tutorial.md)
 - [Workflows](docs/workflows.md)
 - [Trust model](docs/trust_model.md)
-- [Public narrative](docs/public_narrative.md)
 - [Validation](docs/validation.md)
 - [Certificate format](docs/certificate_format.md)
 - [API reference](docs/api_reference.md)
@@ -265,12 +288,11 @@ julia --project=docs -e 'using Pkg; Pkg.develop(path=pwd()); Pkg.instantiate()'
 julia --project=docs docs/make.jl
 ```
 
-## Release And Citation
+## Citation
 
-The repository is prepared for a normal Julia package release, but it should not
-claim a registry entry or DOI until those public services accept the artifact.
-TagBot, CompatHelper, release-path, and Zenodo DOI steps are documented in
-[Release path](docs/release_path.md).
+The repository includes software citation metadata in `CITATION.cff` and
+`codemeta.json`. It should not claim a registry entry or archived DOI until
+those external services accept the artifact.
 
 If CertSDP helps your research, cite this software and the paper that motivates
 the degenerate SDP certification workflow:

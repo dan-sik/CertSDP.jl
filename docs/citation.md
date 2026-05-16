@@ -35,9 +35,9 @@ and keep this repository citation as the development-location reference:
 ## DOI Status
 
 No DOI is minted in this repository until a public tagged archive is deposited
-on Zenodo or an equivalent archive. The release path is:
+on Zenodo or an equivalent archive. Before adding DOI metadata:
 
-1. tag the release after the validation and release audit drills pass;
+1. tag the release after tests, docs, and the validation suite pass;
 2. archive the tag;
 3. update `CITATION.cff`, `codemeta.json`, README, and release notes with the
    minted DOI;

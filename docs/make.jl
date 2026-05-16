@@ -27,7 +27,6 @@ const DOC_ORDER = ["index.md",
                    "diagnostics.md",
                    "workflows.md",
                    "trust_model.md",
-                   "public_narrative.md",
                    "validation.md",
                    "benchmarks.md",
                    "performance.md",
@@ -38,12 +37,7 @@ const DOC_ORDER = ["index.md",
                    "psd_proofs.md",
                    "why_rational_rounding_fails.md",
                    "citation.md",
-                   "cli_tutorial.md",
-                   "RELEASE_CHECKLIST.md",
-                   "release_path.md",
-                   "V1_RELEASE_READINESS.md",
-                   "algebraic_certificate_format.md",
-                   "failure_diagnostics.md"]
+                   "cli_tutorial.md"]
 
 const ALLOWED_CODE_LANGS = Set(["@autodocs",
                                 "@docs",
@@ -139,7 +133,6 @@ function docs_pages(files::Vector{String})
                                                  "workflows.md"]),
                "Trust And Evidence" => _group_pages(files,
                                                      ["trust_model.md",
-                                                      "public_narrative.md",
                                                       "validation.md",
                                                       "benchmarks.md",
                                                       "performance.md",
@@ -151,14 +144,7 @@ function docs_pages(files::Vector{String})
                                              "API_STABILITY.md",
                                              "SCHEMA_V1.md",
                                              "citation.md",
-                                             "cli_tutorial.md"]),
-               "Release" => _group_pages(files,
-                                          ["RELEASE_CHECKLIST.md",
-                                           "release_path.md",
-                                           "V1_RELEASE_READINESS.md"]),
-               "Legacy Redirects" => _group_pages(files,
-                                                   ["algebraic_certificate_format.md",
-                                                    "failure_diagnostics.md"])]
+                                             "cli_tutorial.md"])]
     known = Set(String[])
     for group in grouped
         for pair in group.second

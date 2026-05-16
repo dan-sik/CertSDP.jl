@@ -12,16 +12,12 @@
                      "diagnostics.md",
                      "workflows.md",
                      "trust_model.md",
-                     "public_narrative.md",
                      "validation.md",
                      "benchmarks.md",
                      "performance.md",
                      "certificate_format.md",
                      "api_reference.md",
-                     "citation.md",
-                     "RELEASE_CHECKLIST.md",
-                     "release_path.md",
-                     "V1_RELEASE_READINESS.md"]
+                     "citation.md"]
 
     @testset "expert docs exist" begin
         for doc in required_docs
@@ -48,10 +44,8 @@
         @test occursin("A solver residual is not a proof", readme)
         @test occursin("A solver finds a candidate. CertSDP makes it replayable", readme)
         @test occursin("Signature Demo", readme)
-        @test occursin("Public narrative", readme)
-        @test occursin("Release And Citation", readme)
-        @test occursin("TagBot", readme)
-        @test occursin("Zenodo", readme)
+        @test occursin("Showcases", readme)
+        @test occursin("Citation", readme)
         @test occursin("scripts/run_validation.jl", readme)
         @test occursin("Optional numerical oracle", readme)
         @test !occursin("stress", lowercase(readme))
@@ -86,7 +80,6 @@
         index = read(joinpath(repo_root, "docs", "index.md"), String)
         @test occursin("At A Glance", index)
         @test occursin("Core Claim", index)
-        @test occursin("Public narrative", index)
         @test occursin("Release Boundaries", index)
         @test occursin("Not claimed", index)
         @test occursin("Platform Scope", index)
@@ -99,23 +92,10 @@
         @test occursin("verifier-only", platform)
         @test occursin("Claims To Avoid", platform)
 
-        release_path = read(joinpath(repo_root, "docs", "release_path.md"), String)
-        @test occursin("Julia Registry", release_path)
-        @test occursin("TagBot", release_path)
-        @test occursin("CompatHelper", release_path)
-        @test occursin("DOI", release_path)
-
         benchmarks = read(joinpath(repo_root, "docs", "benchmarks.md"), String)
         @test occursin("public release artifact path", benchmarks)
         @test occursin("bin/certsdp benchmark", benchmarks)
         @test occursin("How To Read One Row", benchmarks)
-
-        public_narrative = read(joinpath(repo_root, "docs", "public_narrative.md"),
-                                String)
-        @test occursin("Claims That Are Safe", public_narrative)
-        @test occursin("Claims To Avoid", public_narrative)
-        @test occursin("Copy-Ready Snippets", public_narrative)
-        @test occursin("registry and doi", lowercase(public_narrative))
 
         trust_model = read(joinpath(repo_root, "docs", "trust_model.md"), String)
         @test occursin("Threat Model / Assumptions", trust_model)
@@ -183,7 +163,6 @@
         @test isfile(joinpath(repo_root, "docs", "build", "quickstart.html"))
         @test isfile(joinpath(repo_root, "docs", "build", "api_reference.html"))
         @test isfile(joinpath(repo_root, "docs", "build", "workflows.html"))
-        @test isfile(joinpath(repo_root, "docs", "build", "release_path.html"))
         @test occursin("Quickstart",
                        read(joinpath(repo_root, "docs", "build", "quickstart.html"),
                             String))
