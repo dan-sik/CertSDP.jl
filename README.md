@@ -14,6 +14,10 @@
 
 ---
 
+<p align="center">
+  <img src="docs/assets/readme/certsdp-cover.png" alt="CertSDP product cover" width="920">
+</p>
+
 CertSDP.jl turns numerical or symbolic SDP/SOS candidates into portable,
 data-only JSON certificates that can be replayed independently with exact
 rational or supported algebraic arithmetic.
@@ -253,6 +257,10 @@ For example, a rational LMI can force `x = sqrt(2)`. No rational value of `x` is
 feasible, so rational rounding fails even when the floating-point approximation
 is excellent. CertSDP can represent the accepted solution algebraically and then
 replay the certificate exactly.
+
+<p align="center">
+  <img src="docs/assets/readme/rational-rounding-failure.png" alt="Rational rounding failure mini figure" width="860">
+</p>
 
 ```bash
 bin/certsdp certify examples/algebraic_problem.json \
