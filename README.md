@@ -37,12 +37,9 @@ A solver finds a candidate. CertSDP makes it replayable.
 **Position:** CertSDP.jl is the exact replay layer between mathematical search
 and durable mathematical evidence.
 
-```text
-solver output / Gram matrix / imported model
-        -> exact certificate
-        -> strict replay
-        -> paper, CI, archive, or proof pipeline
-```
+<p align="center">
+  <img src="docs/assets/readme/at-a-glance-flow.png" alt="CertSDP at a glance workflow" width="860">
+</p>
 
 | You Have | CertSDP Produces |
 | --- | --- |
