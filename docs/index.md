@@ -1,166 +1,126 @@
 # CertSDP Documentation
 
-CertSDP.jl is the post-solver exact replay layer for numerical SDP/SOS
-certificates. It turns rational LMI/SOS data plus solver candidates into
-data-only JSON certificates that can be replayed independently with exact
-rational or supported algebraic arithmetic.
+CertSDP.jl is a post-solver exact replay layer for SDP/SOS research
+workflows. It turns exact problem data plus candidate solutions into data-only
+JSON certificates that can be replayed independently with rational or
+supported algebraic arithmetic.
 
-CertSDP is not a replacement for numerical solvers. It is the certificate
-protocol and strict verifier for the point where a feasible-looking SDP/SOS
-result becomes a replayable research artifact.
+CertSDP is not a numerical SDP solver. It is the smaller verification layer
+used after modeling, solving, algebraic reconstruction, or SOS extraction.
+
+```text
+A solver finds a candidate. CertSDP makes the claim replayable.
+```
+
+## Practical Entry Points
 
 ## Core Claim
 
-Numerical solvers are excellent at finding candidates, but a solver residual is
-not a proof. CertSDP sits after JuMP, SumOfSquares.jl, numerical solvers, and
-optional algebraic backends, then accepts only certificates that survive exact
-replay.
-
-The verifier is the trusted core: it replays canonical hashes, exact
-substitution, rational arithmetic, algebraic root isolation, certified sign
-tests, PSD proof data, and SOS coefficient matching. Numerical solvers and
-algebraic backends can help find candidates, but they are not trusted as proof.
-
-The shortest accurate description is:
-
-```text
-A solver finds a candidate. CertSDP makes it replayable.
-```
+Numerical and symbolic tools are good at finding candidates. CertSDP's job is
+to make the accepted claim replayable: exact hashes, exact substitution,
+certified signs, coefficient matching, and PSD obligations are recomputed from
+certificate data.
 
 ## At A Glance
 
-| Question | Answer |
+| Need | Start here |
 | --- | --- |
-| Input | Exact rational LMI/SOS problem data plus a rational, algebraic, or exported Gram candidate. |
-| Output | Data-only JSON certificates and replay bundles. |
-| Trusted core | `verify --strict`, which recomputes hashes, exact substitution, signs, PSD proofs, and SOS coefficient matching. |
-| Optional tools | Numerical solvers, `msolve`, Sage/msolve, JuMP/MOI, and SumOfSquares.jl can help find or extract candidates. |
-| Public evidence | The validation report records strict replay, expected rejection rows, fake-certificate controls, rational-rounding failures, and imported workflows. |
+| Fresh checkout | [Installation](installation.md), then [Quickstart](quickstart.md). |
+| Replay a certificate | `bin/certsdp verify --strict cert.json`. |
+| Certify rational or algebraic LMI data | [LMI tutorial](lmi_tutorial.md) and [Backends](backends.md). |
+| Certify Gram/SOS data | [SumOfSquares tutorial](sos_tutorial.md). |
+| Connect SDPA, JuMP/MOI, or imported artifacts | [SDPA import](sdpa_import.md), [JuMP/MOI integration](jump_moi_integration.md), and [Workflows](workflows.md). |
+| Understand the trust boundary | [Trust model](trust_model.md), [Certificate format](certificate_format.md), and [Schema v1](SCHEMA_V1.md). |
+| Check release evidence | [Validation](validation.md), [Benchmarks](benchmarks.md), and [Roadmap hard gates](ROADMAP_HARD_GATES.md). |
 
-## Who Should Use This
+## What Is Trusted
 
-| Reader | Use CertSDP to |
+`certify` can use numerical diagnostics, rank guesses, external algebraic
+backends, exactification strategies, and imported workflow metadata.
+`verify --strict` does not trust those inputs. It recomputes:
+
+- canonical problem and certificate hashes;
+- exact rational or supported `QQ(alpha)` reconstruction;
+- exact LMI substitution and SOS coefficient matching;
+- algebraic root isolation and certified signs;
+- PSD proof obligations by exact replay;
+- positive-polynomial, perturbation, compensation, and relation-reduction
+  identities when a certificate family requires them.
+
+The verifier ignores solver success flags, floating residuals, approximate
+eigenvalues, backend logs, cached output, session transcripts, and provenance
+claims.
+
+## Supported Workflows
+
+| Workflow | Status |
 | --- | --- |
-| SDP/SOS researchers | Turn candidate feasible points, Gram matrices, and algebraic solutions into exact replay artifacts. |
-| JuMP, MOI, SumOfSquares.jl, or SOSTOOLS users | Add a strict verification step after numerical or symbolic search. |
-| Paper authors | Archive data-only certificates and replay bundles with a reproducible validation path. |
-| Reviewers and artifact evaluators | Check accepted claims by exact replay instead of solver logs or floating-point residuals. |
-| Tool builders | Depend on the small v1.0 JSON/API boundary for certification, replay, and diagnostics. |
+| Rational LMI and block LMI replay | Public v1 certificate format. |
+| One-root algebraic LMI replay | Public v1 certificate format with certified root/sign checks. |
+| Exact SOS Gram replay | Public v1 certificate format with embedded rational PSD proof. |
+| Approximate SOS Gram exactification | `certify-auto-sos` direct replay plus round-project strategy. |
+| Positive-polynomial identities | Rational-function SOS, Positivstellensatz, and perturbation/compensation replay formats. |
+| Number-field SOS Gram replay | Algebraic SOS Gram certificate over one explicit `QQ(alpha)` field. |
+| Noncommutative and quantum groundwork | Internal hard-gate replay for word identities, trace-cyclic matching, relation reductions, and embedded PSD blocks. |
+| External ecosystem bridge | RealCertify, NCTSSOS, ClusteredLowRankSolver.jl, and CertifiedQuantumBounds adapters translate into CertSDP replay artifacts; raw logs are rejected. |
+| Reviewer artifacts | Data-only certificate directories with manifest, strict replay text, LaTeX snippet, and redacted provenance. |
 
-## Why It Matters
-
-| Solver workflow state | Claim risk | CertSDP behavior |
-| --- | --- | --- |
-| Numerical output | Tolerance-based residuals can hide exact PSD failure. | Candidate data only. |
-| Rational rounding | Degenerate or algebraic feasible points may not survive bounded-denominator rounding. | Exact substitution and PSD replay accept or reject the rounded point. |
-| Exact certificate | Proof fields can be stale, forged, or backend-derived. | Strict replay recomputes every trusted obligation. |
-
-## Trust Boundary
-
-`certify` may use numerical diagnostics, rank guesses, external algebraic
-backends, caches, and heuristic candidate selection. `verify --strict` does not
-trust those claims.
-
-| Trusted by strict replay | Not trusted as proof |
-| --- | --- |
-| v1.0 certificate data and canonical hashes | Solver success flags |
-| Exact arithmetic in `QQ` or `QQ(alpha)` | Floating-point eigenvalues or residuals |
-| Root isolation by rational intervals | Raw `msolve`, Sage, or solver logs |
-| Exact LMI substitution and SOS coefficient matching | Cached backend artifacts |
-| PSD proof replay by accepted exact methods | Approximate equalities or rounded diagnostics |
-
-## Reading Path
-
-For first-time use:
-
-1. [Installation](installation.md)
-2. [Platform support](platform_support.md)
-3. [Quickstart](quickstart.md)
-
-For workflows:
-
-1. [LMI tutorial](lmi_tutorial.md)
-2. [SOS tutorial](sos_tutorial.md)
-3. [SDPA import/export](sdpa_import.md)
-4. [JuMP / MOI integration](jump_moi_integration.md)
-5. [Backends](backends.md)
-6. [Diagnostics](diagnostics.md)
-7. [Workflows](workflows.md)
-
-For trust, evidence, and reference:
-
-1. [Trust model](trust_model.md)
-2. [Validation](validation.md)
-3. [Benchmarks](benchmarks.md)
-4. [Performance](performance.md)
-5. [Certificate format](certificate_format.md)
-6. [API reference](api_reference.md)
-7. [API stability](API_STABILITY.md)
-8. [Schema v1.0](SCHEMA_V1.md)
+The public compatibility surface is intentionally smaller than the internal
+hard-gate implementation. See [API stability](API_STABILITY.md) before using
+module-qualified internals in downstream code.
 
 ## Evidence Snapshot
 
-The public validation suite is the release evidence contract, not a solver-speed
-leaderboard. The current tracked v1.0 report records:
+The validation suite is the release evidence contract. It records accepted
+certificates that pass strict replay, expected rejection rows, fake-certificate
+controls, rational-rounding failures, and imported SDPA/JuMP/SumOfSquares-style
+workflows.
 
-- 18 public validation instances;
-- 15 / 15 accepted certificates passing strict replay;
-- 3 expected rejection or structured-failure rows;
-- 4 actual rational-rounding failures certified by exact algebraic replay;
-- imported SDPA, JuMP/MOI, and SumOfSquares-style workflows;
-- fake-certificate and invalid-approximation rejection controls.
+```bash
+bin/certsdp doctor
+julia --project scripts/run_validation.jl
+```
 
-See [Validation](validation.md) and the tracked report at
-`benchmarks/VALIDATION_REPORT.md`.
+The tracked report is `benchmarks/VALIDATION_REPORT.md`.
 
 ## Good Fits
 
 Use CertSDP when:
 
-- the input problem has exact rational coefficients;
-- a numerical SDP/SOS workflow found a promising candidate but you need an
-  exact certificate;
-- rational rounding may fail because the correct solution is algebraic;
-- the feasible point is degenerate or rank-deficient;
-- a JSON certificate should be archived, shared, inspected, and replayed.
+- the problem data are exact rational data, SDPA sparse data, or exported exact
+  SOS/Gram data;
+- a numerical candidate looks feasible but needs exact replay;
+- rational rounding may fail because the accepted point is algebraic;
+- rank deficiency or degeneracy makes tolerance-based evidence fragile;
+- a paper, reviewer, CI job, archive, or proof pipeline needs a portable
+  certificate.
 
 ## Poor Fits
 
 Do not use CertSDP as:
 
-- a replacement for a numerical SDP solver;
+- a replacement for numerical SDP/SOS modeling and solver stacks;
 - a large-scale dense SDP engine;
-- a general infeasibility certifier;
+- a general infeasibility prover;
 - a verifier for arbitrary floating-point model output without exact
   reconstruction;
-- a fully automated solver for every SumOfSquares hierarchy instance.
+- a guarantee that every feasible-looking numerical result can be certified.
 
-## Version Scope
-
-The current release line exposes rational LMI certificates, one-root algebraic
-LMI certificates including multi-block blockwise replay, exported SOS Gram
-certificates with replay exports, positive-polynomial certificate schemas, SDPA
-sparse import/export, JuMP/MOI affine PSD extraction, optional SumOfSquares
-extraction, optional `msolve` and Sage/msolve candidate generation, structured
-failure reports, replay bundles, and a reproducible validation suite.
-
-Some algorithms are intentionally conservative. When CertSDP accepts a
-certificate, the verifier has replayed the proof exactly. When CertSDP returns
-`not_certified`, that is a diagnostic result rather than a mathematical
-infeasibility proof.
+When CertSDP accepts a certificate, exact replay passed. When it returns
+`not_certified`, no supported exact certificate was accepted; that is diagnostic
+evidence, not a mathematical infeasibility proof.
 
 ## Platform Scope
 
-Core strict verification is cross-platform for Julia 1.10+ environments. The
-full package and validation CI matrix currently covers Linux and macOS, while
-Windows has verifier-only smoke coverage. See [Platform support](platform_support.md)
-for the exact support statement and optional-backend caveats.
+Core strict verification targets Julia 1.10+ environments. Linux and macOS run
+the full package, docs, and validation matrix in CI; Windows has verifier-only
+smoke coverage. Optional candidate-generation tools remain platform-dependent.
 
 ## Release Boundaries
 
 | Boundary | Current contract | Not claimed |
 | --- | --- | --- |
-| Algebraic multi-block workflows | One-root algebraic certificates can be replayed blockwise; certifier generation is budgeted and conservative. | Arbitrary algebraic SDP solving. |
+| Algebraic multi-block workflows | One-root algebraic certificates can be replayed blockwise; certifier generation is conservative. | Arbitrary algebraic SDP solving. |
 | PSD scale | Validation-sized exact PSD replay is supported by determinant, Schur, LDL, pivoted-LDL, and blockwise methods. | Large-scale numerical SDP solving or numerical eigenvalue proof. |
 | Infeasibility | `FailureResult` means no certificate was accepted. | Mathematical infeasibility unless a future explicit certificate family provides it. |
 | Optional tools | Solvers, frontends, and algebraic backends are optional candidate sources. | Trusting optional tool logs, residuals, or backend artifacts as proof. |

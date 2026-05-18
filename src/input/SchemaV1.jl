@@ -523,8 +523,11 @@ function _parse_certificate_v1_object(parsed)
                                        "root.certificate_type")
     if certificate_type == SOS_GRAM_CERTIFICATE_TYPE
         return _parse_sos_gram_certificate_v1_object(parsed)
+    elseif certificate_type == ALGEBRAIC_SOS_GRAM_CERTIFICATE_TYPE
+        return _parse_algebraic_sos_gram_certificate_v1_object(parsed)
     elseif certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE ||
-           certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE
+           certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE ||
+           certificate_type == PERTURBATION_COMPENSATION_CERTIFICATE_TYPE
         return _parse_positive_certificate_v1_object(parsed, certificate_type)
     end
 

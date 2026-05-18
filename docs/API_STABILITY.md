@@ -12,6 +12,7 @@ evolve behind that boundary.
 | Julia API | Stable names listed below. | Applications that construct, certify, verify, diagnose, or write artifacts. |
 | JSON problem/certificate data | Stable v1.0 read/write compatibility through public entry points. | Archived certificates, replay bundles, and paper artifacts. |
 | CLI replay path | Public release workflow for `verify --strict`, `bundle`, and `replay`. | Independent reproduction and artifact checks. |
+| Hard-gate experimental layer | Internal unless promoted below. | Exactification, external-adapter, number-field SOS, NC, and reviewer-artifact development. |
 | Internals | Not stable unless promoted here. | CertSDP implementation and tests only. |
 
 ## Stable Public API
@@ -53,6 +54,18 @@ Patch releases in the v1.0.x line may add keyword arguments and accept more
 input variants, but they must not remove these names, change their core
 meaning, or stop accepting valid v1.0 JSON written by this release.
 
+## Documented Experimental API
+
+These names are documented for early expert use, but they are not yet part of
+the stable v1 compatibility promise and may require the `CertSDP.` namespace:
+
+- `certify_auto_sos(problem, gram; kwargs...)`: exactification entry point for
+  exported SOS Gram data. It tries named strategies such as direct replay and
+  `:sos_round_project`, returning the same result contract as `certify_sos`.
+- `round_project_sos_gram(problem, gram; kwargs...)`: helper that reconstructs
+  and projects an SOS Gram candidate before a separate exact verifier accepts
+  or rejects it.
+
 ## Compatibility Policy
 
 `read_problem` and `read_certificate` are the compatibility entry points. They
@@ -84,6 +97,13 @@ Everything not listed under Stable Public API is internal. This includes:
 - numerical oracle/rank-profile heuristics;
 - PSD proof planners and low-level verifier methods;
 - benchmark runners, CLI subcommand internals, and names beginning with `_`.
+- exactification strategy objects, proof-obligation graph helpers,
+  noncommutative word-algebra groundwork, external adapter specs, and reviewer
+  artifact helpers until they are promoted in a future stability document.
+- `AlgebraicSOSGramProblem`, `AlgebraicSOSGramCertificate`,
+  `NCSOSGramProblem`, `NCSOSGramCertificate`, `ExternalReplayArtifact`, and
+  paper-artifact helper structs/functions. They are production hard-gate
+  implementations, but not yet a stable downstream extension API.
 
 Internal APIs may change within the v1.0 development series without a migration
 promise. They should not be used as persistent file formats, downstream package

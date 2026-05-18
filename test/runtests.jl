@@ -49,9 +49,15 @@ certsdp_include("numeric/approx_solution.jl", "numeric")
 certsdp_include("systems/incidence_builder.jl", "algebraic")
 certsdp_include("backends/msolve_backend.jl", "backend")
 certsdp_include("certify/certifier.jl", "certifier")
+certsdp_include("adapters/external_replay_artifacts.jl", "adapters",
+                "roadmap", "verifier", "adversarial")
 certsdp_include("sos/sos_gram.jl", "sos", "verifier", "adversarial")
+certsdp_include("sos/algebraic_sos_gram.jl", "sos", "algebraic", "verifier",
+                "adversarial")
 certsdp_include("sos/positive_certificates.jl", "sos", "verifier",
                 "release_smoke")
+certsdp_include("exactify/exactify_sos.jl", "exactify", "sos")
+certsdp_include("roadmap/roadmap_foundations.jl", "roadmap", "exactify")
 certsdp_include("cli/main.jl", "cli", "release_smoke")
 certsdp_include("benchmark/validation_suite.jl", "validation", "release_smoke")
 certsdp_include("certify/failure_reports.jl", "failure", "release_smoke")

@@ -306,6 +306,8 @@ function parse_certificate_json(json_text::AbstractString)
         return _parse_block_algebraic_certificate_object(parsed)
     elseif certificate_type == SOS_GRAM_CERTIFICATE_TYPE
         return _parse_sos_gram_certificate_object(parsed)
+    elseif certificate_type == ALGEBRAIC_SOS_GRAM_CERTIFICATE_TYPE
+        return _parse_algebraic_sos_gram_certificate_v1_object(parsed)
     end
 
     throw(ArgumentError("root.certificate_type must be `$RATIONAL_CERTIFICATE_TYPE`, `$BLOCK_RATIONAL_CERTIFICATE_TYPE`, `$ALGEBRAIC_CERTIFICATE_TYPE`, `$BLOCK_ALGEBRAIC_CERTIFICATE_TYPE`, or `$SOS_GRAM_CERTIFICATE_TYPE`; got `$certificate_type`"))

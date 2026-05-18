@@ -88,6 +88,41 @@ end
     @test verify_strict_json(certificate_json_v1_string(cert))
 end
 
+@testset "perturbation compensation SOS certificate" begin
+    target = [PolynomialTerm([2], 1)]
+    perturbation = [PolynomialTerm([0], 1)]
+    perturbed = [SOSSquare([PolynomialTerm([1], 1)], 1),
+                 SOSSquare([PolynomialTerm([0], 1)], 1)]
+    compensation = [SOSSquare([PolynomialTerm([0], 1)], 1)]
+    cert = PerturbationCompensationSOSCertificate([:x],
+                                                  target,
+                                                  perturbation,
+                                                  perturbed,
+                                                  compensation)
+
+    @test verify(cert)
+    @test verify_strict_json(certificate_json_v1_string(cert))
+    loaded = parse_certificate_json(certificate_json_v1_string(cert))
+    @test loaded isa PerturbationCompensationSOSCertificate
+    @test verify(loaded)
+
+    graph = CertSDP.proof_obligation_graph(cert)
+    @test graph.family === :perturbation_compensation_sos
+    @test any(obligation -> obligation.id === :compensation_identity,
+              graph.obligations)
+
+    bad = PerturbationCompensationSOSCertificate(cert.variables,
+                                                 cert.target,
+                                                 cert.perturbation,
+                                                 cert.perturbed_squares,
+                                                 SOSSquare[],
+                                                 cert.perturbed_identity_proof,
+                                                 cert.compensation_identity_proof,
+                                                 cert.hash,
+                                                 cert.metadata)
+    @test !verify(bad)
+end
+
 @testset "SOSTOOLS-lite converter" begin
     root = normpath(joinpath(@__DIR__, "..", ".."))
     input_path = joinpath(root, "showcases", "sostools",

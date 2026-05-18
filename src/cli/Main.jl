@@ -48,6 +48,8 @@ function main(args=ARGS; io::IO=stdout, err::IO=stderr)
         return _cli_certify(rest; io, err)
     elseif command == "certify-sos"
         return _cli_certify_sos(rest; io, err)
+    elseif command == "certify-auto-sos"
+        return _cli_certify_auto_sos(rest; io, err)
     elseif command == "solve"
         return _cli_solve(rest; io, err)
     elseif command == "solve-certify"
@@ -62,6 +64,64 @@ function main(args=ARGS; io::IO=stdout, err::IO=stderr)
 
     println(err, "[FAIL] unknown command `$command`")
     return _cli_usage(err)
+end
+
+function _cli_certify_auto_sos(args; io::IO, err::IO)
+    parsed = try
+        _parse_certify_auto_sos_args(args)
+    catch parse_error
+        println(err, "[FAIL] $(sprint(showerror, parse_error))")
+        println(err, "usage:")
+        _print_certify_auto_sos_usage(err)
+        return CLI_EXIT_USAGE
+    end
+
+    problem = try
+        parse_sos_gram_json(read(parsed.problem_path, String))
+    catch parse_error
+        println(err,
+                "[FAIL] could not read SOS Gram problem `$(parsed.problem_path)`: $(sprint(showerror, parse_error))")
+        return CLI_EXIT_USAGE
+    end
+
+    gram_candidate = try
+        _read_sos_gram_candidate_value(problem, parsed.solution_path)
+    catch parse_error
+        println(err,
+                "[FAIL] could not read SOS Gram candidate `$(parsed.solution_path)`: $(sprint(showerror, parse_error))")
+        return CLI_EXIT_USAGE
+    end
+
+    result = certify_auto_sos(problem,
+                              gram_candidate;
+                              strategies=parsed.strategies,
+                              tolerance=parsed.tolerance,
+                              max_denominator=parsed.max_denominator)
+    if result isa FailureResult
+        _print_certification_failure(result.failure, err)
+        return _cli_exit_for_failure(result.failure)
+    end
+    cert = certificate(result)
+
+    accepted = verify(cert; io)
+    if !accepted
+        println(err,
+                "[FAIL] internal verifier rejected the exactified SOS Gram certificate")
+        return CLI_EXIT_REJECTED
+    end
+
+    try
+        write_certificate(parsed.out_path, cert)
+    catch write_error
+        println(err,
+                "[FAIL] could not write certificate `$(parsed.out_path)`: $(sprint(showerror, write_error))")
+        return CLI_EXIT_USAGE
+    end
+
+    report = result.artifacts[:exactification_report]
+    println(io, "[OK] exactification strategy: ", report.selected_strategy)
+    println(io, "[OK] wrote SOS Gram certificate: $(parsed.out_path)")
+    return CLI_EXIT_OK
 end
 
 function _cli_convert_sostools(args; io::IO, err::IO)
@@ -1628,6 +1688,66 @@ function _parse_certify_sos_args(args::Vector{String})
             reconstruction_max_denominator,)
 end
 
+function _parse_certify_auto_sos_args(args::Vector{String})
+    isempty(args) &&
+        throw(ArgumentError("certify-auto-sos expects an exported SOS Gram problem path"))
+
+    problem_path = nothing
+    solution_path = nothing
+    out_path = nothing
+    strategies = Symbol[:direct, :sos_round_project]
+    tolerance = nothing
+    max_denominator = DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR
+
+    i = 1
+    while i <= length(args)
+        arg = args[i]
+
+        if arg == "--solution"
+            i += 1
+            i <= length(args) || throw(ArgumentError("--solution requires a path"))
+            solution_path = args[i]
+        elseif arg == "--out"
+            i += 1
+            i <= length(args) || throw(ArgumentError("--out requires a path"))
+            out_path = args[i]
+        elseif arg == "--strategies"
+            i += 1
+            i <= length(args) ||
+                throw(ArgumentError("--strategies requires a comma-separated list"))
+            strategies = _parse_cli_symbol_list(args[i])
+            isempty(strategies) &&
+                throw(ArgumentError("--strategies must name at least one exactification strategy"))
+        elseif arg in ("--tolerance", "--reconstruction-tolerance")
+            i += 1
+            i <= length(args) || throw(ArgumentError("$arg requires a value"))
+            tolerance = _parse_cli_positive_float(args[i], arg)
+        elseif arg in ("--max-denominator", "--reconstruction-max-denominator")
+            i += 1
+            i <= length(args) || throw(ArgumentError("$arg requires a value"))
+            max_denominator = _parse_cli_positive_int(args[i], arg)
+        elseif startswith(arg, "--")
+            throw(ArgumentError("unknown certify-auto-sos option `$arg`"))
+        elseif isnothing(problem_path)
+            problem_path = arg
+        else
+            throw(ArgumentError("unexpected positional argument `$arg`"))
+        end
+
+        i += 1
+    end
+
+    isnothing(problem_path) &&
+        throw(ArgumentError("certify-auto-sos is missing sos_gram.json"))
+    isnothing(solution_path) &&
+        throw(ArgumentError("certify-auto-sos is missing --solution gram_solution.json"))
+    isnothing(out_path) &&
+        throw(ArgumentError("certify-auto-sos is missing --out cert.json"))
+
+    return (; problem_path, solution_path, out_path, strategies, tolerance,
+            max_denominator)
+end
+
 function _parse_diagnose_args(args::Vector{String})
     isempty(args) && throw(ArgumentError("diagnose expects a problem path"))
 
@@ -1991,6 +2111,40 @@ function _read_sos_gram_matrix_solution(problem::SOSGramProblem, path::AbstractS
     throw(ArgumentError("solution must contain `gram_matrix` or triangular coordinate vector `x`"))
 end
 
+function _read_sos_gram_candidate_value(problem::SOSGramProblem, path::AbstractString)
+    parsed = try
+        JSON3.read(read(path, String))
+    catch err
+        throw(ArgumentError("invalid SOS Gram solution JSON: $(sprint(showerror, err))"))
+    end
+
+    _require_object(parsed, "root")
+    if haskey(parsed, :certsdp_version)
+        _require_value(parsed, :certsdp_version, LMI_JSON_VERSION, "root.certsdp_version")
+    end
+
+    if haskey(parsed, :sos_problem)
+        embedded = _parse_sos_gram_problem_object(_require_key(parsed, :sos_problem,
+                                                               "root"))
+        embedded_hash = sos_gram_problem_hash(embedded)
+        problem_hash = sos_gram_problem_hash(problem)
+        embedded_hash == problem_hash ||
+            throw(ArgumentError("embedded SOS problem hash $embedded_hash does not match problem hash $problem_hash"))
+    end
+
+    solution = _require_key(parsed, :solution, "root")
+    _require_object(solution, "solution")
+    _require_value(solution, :type, SOS_GRAM_SOLUTION_TYPE, "solution.type")
+    if haskey(solution, :gram_matrix)
+        return _require_key(solution, :gram_matrix, "solution")
+    elseif haskey(solution, :x)
+        return gram_matrix_from_solution(problem,
+                                         _parse_rational_solution(solution,
+                                                                  num_variables(problem.lmi)))
+    end
+    throw(ArgumentError("solution must contain `gram_matrix` or triangular coordinate vector `x`"))
+end
+
 function _parse_reconstructed_sos_gram_matrix(value, expected_size::Integer;
                                               tolerance,
                                               max_denominator::Integer)
@@ -2315,6 +2469,7 @@ function _print_cli_usage(io::IO)
     _print_solve_certify_usage(io)
     _print_certify_usage(io)
     _print_certify_sos_usage(io)
+    _print_certify_auto_sos_usage(io)
     _print_explain_usage(io)
     _print_bundle_usage(io)
     _print_replay_usage(io)
@@ -2351,6 +2506,11 @@ end
 function _print_certify_sos_usage(io::IO)
     return println(io,
                    "  certsdp certify-sos sos_gram.json --solution gram_solution.json --out cert.json [--reconstruct-floats --reconstruction-tolerance tol]")
+end
+
+function _print_certify_auto_sos_usage(io::IO)
+    return println(io,
+                   "  certsdp certify-auto-sos sos_gram.json --solution gram_solution.json --out cert.json [--strategies direct,sos_round_project] [--tolerance tol] [--max-denominator n]")
 end
 
 function _print_explain_usage(io::IO)

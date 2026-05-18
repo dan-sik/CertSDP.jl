@@ -134,6 +134,23 @@ bin/certsdp export-sos /tmp/certsdp-sos-cert.json \
 
 `export-sos` supports `json`, `text`, `latex`, `sage`, and `julia` formats.
 
+For approximate exported Gram candidates, use the strategy-based exactification
+entry point:
+
+```bash
+bin/certsdp certify-auto-sos examples/sos/gram_x2_plus_1.json \
+  --solution examples/sos/gram_x2_plus_1_solution.json \
+  --out /tmp/certsdp-auto-sos-cert.json \
+  --strategies direct,sos_round_project \
+  --tolerance 1e-12
+
+bin/certsdp verify --strict /tmp/certsdp-auto-sos-cert.json
+```
+
+The command reports which strategy was accepted. Strategy diagnostics are
+provenance; strict replay of the emitted certificate remains the acceptance
+boundary.
+
 ## Diagnostics
 
 Diagnose approximate data:

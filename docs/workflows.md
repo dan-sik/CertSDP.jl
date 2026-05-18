@@ -68,7 +68,61 @@ concrete wrapper types.
 | Numerical seed then exact replay | `solve_approximately`, `diagnose`, `certify` | `certsdp solve-certify problem.json --cert-out cert.json` | Depends on the exact certificate produced |
 | JuMP/MOI affine PSD model | Optional extension extraction, then `certify` | Validation harness source fixture or extracted JSON | Block LMI certificate |
 | Exported SOS Gram JSON | `certify_sos(problem, gram)` | `certsdp certify-sos problem.json --solution gram.json` | `sos_gram_certificate` |
+| Approximate SOS Gram JSON | `CertSDP.certify_auto_sos(problem, gram; tolerance=...)` | `certsdp certify-auto-sos problem.json --solution gram.json --tolerance tol` | `sos_gram_certificate` after round-project exactification |
 | SumOfSquares-style extraction | Optional extension extraction, then `certify_sos` | Validation harness source fixture or extracted JSON | `sos_gram_certificate` |
+| Algebraic SOS Gram over `QQ(alpha)` | Internal hard-gate constructor, then `verify` | Schema-v1 replay after translation | `algebraic_sos_gram_certificate` |
+| Positive-polynomial identity | Explicit rational squares and multipliers | Schema-v1 replay or showcase fixtures | `rational_function_sos_certificate`, `positivstellensatz_certificate`, or `perturbation_compensation_sos_certificate` |
+| External exact-certificate ecosystem | Translate with adapter boundary, then `verify` | External replay artifact fixture | CertSDP certificate embedded in `ExternalReplayArtifact` |
+| Reviewer artifact directory | `CertSDP.write_paper_artifact(dir, cert)` | `certsdp bundle` / `certsdp replay` for zip bundles | Data-only artifact, not a new certificate family |
+
+## Exactification Strategies
+
+`certify-auto-sos` is the first strategy-based exactification entrypoint. It
+tries direct exact replay, then `sos_round_project`, which reconstructs a
+rational Gram candidate, projects it onto the exact coefficient-matching affine
+space, and hands the result to the existing SOS verifier. Strategy diagnostics
+are provenance only; the certificate is accepted only when strict replay accepts
+the resulting JSON artifact.
+
+Other roadmap strategies, such as perturbation/compensation, field-extension
+low-rank SOS, noncommutative projection, and quantum-bound bridges, are held
+behind hard gates until their proof obligations are replayable by CertSDP.
+
+## External Adapter Boundary
+
+Adapters for RealCertify, NCTSSOS, ClusteredLowRankSolver.jl, and
+CertifiedQuantumBounds are translation contracts. They may carry metadata about
+the source tool and the original search workflow, but acceptance depends only
+on the translated CertSDP certificate.
+
+An external replay artifact is accepted only when:
+
+- the embedded translated certificate is schema-v1 data;
+- `verify --strict` accepts that certificate;
+- the artifact hash matches the translated data;
+- forbidden trust fields such as raw solver output, backend logs, session
+  transcripts, and floating residuals are absent.
+
+This makes external ecosystems useful sources of candidates without making
+their logs part of CertSDP's trusted base.
+
+## Reviewer Artifacts
+
+For paper or artifact-evaluation use, a reviewer directory should contain the
+minimum data needed to re-check the claim from a fresh checkout:
+
+```julia
+using CertSDP
+
+result = certify_sos("examples/sos/gram_x2_plus_1.json", [1 0; 0 1])
+verify(result) || error("certificate rejected")
+CertSDP.write_paper_artifact("/tmp/certsdp-review", result;
+                             title="SOS replay artifact")
+```
+
+The directory includes `certificate.json`, `manifest.json`,
+`strict_replay.txt`, `snippet.tex`, `provenance.json`, and `README.md`.
+Generation fails unless strict replay accepts the certificate locally.
 
 ## Independent Replay
 

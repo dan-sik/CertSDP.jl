@@ -15,7 +15,19 @@ Current certificate types are:
 - `block_algebraic_psd_certificate`: a shared algebraic feasible point for a
   multi-block `BlockLMIProblem`, with one exact algebraic PSD proof per block;
 - `sos_gram_certificate`: an exact SOS Gram certificate with embedded rational
-  PSD proof.
+  PSD proof;
+- `algebraic_sos_gram_certificate`: an SOS Gram certificate over one explicit
+  `QQ(alpha)` field, with exact coefficient and sign replay;
+- `rational_function_sos_certificate`: a rational-function SOS identity
+  certificate;
+- `positivstellensatz_certificate`: an exact multiplier identity certificate
+  for constrained positivity examples;
+- `perturbation_compensation_sos_certificate`: an exact perturbed SOS plus
+  compensation identity certificate.
+
+`nc_sos_gram_certificate` is currently an internal hard-gate replay object for
+noncommutative and trace-polynomial workflows. It is not part of the stable
+schema-v1 external compatibility surface.
 
 ## Top-Level v1 Shape
 
@@ -171,6 +183,51 @@ An SOS Gram certificate contains:
 matrices may include an exact rational square export when the LDL-based
 factorization is safe. If no square decomposition is present, the Gram-only
 certificate remains valid and must include a reason.
+
+## Algebraic SOS Gram Certificates
+
+An algebraic SOS Gram certificate uses the same replay idea as a rational SOS
+Gram certificate, but its Gram entries live in a single represented real number
+field `QQ(alpha)`. The certificate records:
+
+- variables, monomial basis, and target polynomial coefficients;
+- the minimal polynomial and isolating interval selecting the real embedding;
+- Gram entries serialized as field elements;
+- coefficient-matching equations over the represented field;
+- an algebraic PSD proof whose signs are replayed by certified algebraic sign
+  tests.
+
+External tools such as ClusteredLowRankSolver.jl can target this shape by
+translating their field-extension Gram data into CertSDP's exact field
+representation. Their solver logs remain provenance only.
+
+## Positive And Perturbation Certificates
+
+The positive-polynomial certificate families store explicit identities rather
+than solver claims:
+
+| Type | Exact identity replayed |
+| --- | --- |
+| `rational_function_sos_certificate` | `denominator_sos * target == numerator_sos` |
+| `positivstellensatz_certificate` | `f == sum_j sigma_j * product(g_i)` |
+| `perturbation_compensation_sos_certificate` | `target + perturbation == perturbed_sos` and `target == perturbed_sos - compensation_sos` |
+
+The verifier expands the recorded rational squares or multiplier terms and
+recomputes coefficient equality before accepting.
+
+## External Replay Artifacts
+
+An `ExternalReplayArtifact` is not a new proof system. It is a wrapper around a
+translated CertSDP certificate plus adapter metadata. The trusted checks are:
+
+- the artifact hash matches the wrapped data;
+- the translated certificate is schema-v1 data;
+- strict replay accepts the translated certificate;
+- forbidden proof fields such as raw solver output, backend logs, session
+  transcripts, and floating residuals are absent.
+
+Adapters currently define translation contracts for RealCertify, NCTSSOS,
+ClusteredLowRankSolver.jl, and CertifiedQuantumBounds.
 
 ## Compatibility
 

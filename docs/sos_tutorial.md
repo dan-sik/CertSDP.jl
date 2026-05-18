@@ -114,6 +114,25 @@ CertSDP never silently accepts floating-point coefficients as proof; the
 reconstructed rational candidate is still checked by exact coefficient matching
 and exact PSD verification.
 
+## Auto Exactification
+
+For exported SOS Gram problems with an approximate Gram candidate, use
+`certify-auto-sos`. The command tries exact replay first, then the
+Parrilo-Peyrl-style round-and-project strategy:
+
+```bash
+bin/certsdp certify-auto-sos examples/sos/gram_x2_plus_1.json \
+  --solution examples/sos/gram_x2_plus_1_solution.json \
+  --out /tmp/certsdp-auto-sos-cert.json \
+  --tolerance 1e-12
+
+bin/certsdp verify --strict /tmp/certsdp-auto-sos-cert.json
+```
+
+The projection step only repairs coefficient matching. It is not accepted as a
+certificate until the ordinary SOS verifier checks the projected Gram matrix
+and embedded PSD proof exactly.
+
 ## SOSTOOLS-Lite Replay
 
 The release showcase includes a minimal neutral JSON shape for SOSTOOLS-style

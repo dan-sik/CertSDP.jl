@@ -117,11 +117,36 @@ function _strict_require_problem_hash_complete(parsed, certificate_type::Abstrac
         return true
     end
 
+    if certificate_type == ALGEBRAIC_SOS_GRAM_CERTIFICATE_TYPE
+        problem = _require_key(parsed, :problem, "root")
+        _require_object(problem, "root.problem")
+        _require_value(problem, :embedded, true, "root.problem.embedded")
+        _require_value(problem, :type, ALGEBRAIC_SOS_GRAM_PROBLEM_TYPE,
+                       "root.problem.type")
+        data = _require_key(problem, :data, "root.problem")
+        _require_object(data, "root.problem.data")
+        _require_value(data, CERTSDP_PROBLEM_VERSION_KEY, SCHEMA_V1_VERSION,
+                       "root.problem.data.certsdp_problem_version")
+        _require_value(data, :type, ALGEBRAIC_SOS_GRAM_PROBLEM_TYPE,
+                       "root.problem.data.type")
+        _require_value(data, :field, "QQ(alpha)", "root.problem.data.field")
+        embedded_hash = _require_string(data, :hash, "root.problem.data.hash")
+        embedded_hash == problem_hash ||
+            throw(ArgumentError("root.problem_hash mismatch: must match root.problem.data.hash in strict mode"))
+        return true
+    end
+
     if certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE ||
-       certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE
-        expected_problem_type = certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE ?
-                                RATIONAL_FUNCTION_SOS_PROBLEM_TYPE :
-                                POSITIVSTELLENSATZ_PROBLEM_TYPE
+       certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE ||
+       certificate_type == PERTURBATION_COMPENSATION_CERTIFICATE_TYPE
+        expected_problem_type = if certificate_type ==
+                                   RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE
+            RATIONAL_FUNCTION_SOS_PROBLEM_TYPE
+        elseif certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE
+            POSITIVSTELLENSATZ_PROBLEM_TYPE
+        else
+            PERTURBATION_COMPENSATION_PROBLEM_TYPE
+        end
         problem = _require_key(parsed, :problem, "root")
         _require_object(problem, "root.problem")
         embedded = _require_key(problem, :embedded, "root.problem")
@@ -183,8 +208,12 @@ function _strict_require_exact_proof_complete(parsed, certificate_type::Abstract
     if certificate_type == SOS_GRAM_CERTIFICATE_TYPE
         _strict_require_sos_exact_proof_complete(parsed)
         return true
+    elseif certificate_type == ALGEBRAIC_SOS_GRAM_CERTIFICATE_TYPE
+        _strict_require_algebraic_sos_exact_proof_complete(parsed)
+        return true
     elseif certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE ||
-           certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE
+           certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE ||
+           certificate_type == PERTURBATION_COMPENSATION_CERTIFICATE_TYPE
         _strict_require_positive_exact_proof_complete(parsed, certificate_type)
         return true
     end
@@ -203,13 +232,56 @@ function _strict_require_exact_proof_complete(parsed, certificate_type::Abstract
     return true
 end
 
+function _strict_require_algebraic_sos_exact_proof_complete(parsed)
+    solution = _require_key(parsed, :solution, "root")
+    _require_object(solution, "root.solution")
+    _require_value(solution, :field, "QQ(alpha)", "root.solution.field")
+    _require_value(solution, :representation, ALGEBRAIC_SOS_GRAM_SOLUTION_TYPE,
+                   "root.solution.representation")
+    _require_value(solution, :root_symbol, "t", "root.solution.root_symbol")
+    _require_string(solution, :minimal_polynomial,
+                    "root.solution.minimal_polynomial")
+    interval = _require_key(solution, :root_interval, "root.solution")
+    _require_array(interval, "root.solution.root_interval")
+    length(interval) == 2 ||
+        throw(ArgumentError("root.solution.root_interval must contain exactly two rational endpoints"))
+    _require_key(solution, :gram_matrix, "root.solution")
+
+    coefficient = _require_key(parsed, :coefficient_proof, "root")
+    _require_object(coefficient, "root.coefficient_proof")
+    _require_value(coefficient, :method, "exact_coefficient_matching",
+                   "root.coefficient_proof.method")
+    _require_value(coefficient, :identity,
+                   "target_equals_v_transpose_Q_v_over_QQ_alpha",
+                   "root.coefficient_proof.identity")
+    _require_array(_require_key(coefficient, :matches, "root.coefficient_proof"),
+                   "root.coefficient_proof.matches")
+
+    proof = _require_key(parsed, :proof, "root")
+    _require_object(proof, "root.proof")
+    matching = _require_key(proof, :coefficient_matching, "root.proof")
+    _require_object(matching, "root.proof.coefficient_matching")
+    _require_value(matching, :method, "exact_coefficient_matching",
+                   "root.proof.coefficient_matching.method")
+    _require_value(matching, :status, "claimed",
+                   "root.proof.coefficient_matching.status")
+    _strict_require_psd_proof_complete(_require_key(proof, :psd, "root.proof"),
+                                       "root.proof.psd")
+    return true
+end
+
 function _strict_require_positive_exact_proof_complete(parsed,
                                                        certificate_type::AbstractString)
     solution = _require_key(parsed, :solution, "root")
     _require_object(solution, "root.solution")
     _require_value(solution, :field, LMI_FIELD, "root.solution.field")
-    expected_representation = certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE ?
-                              "rational_function_sos" : "sos_multipliers"
+    expected_representation = if certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE
+        "rational_function_sos"
+    elseif certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE
+        "sos_multipliers"
+    else
+        "perturbation_compensation_sos"
+    end
     _require_value(solution, :representation, expected_representation,
                    "root.solution.representation")
     if certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE
@@ -219,7 +291,7 @@ function _strict_require_positive_exact_proof_complete(parsed,
         _strict_require_sos_square_block(_require_key(solution, :denominator_sos,
                                                       "root.solution"),
                                          "root.solution.denominator_sos")
-    else
+    elseif certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE
         terms = _require_key(solution, :terms, "root.solution")
         _require_array(terms, "root.solution.terms")
         isempty(terms) && throw(ArgumentError("root.solution.terms must not be empty"))
@@ -231,27 +303,58 @@ function _strict_require_positive_exact_proof_complete(parsed,
             _strict_require_sos_square_block(_require_key(term, :sos, term_path),
                                              "$term_path.sos")
         end
+    else
+        _strict_require_sos_square_block(_require_key(solution, :perturbed_sos,
+                                                      "root.solution"),
+                                         "root.solution.perturbed_sos")
+        _strict_require_sos_square_block(_require_key(solution, :compensation_sos,
+                                                      "root.solution"),
+                                         "root.solution.compensation_sos")
     end
 
     coefficient = _require_key(parsed, :coefficient_proof, "root")
     _require_object(coefficient, "root.coefficient_proof")
     _require_value(coefficient, :method, "exact_coefficient_matching",
                    "root.coefficient_proof.method")
-    expected_identity = certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE ?
-                        "denominator_times_target_equals_numerator" :
-                        "target_equals_sos_constraint_assembly"
+    expected_identity = if certificate_type == RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE
+        "denominator_times_target_equals_numerator"
+    elseif certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE
+        "target_equals_sos_constraint_assembly"
+    else
+        "target_plus_perturbation_equals_perturbed_sos_and_target_equals_perturbed_minus_compensation"
+    end
     _require_value(coefficient, :identity, expected_identity,
                    "root.coefficient_proof.identity")
-    _require_array(_require_key(coefficient, :matches, "root.coefficient_proof"),
-                   "root.coefficient_proof.matches")
+    if certificate_type == PERTURBATION_COMPENSATION_CERTIFICATE_TYPE
+        _require_array(_require_key(coefficient, :perturbed_matches,
+                                    "root.coefficient_proof"),
+                       "root.coefficient_proof.perturbed_matches")
+        _require_array(_require_key(coefficient, :compensation_matches,
+                                    "root.coefficient_proof"),
+                       "root.coefficient_proof.compensation_matches")
+    else
+        _require_array(_require_key(coefficient, :matches, "root.coefficient_proof"),
+                       "root.coefficient_proof.matches")
+    end
 
     proof = _require_key(parsed, :proof, "root")
     _require_object(proof, "root.proof")
-    identity = _require_key(proof, :identity, "root.proof")
-    _require_object(identity, "root.proof.identity")
-    _require_value(identity, :method, "exact_coefficient_matching",
-                   "root.proof.identity.method")
-    _require_value(identity, :status, "claimed", "root.proof.identity.status")
+    if certificate_type == PERTURBATION_COMPENSATION_CERTIFICATE_TYPE
+        for key in (:perturbed_identity, :compensation_identity)
+            identity = _require_key(proof, key, "root.proof")
+            path = "root.proof.$(String(key))"
+            _require_object(identity, path)
+            _require_value(identity, :method, "exact_coefficient_matching",
+                           "$path.method")
+            _require_value(identity, :status, "claimed", "$path.status")
+        end
+    else
+        identity = _require_key(proof, :identity, "root.proof")
+        _require_object(identity, "root.proof.identity")
+        _require_value(identity, :method, "exact_coefficient_matching",
+                       "root.proof.identity.method")
+        _require_value(identity, :status, "claimed", "root.proof.identity.status")
+    end
     sos = _require_key(proof, :sos, "root.proof")
     _require_object(sos, "root.proof.sos")
     _require_value(sos, :method, EXPLICIT_RATIONAL_SQUARES_METHOD,

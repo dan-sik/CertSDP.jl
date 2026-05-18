@@ -1,9 +1,9 @@
 # Trust Model
 
 CertSDP separates candidate generation from proof checking. The certifier may
-use numerical solvers, rank heuristics, `msolve`, caches, and backend artifacts
-to find a candidate. The verifier accepts a certificate only after replaying
-exact data.
+use numerical solvers, rank heuristics, `msolve`, caches, exactification
+strategies, external adapter metadata, and backend artifacts to find a
+candidate. The verifier accepts a certificate only after replaying exact data.
 
 ## Boundary Diagram
 
@@ -11,6 +11,7 @@ exact data.
 flowchart TB
     N["Numerical solvers<br/>Clarabel, SCS, Mosek, user xhat"] --> C["Candidate data"]
     A["Algebraic backends<br/>msolve, Sage/msolve"] --> C
+    E["External ecosystems<br/>RealCertify, NCTSSOS, ClusteredLowRank, quantum tools"] --> C
     F["Frontends<br/>SDPA, JuMP/MOI, SumOfSquares"] --> P["Exact problem data"]
     C --> J["Certificate JSON<br/>proof claims and provenance"]
     P --> J
@@ -48,7 +49,11 @@ The strict verifier trusts only:
 - exact substitution into the embedded LMI or SOS Gram problem;
 - exact PSD proof replay by principal minors, Schur-zero, LDL, pivoted LDL, or
   blockwise replay;
-- exact SOS coefficient matching for Gram certificates.
+- exact SOS coefficient matching for Gram certificates;
+- exact positive-polynomial identities for rational-function,
+  Positivstellensatz, and perturbation/compensation certificates;
+- exact noncommutative word, trace-cyclic, involution, and relation-reduction
+  checks for internal NC replay paths.
 
 Strict mode is invoked as:
 
@@ -65,6 +70,8 @@ The verifier does not trust:
 
 - numerical solver status, residuals, eigenvalues, or rank estimates;
 - `msolve` stdout, backend logs, artifact paths, or cached backend output;
+- RealCertify, NCTSSOS, ClusteredLowRankSolver.jl, CertifiedQuantumBounds, or
+  paper-benchmark logs as proof;
 - certificate provenance;
 - approximate equality claims or tolerances;
 - substituted matrices, determinants, Schur complements, LDL pivots, or SOS
@@ -95,7 +102,10 @@ exact PSD verification
 ```
 
 For an SOS Gram certificate, strict verification additionally recomputes
-coefficient matching and verifies the embedded rational PSD certificate.
+coefficient matching and verifies the embedded rational or supported algebraic
+PSD certificate. Positive-polynomial certificates replay their explicit
+polynomial identities. External replay artifacts are accepted only after the
+translated CertSDP certificate passes the same strict boundary.
 
 ## Certifier Boundary
 
@@ -106,3 +116,13 @@ is not trusted until `verify` accepts it.
 `verify --strict` is the independent replay boundary. It rejects legacy certificate
 shapes and requires the v1.0 exact proof surface so that success is independent
 of solver availability and backend artifacts.
+
+## External Adapter Boundary
+
+External adapters are intentionally untrusted translators. A RealCertify,
+NCTSSOS, ClusteredLowRankSolver.jl, CertifiedQuantumBounds, or paper-benchmark
+artifact can contribute exact candidate data only after it is converted into a
+CertSDP schema-v1 certificate or external replay artifact. The parser rejects
+raw solver output, backend logs, floating residuals, and session transcripts in
+the proof surface. Metadata may describe where a candidate came from, but only
+CertSDP replay can make it accepted.

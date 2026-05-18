@@ -33,6 +33,11 @@ leaderboard. It covers:
 - msolve-backed certifier-generated algebraic certificates;
 - multi-block blockwise PSD certificates;
 - exact SOS Gram coefficient matching;
+- SOS round/project exactification gates;
+- algebraic SOS Gram and perturbation/compensation replay gates;
+- noncommutative relation-reduction negative controls;
+- external adapter replay-artifact translation checks;
+- reviewer artifact generation checks;
 - SDPA sparse import;
 - JuMP/MOI and SumOfSquares-style extraction workflows;
 - numerical solve -> diagnose -> certify workflows;

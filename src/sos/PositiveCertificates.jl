@@ -1,7 +1,9 @@
 const RATIONAL_FUNCTION_SOS_CERTIFICATE_TYPE = "rational_function_sos_certificate"
 const POSITIVSTELLENSATZ_CERTIFICATE_TYPE = "positivstellensatz_certificate"
+const PERTURBATION_COMPENSATION_CERTIFICATE_TYPE = "perturbation_compensation_sos_certificate"
 const RATIONAL_FUNCTION_SOS_PROBLEM_TYPE = "rational_function_sos_claim"
 const POSITIVSTELLENSATZ_PROBLEM_TYPE = "positivstellensatz_claim"
+const PERTURBATION_COMPENSATION_PROBLEM_TYPE = "perturbation_compensation_sos_claim"
 const EXPLICIT_RATIONAL_SQUARES_METHOD = "explicit_rational_squares"
 
 struct NamedPolynomial
@@ -49,6 +51,18 @@ struct PositivstellensatzCertificate
     constraints::Vector{NamedPolynomial}
     terms::Vector{PositivstellensatzTerm}
     coefficient_proof::Vector{PolynomialIdentityMatch}
+    hash::String
+    metadata::Dict{Symbol, Any}
+end
+
+struct PerturbationCompensationSOSCertificate
+    variables::Vector{Symbol}
+    target::Vector{PolynomialTerm}
+    perturbation::Vector{PolynomialTerm}
+    perturbed_squares::Vector{SOSSquare}
+    compensation_squares::Vector{SOSSquare}
+    perturbed_identity_proof::Vector{PolynomialIdentityMatch}
+    compensation_identity_proof::Vector{PolynomialIdentityMatch}
     hash::String
     metadata::Dict{Symbol, Any}
 end
@@ -115,6 +129,47 @@ function PositivstellensatzCertificate(variables, target, constraints, terms;
                                          _symbol_any_dict(metadata))
 end
 
+function PerturbationCompensationSOSCertificate(variables,
+                                                target,
+                                                perturbation,
+                                                perturbed_squares,
+                                                compensation_squares;
+                                                metadata=Dict{Symbol, Any}())
+    variable_names = _sos_variable_symbols(variables)
+    target_terms = _normalize_polynomial_terms(target, length(variable_names))
+    perturbation_terms = _normalize_polynomial_terms(perturbation,
+                                                     length(variable_names))
+    perturbed = SOSSquare[perturbed_squares...]
+    compensation = SOSSquare[compensation_squares...]
+    perturbed_identity = _perturbation_compensation_perturbed_matches(variable_names,
+                                                                      target_terms,
+                                                                      perturbation_terms,
+                                                                      perturbed)
+    compensation_identity = _perturbation_compensation_final_matches(variable_names,
+                                                                     target_terms,
+                                                                     perturbation_terms,
+                                                                     perturbed,
+                                                                     compensation)
+    cert = PerturbationCompensationSOSCertificate(variable_names,
+                                                  target_terms,
+                                                  perturbation_terms,
+                                                  perturbed,
+                                                  compensation,
+                                                  perturbed_identity,
+                                                  compensation_identity,
+                                                  "",
+                                                  _symbol_any_dict(metadata))
+    return PerturbationCompensationSOSCertificate(variable_names,
+                                                  target_terms,
+                                                  perturbation_terms,
+                                                  perturbed,
+                                                  compensation,
+                                                  perturbed_identity,
+                                                  compensation_identity,
+                                                  perturbation_compensation_sos_certificate_hash(cert),
+                                                  _symbol_any_dict(metadata))
+end
+
 function rational_function_sos_problem_hash(cert::RationalFunctionSOSCertificate)
     return rational_function_sos_problem_hash(cert.variables, cert.target)
 end
@@ -128,6 +183,20 @@ end
 function positivstellensatz_problem_hash(cert::PositivstellensatzCertificate)
     return positivstellensatz_problem_hash(cert.variables, cert.target,
                                            cert.constraints)
+end
+
+function perturbation_compensation_sos_problem_hash(cert::PerturbationCompensationSOSCertificate)
+    return perturbation_compensation_sos_problem_hash(cert.variables,
+                                                      cert.target,
+                                                      cert.perturbation)
+end
+
+function perturbation_compensation_sos_problem_hash(variables::Vector{Symbol},
+                                                    target::Vector{PolynomialTerm},
+                                                    perturbation::Vector{PolynomialTerm})
+    canonical = _perturbation_compensation_sos_problem_json(variables, target,
+                                                            perturbation)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(canonical)))
 end
 
 function positivstellensatz_problem_hash(variables::Vector{Symbol},
@@ -147,6 +216,11 @@ function positivstellensatz_certificate_hash(cert::PositivstellensatzCertificate
     return "sha256:" * bytes2hex(sha256(JSON3.write(canonical)))
 end
 
+function perturbation_compensation_sos_certificate_hash(cert::PerturbationCompensationSOSCertificate)
+    canonical = _canonical_perturbation_compensation_sos_certificate_json(cert)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(canonical)))
+end
+
 function certificate_json_v1(cert::RationalFunctionSOSCertificate)
     return merge(_canonical_rational_function_sos_certificate_json(cert),
                  (; certificate_id=cert.hash,))
@@ -154,6 +228,11 @@ end
 
 function certificate_json_v1(cert::PositivstellensatzCertificate)
     return merge(_canonical_positivstellensatz_certificate_json(cert),
+                 (; certificate_id=cert.hash,))
+end
+
+function certificate_json_v1(cert::PerturbationCompensationSOSCertificate)
+    return merge(_canonical_perturbation_compensation_sos_certificate_json(cert),
                  (; certificate_id=cert.hash,))
 end
 
@@ -171,10 +250,22 @@ function write_certificate(path::AbstractString, cert::PositivstellensatzCertifi
     return path
 end
 
+function write_certificate(path::AbstractString,
+                           cert::PerturbationCompensationSOSCertificate)
+    open(path, "w") do io
+        return write(io, certificate_json_v1_string(cert))
+    end
+    return path
+end
+
 function save_certificate(path::AbstractString, cert::RationalFunctionSOSCertificate)
     return write_certificate(path, cert)
 end
 function save_certificate(path::AbstractString, cert::PositivstellensatzCertificate)
+    return write_certificate(path, cert)
+end
+function save_certificate(path::AbstractString,
+                          cert::PerturbationCompensationSOSCertificate)
     return write_certificate(path, cert)
 end
 
@@ -250,6 +341,64 @@ function verify(cert::PositivstellensatzCertificate; io::Union{Nothing, IO}=noth
     end
 end
 
+function verify(cert::PerturbationCompensationSOSCertificate;
+                io::Union{Nothing, IO}=nothing,
+                strict::Bool=false,
+                kwargs...)
+    if strict
+        return _strict_verify_certificate_object(certificate_json_v1(cert); io,
+                                                 kwargs...)
+    end
+
+    try
+        _check_or_report(io,
+                         cert.hash ==
+                         perturbation_compensation_sos_certificate_hash(cert),
+                         "perturbation/compensation certificate hash matches") ||
+            return false
+        _check_or_report(io,
+                         perturbation_compensation_sos_problem_hash(cert) ==
+                         _require_string(certificate_json_v1(cert).problem.data,
+                                         :hash,
+                                         "problem.data.hash"),
+                         "perturbation/compensation problem hash matches") ||
+            return false
+        expected_perturbed = _perturbation_compensation_perturbed_matches(cert.variables,
+                                                                          cert.target,
+                                                                          cert.perturbation,
+                                                                          cert.perturbed_squares)
+        _check_or_report(io,
+                         _identity_matches_equal(cert.perturbed_identity_proof,
+                                                 expected_perturbed),
+                         "perturbed SOS identity metadata matches recomputation") ||
+            return false
+        _check_or_report(io,
+                         _identity_matches_all_exact(cert.perturbed_identity_proof),
+                         "target plus perturbation equals perturbed SOS exactly") ||
+            return false
+        expected_final = _perturbation_compensation_final_matches(cert.variables,
+                                                                  cert.target,
+                                                                  cert.perturbation,
+                                                                  cert.perturbed_squares,
+                                                                  cert.compensation_squares)
+        _check_or_report(io,
+                         _identity_matches_equal(cert.compensation_identity_proof,
+                                                 expected_final),
+                         "compensation identity metadata matches recomputation") ||
+            return false
+        _check_or_report(io,
+                         _identity_matches_all_exact(cert.compensation_identity_proof),
+                         "target equals perturbed SOS minus compensation exactly") ||
+            return false
+        _ok(io, "perturbation/compensation SOS certificate accepted")
+        return true
+    catch err
+        _fail(io,
+              "perturbation/compensation SOS verification error: $(sprint(showerror, err))")
+        return false
+    end
+end
+
 function _rational_function_sos_problem_json(variables::Vector{Symbol},
                                              target::Vector{PolynomialTerm})
     return (;
@@ -273,6 +422,18 @@ function _positivstellensatz_problem_json(variables::Vector{Symbol},
                           name=constraint.name,
                           polynomial=_sos_terms_json(constraint.polynomial),)
                          for constraint in constraints],)
+end
+
+function _perturbation_compensation_sos_problem_json(variables::Vector{Symbol},
+                                                     target::Vector{PolynomialTerm},
+                                                     perturbation::Vector{PolynomialTerm})
+    return (;
+            certsdp_problem_version=SCHEMA_V1_VERSION,
+            type=PERTURBATION_COMPENSATION_PROBLEM_TYPE,
+            field=LMI_FIELD,
+            variables=String.(variables),
+            polynomial=_sos_terms_json(target),
+            perturbation=_sos_terms_json(perturbation),)
 end
 
 function _canonical_rational_function_sos_certificate_json(cert::RationalFunctionSOSCertificate)
@@ -343,6 +504,47 @@ function _canonical_positivstellensatz_certificate_json(cert::Positivstellensatz
             verification=_positive_certificate_verification_json(cert.metadata),)
 end
 
+function _canonical_perturbation_compensation_sos_certificate_json(cert::PerturbationCompensationSOSCertificate)
+    problem = _perturbation_compensation_sos_problem_json(cert.variables,
+                                                          cert.target,
+                                                          cert.perturbation)
+    problem_hash = perturbation_compensation_sos_problem_hash(cert)
+    return (;
+            certsdp_certificate_version=SCHEMA_V1_VERSION,
+            certificate_type=PERTURBATION_COMPENSATION_CERTIFICATE_TYPE,
+            problem_hash,
+            problem=(;
+                     embedded=true,
+                     type=PERTURBATION_COMPENSATION_PROBLEM_TYPE,
+                     data=merge(problem, (; hash=problem_hash,)),),
+            solution=(;
+                      field=LMI_FIELD,
+                      representation="perturbation_compensation_sos",
+                      perturbed_sos=_sos_square_block_json(cert.perturbed_squares),
+                      compensation_sos=_sos_square_block_json(cert.compensation_squares),),
+            coefficient_proof=(;
+                               method="exact_coefficient_matching",
+                               identity="target_plus_perturbation_equals_perturbed_sos_and_target_equals_perturbed_minus_compensation",
+                               perturbed_matches=_identity_matches_json(cert.perturbed_identity_proof),
+                               compensation_matches=_identity_matches_json(cert.compensation_identity_proof),),
+            proof=(;
+                   perturbed_identity=(;
+                                       method="exact_coefficient_matching",
+                                       status="claimed",
+                                       equations=length(cert.perturbed_identity_proof),),
+                   compensation_identity=(;
+                                          method="exact_coefficient_matching",
+                                          status="claimed",
+                                          equations=length(cert.compensation_identity_proof),),
+                   sos=(;
+                        method=EXPLICIT_RATIONAL_SQUARES_METHOD,
+                        perturbed_squares=length(cert.perturbed_squares),
+                        compensation_squares=length(cert.compensation_squares),),),
+            provenance=_positive_certificate_provenance_json(cert.metadata,
+                                                             "perturbation_compensation_sos"),
+            verification=_positive_certificate_verification_json(cert.metadata),)
+end
+
 function _positive_certificate_provenance_json(metadata::Dict{Symbol, Any},
                                                default_source::AbstractString)
     return (;
@@ -365,7 +567,87 @@ function _parse_positive_certificate_v1_object(parsed, certificate_type::Abstrac
         return _parse_rational_function_sos_certificate_v1_object(parsed)
     certificate_type == POSITIVSTELLENSATZ_CERTIFICATE_TYPE &&
         return _parse_positivstellensatz_certificate_v1_object(parsed)
+    certificate_type == PERTURBATION_COMPENSATION_CERTIFICATE_TYPE &&
+        return _parse_perturbation_compensation_sos_certificate_v1_object(parsed)
     throw(ArgumentError("unsupported positive certificate type `$certificate_type`"))
+end
+
+function _parse_perturbation_compensation_sos_certificate_v1_object(parsed)
+    _require_value(parsed, CERTSDP_CERTIFICATE_VERSION_KEY, SCHEMA_V1_VERSION,
+                   "root.certsdp_certificate_version")
+    _require_value(parsed, :certificate_type,
+                   PERTURBATION_COMPENSATION_CERTIFICATE_TYPE,
+                   "root.certificate_type")
+    certificate_id = _require_string(parsed, :certificate_id, "root.certificate_id")
+    _validate_sha256_identifier(certificate_id, "root.certificate_id")
+    problem_block = _require_key(parsed, :problem, "root")
+    _require_object(problem_block, "root.problem")
+    _require_value(problem_block, :embedded, true, "root.problem.embedded")
+    _require_value(problem_block, :type, PERTURBATION_COMPENSATION_PROBLEM_TYPE,
+                   "root.problem.type")
+    problem = _parse_perturbation_compensation_sos_problem_v1_document(_require_key(problem_block,
+                                                                                    :data,
+                                                                                    "root.problem"))
+    supplied_problem_hash = _require_string(parsed, :problem_hash,
+                                            "root.problem_hash")
+    problem_hash = perturbation_compensation_sos_problem_hash(problem.variables,
+                                                              problem.polynomial,
+                                                              problem.perturbation)
+    supplied_problem_hash == problem_hash ||
+        throw(ArgumentError("root.problem_hash mismatch: expected $supplied_problem_hash, computed $problem_hash"))
+    _require_string(problem, :hash, "root.problem.data.hash") == problem_hash ||
+        throw(ArgumentError("root.problem.data.hash must match root.problem_hash"))
+
+    solution = _require_key(parsed, :solution, "root")
+    _require_object(solution, "root.solution")
+    _require_value(solution, :field, LMI_FIELD, "root.solution.field")
+    _require_value(solution, :representation, "perturbation_compensation_sos",
+                   "root.solution.representation")
+    perturbed = _parse_sos_square_block(_require_key(solution, :perturbed_sos,
+                                                     "root.solution"),
+                                        length(problem.variables),
+                                        "root.solution.perturbed_sos")
+    compensation = _parse_sos_square_block(_require_key(solution, :compensation_sos,
+                                                        "root.solution"),
+                                           length(problem.variables),
+                                           "root.solution.compensation_sos")
+    coefficient_proof = _require_key(parsed, :coefficient_proof, "root")
+    _require_object(coefficient_proof, "root.coefficient_proof")
+    _require_value(coefficient_proof, :method, "exact_coefficient_matching",
+                   "root.coefficient_proof.method")
+    _require_value(coefficient_proof,
+                   :identity,
+                   "target_plus_perturbation_equals_perturbed_sos_and_target_equals_perturbed_minus_compensation",
+                   "root.coefficient_proof.identity")
+    perturbed_matches = _parse_identity_matches_array(_require_key(coefficient_proof,
+                                                                   :perturbed_matches,
+                                                                   "root.coefficient_proof"),
+                                                      length(problem.variables),
+                                                      "root.coefficient_proof.perturbed_matches")
+    compensation_matches = _parse_identity_matches_array(_require_key(coefficient_proof,
+                                                                      :compensation_matches,
+                                                                      "root.coefficient_proof"),
+                                                         length(problem.variables),
+                                                         "root.coefficient_proof.compensation_matches")
+    _validate_perturbation_compensation_proof(parsed, "root")
+    provenance = _require_key(parsed, :provenance, "root")
+    verification = _require_key(parsed, :verification, "root")
+    _require_object(provenance, "root.provenance")
+    _require_object(verification, "root.verification")
+    metadata = _positive_certificate_metadata_from_blocks(provenance, verification)
+
+    cert = PerturbationCompensationSOSCertificate(problem.variables,
+                                                  problem.polynomial,
+                                                  problem.perturbation,
+                                                  perturbed,
+                                                  compensation,
+                                                  perturbed_matches,
+                                                  compensation_matches,
+                                                  certificate_id,
+                                                  metadata)
+    cert.hash == perturbation_compensation_sos_certificate_hash(cert) ||
+        throw(ArgumentError("root.certificate_id must match the perturbation/compensation SOS certificate hash"))
+    return cert
 end
 
 function _parse_rational_function_sos_certificate_v1_object(parsed)
@@ -551,6 +833,51 @@ function _parse_positivstellensatz_problem_v1_document(value)
                                          "root.problem.data.hash"),))
 end
 
+function _parse_perturbation_compensation_sos_problem_v1_document(value)
+    _require_object(value, "root.problem.data")
+    _require_value(value, CERTSDP_PROBLEM_VERSION_KEY, SCHEMA_V1_VERSION,
+                   "root.problem.data.certsdp_problem_version")
+    _require_value(value, :type, PERTURBATION_COMPENSATION_PROBLEM_TYPE,
+                   "root.problem.data.type")
+    _require_value(value, :field, LMI_FIELD, "root.problem.data.field")
+    variables = _parse_sos_variables_at(_require_key(value, :variables,
+                                                     "root.problem.data"),
+                                        "root.problem.data.variables")
+    polynomial = _parse_polynomial_terms_at(_require_key(value, :polynomial,
+                                                         "root.problem.data"),
+                                            length(variables),
+                                            "root.problem.data.polynomial")
+    perturbation = _parse_polynomial_terms_at(_require_key(value, :perturbation,
+                                                           "root.problem.data"),
+                                              length(variables),
+                                              "root.problem.data.perturbation")
+    return merge((;
+                  variables,
+                  polynomial,
+                  perturbation,),
+                 (; hash=_require_string(value, :hash,
+                                         "root.problem.data.hash"),))
+end
+
+function _validate_perturbation_compensation_proof(parsed, path::AbstractString)
+    proof = _require_key(parsed, :proof, path)
+    _require_object(proof, "$path.proof")
+    for field in (:perturbed_identity, :compensation_identity)
+        block = _require_key(proof, field, "$path.proof")
+        block_path = "$path.proof.$(String(field))"
+        _require_object(block, block_path)
+        _require_value(block, :method, "exact_coefficient_matching",
+                       "$block_path.method")
+        _require_value(block, :status, "claimed", "$block_path.status")
+        _require_integer(block, :equations, "$block_path.equations")
+    end
+    sos = _require_key(proof, :sos, "$path.proof")
+    _require_object(sos, "$path.proof.sos")
+    _require_value(sos, :method, EXPLICIT_RATIONAL_SQUARES_METHOD,
+                   "$path.proof.sos.method")
+    return true
+end
+
 function _validate_positive_certificate_proof(parsed, path::AbstractString)
     proof = _require_key(parsed, :proof, path)
     _require_object(proof, "$path.proof")
@@ -632,10 +959,17 @@ function _parse_identity_coefficient_proof(value, variable_count::Integer,
                    "coefficient_proof.method")
     _require_value(value, :identity, expected_identity, "coefficient_proof.identity")
     matches_value = _require_key(value, :matches, "coefficient_proof")
-    _require_array(matches_value, "coefficient_proof.matches")
+    return _parse_identity_matches_array(matches_value, variable_count,
+                                         "coefficient_proof.matches")
+end
+
+function _parse_identity_matches_array(matches_value,
+                                       variable_count::Integer,
+                                       path_prefix::AbstractString)
+    _require_array(matches_value, path_prefix)
     matches = PolynomialIdentityMatch[]
     for (i, match_value) in enumerate(matches_value)
-        path = "coefficient_proof.matches[$i]"
+        path = "$path_prefix[$i]"
         _require_object(match_value, path)
         exponents = _sos_exponent_vector(_require_key(match_value, :exponents, path),
                                          variable_count, "$path.exponents")
@@ -750,6 +1084,30 @@ function _positivstellensatz_identity_matches(variables::Vector{Symbol},
                                         variable_count)
 end
 
+function _perturbation_compensation_perturbed_matches(variables::Vector{Symbol},
+                                                      target::Vector{PolynomialTerm},
+                                                      perturbation::Vector{PolynomialTerm},
+                                                      perturbed_squares::Vector{SOSSquare})
+    variable_count = length(variables)
+    lhs = _poly_add(_poly_from_terms(target), _poly_from_terms(perturbation))
+    rhs = _polynomial_from_squares(perturbed_squares, variable_count)
+    return _polynomial_identity_matches(lhs, rhs, variable_count)
+end
+
+function _perturbation_compensation_final_matches(variables::Vector{Symbol},
+                                                  target::Vector{PolynomialTerm},
+                                                  perturbation::Vector{PolynomialTerm},
+                                                  perturbed_squares::Vector{SOSSquare},
+                                                  compensation_squares::Vector{SOSSquare})
+    variable_count = length(variables)
+    lhs = _poly_from_terms(target)
+    rhs = _poly_add(_polynomial_from_squares(perturbed_squares, variable_count),
+                    _poly_scale(_polynomial_from_squares(compensation_squares,
+                                                         variable_count),
+                                -1 // 1))
+    return _polynomial_identity_matches(lhs, rhs, variable_count)
+end
+
 function _polynomial_identity_matches(lhs::Dict, rhs::Dict, variable_count::Integer)
     exponents = union(Set(keys(lhs)), Set(keys(rhs)))
     matches = PolynomialIdentityMatch[]
@@ -821,6 +1179,18 @@ function _poly_mul(a::Dict, b::Dict)
         exponent = tuple((exp_a[i] + exp_b[i] for i in eachindex(exp_a))...)
         result[exponent] = get(result, exponent, 0 // 1) + coeff_a * coeff_b
         iszero(result[exponent]) && delete!(result, exponent)
+    end
+    return result
+end
+
+function _poly_scale(a::Dict, factor)
+    scale = _to_big_rational(factor; name=:polynomial_scale_factor)
+    iszero(scale) && return _poly_zero()
+    result = _poly_zero()
+    for (exponent, coefficient) in a
+        value = scale * coefficient
+        iszero(value) && continue
+        result[exponent] = value
     end
     return result
 end

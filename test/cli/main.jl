@@ -145,6 +145,46 @@
         @test occursin("@polyvar x", read(export_julia_path, String))
     end
 
+    @testset "certify-auto-sos round-project flow" begin
+        problem_path = tempname() * ".json"
+        solution_path = tempname() * ".json"
+        cert_path = tempname() * ".json"
+
+        problem = build_sos_gram_problem([:x],
+                                         [[1], [0]],
+                                         [PolynomialTerm([2], 1),
+                                          PolynomialTerm([0], 1)])
+        write(problem_path, sos_gram_problem_json_string(problem))
+        write(solution_path, """
+        {
+            "certsdp_version": "0.1",
+            "solution": {
+                "type": "rational_gram_matrix",
+                "gram_matrix": [[1.0000001, 0.125], [0.125, 0.9999999]]
+            }
+        }
+        """)
+
+        result = run_cli("certify-auto-sos",
+                         problem_path,
+                         "--solution",
+                         solution_path,
+                         "--out",
+                         cert_path,
+                         "--tolerance",
+                         "0.2",
+                         "--max-denominator",
+                         "64")
+        @test result.code == 0
+        @test occursin("[OK] exactification strategy: sos_round_project",
+                       result.out)
+        @test isfile(cert_path)
+
+        verify_result = run_cli("verify", "--strict", cert_path)
+        @test verify_result.code == 0
+        @test occursin("[OK] SOS Gram certificate accepted", verify_result.out)
+    end
+
     @testset "certify algebraic flow through msolve when available" begin
         if !has_msolve()
             @test_skip "msolve binary is not installed"

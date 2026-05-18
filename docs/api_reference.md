@@ -56,6 +56,7 @@ should branch with `verify(result)`, write accepted results with
 | Algebraic LMI from approximate seed | `certify(problem, approx; algebraic_backend=:msolve)` | `verify(result)` |
 | SDPA or block LMI | `read_problem(path)` then `certify` | `verify --strict` through CLI or `verify` in Julia |
 | SOS Gram data | `certify_sos(problem_or_path, gram)` | `verify_sos(result)` |
+| Approximate SOS Gram data | `certify_auto_sos(problem, gram; tolerance=...)` | `verify_sos(result)` or `verify --strict` after writing |
 | Failure diagnostics | `diagnose(result_or_failure)` | `bin/certsdp explain failure.json` for saved reports |
 | Replayable artifact | `write_certificate(path, result)` | `bin/certsdp bundle` and `bin/certsdp replay` |
 
@@ -85,12 +86,17 @@ write_certificate
 ```@docs
 certify_sos
 verify_sos
+certify_auto_sos
 export_sos_decomposition
 sos_decomposition_text
 sos_decomposition_latex
 sos_decomposition_sage
 sos_decomposition_julia
 ```
+
+`certify_auto_sos` is documented for practical use but remains an experimental
+exactification API in the v1 line. The accepted certificate is still ordinary
+strictly replayed SOS data.
 
 ## Public Index
 

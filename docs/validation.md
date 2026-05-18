@@ -37,6 +37,12 @@ The validation suite includes:
 - algebraic certificate replay where bounded rational rounding fails;
 - certifier-generated algebraic certificates from approximate candidates;
 - exact SOS Gram certificates with coefficient matching;
+- strategy-based SOS round/project exactification;
+- algebraic SOS Gram replay over explicit `QQ(alpha)` data;
+- perturbation/compensation positive-polynomial identity replay;
+- noncommutative word, trace-cyclic, and relation-reduction replay gates;
+- external adapter replay artifacts for translated third-party certificates;
+- reviewer artifact generation with strict replay text and manifests;
 - SDPA sparse import;
 - JuMP/MOI extracted multi-block SDP;
 - SumOfSquares-style extracted SOS Gram workflow;
@@ -86,6 +92,21 @@ test gate goes deeper and mutates the proof surface directly:
 | Principal minors, LDL pivots, and Schur-zero data | PSD proof data is recomputed and fake pivots/minors are rejected. |
 | Algebraic minimal polynomial, root interval, and coordinate functions | Root isolation and exact algebraic equality/sign checks are replayed. |
 | SOS coefficient table and Gram PSD proof | Coefficient matching and the embedded Gram PSD certificate are recomputed. |
+| External adapter artifacts | Raw solver logs, transcripts, and floating residuals are rejected before replay. |
+| Noncommutative relation reductions | Recorded fingerprints and reduced word identities must match recomputation. |
+
+## Hard-Gate Evidence
+
+The roadmap hard-gate tests complement the public validation rows. They check
+that newly added research-facing paths are production-complete at the verifier
+boundary before they are promoted as user-facing claims:
+
+- exactification strategies expose bounded attempt diagnostics;
+- unsupported experimental strategies fail loudly instead of producing partial
+  certificates;
+- external adapter wrappers accept only translated CertSDP certificates;
+- reviewer artifact directories are generated only after strict replay accepts;
+- NC and algebraic SOS replay paths reject stale or mismatched proof metadata.
 
 ## Raw Artifacts And DOI
 

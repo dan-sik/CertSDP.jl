@@ -993,8 +993,8 @@ function _certify_from_msolve_output(P::LMIProblem,
                                                                          :has_rur => !isnothing(output.rur),
                                                                          :attempt => attempt))
 
-    method, pivots = try
-        _certification_psd_choice(psd_method, profile, pivot_block, matrix_size(P))
+    method_plan = try
+        _certification_psd_choices(psd_method, profile, pivot_block, matrix_size(P))
     catch err
         return _certification_exception(:invalid_psd_proof_method, :certificate_build, err)
     end
@@ -1017,28 +1017,44 @@ function _certify_from_msolve_output(P::LMIProblem,
             continue
         end
 
-        cert = try
-            AlgebraicCertificate(P, candidate.root, candidate.coordinates;
-                                 psd_method=method, pivot_block=pivots,
-                                 provenance=_algebraic_certificate_backend_provenance(backend_provenance))
-        catch err
-            push!(selected_failures, _candidate_failure(candidate, :certificate_build, err))
-            continue
-        end
+        for plan in method_plan
+            cert = try
+                AlgebraicCertificate(P, candidate.root, candidate.coordinates;
+                                     psd_method=plan.method,
+                                     pivot_block=plan.pivot_block,
+                                     provenance=_algebraic_certificate_backend_provenance(backend_provenance))
+            catch err
+                push!(selected_failures,
+                      _candidate_failure(candidate,
+                                         :certificate_build,
+                                         err;
+                                         psd_method=plan.method,
+                                         pivot_block=plan.pivot_block))
+                continue
+            end
 
-        accepted = try
-            verify(cert; io=verify_io)
-        catch err
-            push!(selected_failures, _candidate_failure(candidate, :verify_exception, err))
-            continue
-        end
+            accepted = try
+                verify(cert; io=verify_io)
+            catch err
+                push!(selected_failures,
+                      _candidate_failure(candidate,
+                                         :verify_exception,
+                                         err;
+                                         psd_method=plan.method,
+                                         pivot_block=plan.pivot_block))
+                continue
+            end
 
-        accepted && return cert
-        push!(selected_failures,
-              Dict{Symbol, Any}(:stage => :verify,
-                                :message => "exact verifier rejected candidate certificate",
-                                :distance => string(candidate.distance),
-                                :root_interval => _rational_interval_strings(candidate.root.interval)))
+            accepted && return cert
+            push!(selected_failures,
+                  Dict{Symbol, Any}(:stage => :verify,
+                                    :message => "exact verifier rejected candidate certificate",
+                                    :distance => string(candidate.distance),
+                                    :root_interval => _rational_interval_strings(candidate.root.interval),
+                                    :psd_method => plan.method,
+                                    :pivot_block => isnothing(plan.pivot_block) ?
+                                                    nothing : copy(plan.pivot_block)))
+        end
     end
 
     reason = _candidate_failures_are_psd(selected_failures) ? :psd_verification_failed :
@@ -1112,6 +1128,15 @@ end
 
 function _certification_psd_choice(psd_method, profile::RankProfile, pivot_block,
                                    matrix_size_value::Integer)
+    plan = first(_certification_psd_choices(psd_method, profile, pivot_block,
+                                            matrix_size_value))
+    return plan.method, plan.pivot_block
+end
+
+function _certification_psd_choices(psd_method,
+                                    profile::RankProfile,
+                                    pivot_block,
+                                    matrix_size_value::Integer)
     method = Symbol(psd_method)
     if method === :auto
         method = profile.rank < matrix_size_value ? Symbol(SCHUR_ZERO_PSD_METHOD) :
@@ -1121,21 +1146,34 @@ function _certification_psd_choice(psd_method, profile::RankProfile, pivot_block
     if method === Symbol(SCHUR_ZERO_PSD_METHOD)
         pivots = isnothing(pivot_block) ? copy(profile.pivot_cols) :
                  Int[value for value in pivot_block]
-        return method, pivots
+        plans = Any[(; method, pivot_block=pivots)]
+        isnothing(pivot_block) &&
+            append!(plans,
+                    [(; method=Symbol(RATIONAL_PSD_METHOD), pivot_block=nothing),
+                     (; method=Symbol(LDL_PSD_METHOD), pivot_block=nothing),
+                     (; method=Symbol(PIVOTED_LDL_PSD_METHOD), pivot_block=nothing)])
+        return plans
     elseif method in (Symbol(RATIONAL_PSD_METHOD), Symbol(LDL_PSD_METHOD),
                       Symbol(PIVOTED_LDL_PSD_METHOD), :auto)
-        return method, nothing
+        return [(; method, pivot_block=nothing)]
     end
 
     throw(ArgumentError("unsupported PSD proof method `$psd_method`"))
 end
 
-function _candidate_failure(candidate::SelectedAlgebraicSolution, stage::Symbol, err)
+function _candidate_failure(candidate::SelectedAlgebraicSolution,
+                            stage::Symbol,
+                            err;
+                            psd_method=nothing,
+                            pivot_block=nothing)
     return Dict{Symbol, Any}(:stage => stage,
                              :message => sprint(showerror, err),
                              :exception_type => string(typeof(err)),
                              :distance => string(candidate.distance),
-                             :root_interval => _rational_interval_strings(candidate.root.interval))
+                             :root_interval => _rational_interval_strings(candidate.root.interval),
+                             :psd_method => psd_method,
+                             :pivot_block => isnothing(pivot_block) ? nothing :
+                                             copy(pivot_block))
 end
 
 """
