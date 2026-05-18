@@ -2,9 +2,9 @@
 
 # CertSDP.jl
 
-[![CI](https://github.com/fang251440/CertSDP.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/fang251440/CertSDP.jl/actions/workflows/ci.yml)
-[![Docs](https://github.com/fang251440/CertSDP.jl/actions/workflows/docs.yml/badge.svg)](https://github.com/fang251440/CertSDP.jl/actions/workflows/docs.yml)
-[![Validation](https://github.com/fang251440/CertSDP.jl/actions/workflows/validation.yml/badge.svg)](https://github.com/fang251440/CertSDP.jl/actions/workflows/validation.yml)
+[![CI](https://github.com/dan-sik/CertSDP.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/dan-sik/CertSDP.jl/actions/workflows/ci.yml)
+[![Docs](https://github.com/dan-sik/CertSDP.jl/actions/workflows/docs.yml/badge.svg)](https://github.com/dan-sik/CertSDP.jl/actions/workflows/docs.yml)
+[![Validation](https://github.com/dan-sik/CertSDP.jl/actions/workflows/validation.yml/badge.svg)](https://github.com/dan-sik/CertSDP.jl/actions/workflows/validation.yml)
 [![Julia 1.10+](https://img.shields.io/badge/Julia-1.10%2B-9558B2)](Project.toml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 

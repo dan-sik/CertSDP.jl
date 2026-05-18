@@ -7,8 +7,8 @@ authors:
 version: "1.0.0"
 date-released: "2026-05-14"
 license: "Apache-2.0"
-repository-code: "https://github.com/fang251440/CertSDP.jl"
-url: "https://github.com/fang251440/CertSDP.jl"
+repository-code: "https://github.com/dan-sik/CertSDP.jl"
+url: "https://github.com/dan-sik/CertSDP.jl"
 abstract: >-
   CertSDP.jl is an exact replay layer for semidefinite programming and
   sum-of-squares workflows. Numerical solvers and algebraic backends may

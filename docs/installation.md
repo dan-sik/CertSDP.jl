@@ -33,7 +33,7 @@ Until a Julia General registry release exists, downstream Julia environments
 should depend on the repository URL or a local checkout:
 
 ```bash
-julia -e 'using Pkg; Pkg.develop(url="https://github.com/fang251440/CertSDP.jl")'
+julia -e 'using Pkg; Pkg.develop(url="https://github.com/dan-sik/CertSDP.jl")'
 # or, from a local clone:
 julia -e 'using Pkg; Pkg.develop(path="/absolute/path/to/CertSDP")'
 ```
