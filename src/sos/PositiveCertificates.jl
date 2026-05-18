@@ -82,7 +82,8 @@ function PositivstellensatzCertificate(variables, target, constraints, terms;
     for (i, constraint) in enumerate(constraints)
         named = _as_named_polynomial(constraint, length(variable_names),
                                      "constraints[$i]")
-        isempty(named.name) && throw(ArgumentError("constraints[$i].name must not be empty"))
+        isempty(named.name) &&
+            throw(ArgumentError("constraints[$i].name must not be empty"))
         named.name in seen &&
             throw(ArgumentError("constraint name `$(named.name)` is repeated"))
         push!(seen, named.name)
@@ -170,10 +171,12 @@ function write_certificate(path::AbstractString, cert::PositivstellensatzCertifi
     return path
 end
 
-save_certificate(path::AbstractString, cert::RationalFunctionSOSCertificate) =
-    write_certificate(path, cert)
-save_certificate(path::AbstractString, cert::PositivstellensatzCertificate) =
-    write_certificate(path, cert)
+function save_certificate(path::AbstractString, cert::RationalFunctionSOSCertificate)
+    return write_certificate(path, cert)
+end
+function save_certificate(path::AbstractString, cert::PositivstellensatzCertificate)
+    return write_certificate(path, cert)
+end
 
 function verify(cert::RationalFunctionSOSCertificate; io::Union{Nothing, IO}=nothing,
                 strict::Bool=false, kwargs...)
@@ -192,8 +195,9 @@ function verify(cert::RationalFunctionSOSCertificate; io::Union{Nothing, IO}=not
                          _require_string(certificate_json_v1(cert).problem.data, :hash,
                                          "problem.data.hash"),
                          "rational-function SOS problem hash matches") || return false
-        _check_or_report(io, !isempty(_polynomial_from_squares(cert.denominator_squares,
-                                                               length(cert.variables))),
+        _check_or_report(io,
+                         !isempty(_polynomial_from_squares(cert.denominator_squares,
+                                                           length(cert.variables))),
                          "denominator SOS is not the zero polynomial") || return false
         expected = _rational_function_sos_identity_matches(cert.variables, cert.target,
                                                            cert.numerator_squares,
@@ -490,8 +494,9 @@ function _parse_rational_function_sos_problem_v1_document(value)
                                             "root.problem.data.polynomial")
     return merge((;
                   variables,
-                  polynomial,), (; hash=_require_string(value, :hash,
-                                                        "root.problem.data.hash"),))
+                  polynomial,),
+                 (; hash=_require_string(value, :hash,
+                                         "root.problem.data.hash"),))
 end
 
 function _parse_positivstellensatz_problem_v1_document(value)
@@ -528,8 +533,9 @@ function _parse_positivstellensatz_problem_v1_document(value)
     return merge((;
                   variables,
                   polynomial,
-                  constraints,), (; hash=_require_string(value, :hash,
-                                                         "root.problem.data.hash"),))
+                  constraints,),
+                 (; hash=_require_string(value, :hash,
+                                         "root.problem.data.hash"),))
 end
 
 function _validate_positive_certificate_proof(parsed, path::AbstractString)
@@ -850,7 +856,7 @@ function convert_sostools_lite_json(input_path::AbstractString;
                           solution=(;
                                     type=SOS_GRAM_SOLUTION_TYPE,
                                     gram_matrix=_json_matrix(gram),),))
-            println(io)
+            return println(io)
         end
     end
     cert = if isnothing(cert_out)

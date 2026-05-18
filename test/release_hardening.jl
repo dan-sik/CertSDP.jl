@@ -109,17 +109,17 @@ using TOML
                                    "docs/Manifest.toml",
                                    "docs/build"])
             @test all(path -> !(path in forbidden_paths &&
-                                 (isfile(joinpath(repo_root, path)) ||
-                                  isdir(joinpath(repo_root, path)))),
+                                (isfile(joinpath(repo_root, path)) ||
+                                 isdir(joinpath(repo_root, path)))),
                       tracked)
             @test all(path -> !(startswith(path, "designdoc/") &&
-                                 isfile(joinpath(repo_root, path))), tracked)
+                                isfile(joinpath(repo_root, path))), tracked)
             @test all(path -> !(startswith(path, "reports/") &&
-                                 isfile(joinpath(repo_root, path))), tracked)
+                                isfile(joinpath(repo_root, path))), tracked)
             @test all(path -> !(startswith(path, "benchmarks/generated/") &&
-                                 isfile(joinpath(repo_root, path))), tracked)
+                                isfile(joinpath(repo_root, path))), tracked)
             @test all(path -> !(startswith(path, "references/") &&
-                                 isfile(joinpath(repo_root, path))), tracked)
+                                isfile(joinpath(repo_root, path))), tracked)
 
             text_suffixes = [".md", ".jl", ".toml", ".json", ".yml", ".yaml",
                              ".cff", ".sh", ".txt"]

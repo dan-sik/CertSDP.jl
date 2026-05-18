@@ -8,7 +8,7 @@
 [![Julia 1.10+](https://img.shields.io/badge/Julia-1.10%2B-9558B2)](Project.toml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-**Exact replay for SDP and SOS certificates.**
+**Exact replay for numerical SDP/SOS certificates.**
 
 </div>
 
@@ -65,7 +65,7 @@ solver output / Gram matrix / imported model
 - [Validation Evidence](#validation-evidence)
 - [Showcases](#showcases)
 - [Platform Support](#platform-support)
-- [Limits](#limits)
+- [Limitations](#limitations)
 - [Documentation](#documentation)
 - [Citation](#citation)
 - [License](#license)
@@ -226,7 +226,8 @@ The certifier may be complicated. The verifier must remain small, exact, and aud
 - optional **JuMP/MOI extraction**;
 - optional **SumOfSquares.jl extraction**;
 - optional **`msolve` or Sage/msolve candidate generation**;
-- optional **Clarabel numerical oracle** for approximate seeds and diagnostics.
+- **Optional numerical oracle:** Clarabel can provide approximate seeds and
+  diagnostics.
 
 > Optional components help with search and extraction. **They are not trusted by
 > strict replay.**
@@ -283,6 +284,8 @@ substitution, certified signs, and PSD proof replay. See
 CertSDP ships a public validation suite that is meant to be an evidence
 contract, not a solver-speed leaderboard. The tracked v1.0 report includes
 strong cases such as:
+
+### Current Validation Snapshot
 
 | Case | Representative rows | What it exercises |
 | --- | --- | --- |
@@ -345,7 +348,7 @@ installation.
 
 ---
 
-## Limits
+## Limitations
 
 CertSDP targets exact certification for supported small-to-medium audit and
 reproducibility workflows. **It is not:**
