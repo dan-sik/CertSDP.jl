@@ -2,278 +2,298 @@ module CertSDPSumOfSquaresExt
 
 using CertSDP
 import CertSDP: certify_sos, extract_sos_gram_sdp
+import MathOptInterface as MOI
 
 using JuMP: JuMP
 using MultivariatePolynomials: MultivariatePolynomials
+using MultivariateBases: MultivariateBases
 using SumOfSquares: SumOfSquares
 
 const MP = MultivariatePolynomials
+const MB = MultivariateBases
 const SOS = SumOfSquares
 
-"""
-    extract_sos_gram_sdp(gram::SumOfSquares.GramMatrix; polynomial=nothing)
+# ---------------------------------------------------------------------------
+# Constraint attributes
+# ---------------------------------------------------------------------------
 
-Optional SumOfSquares frontend. It converts a SumOfSquares Gram matrix into
-CertSDP's exact `SOSGramProblem` plus Gram matrix. The Gram entries and
-polynomial coefficients must be reconstructable as rationals; numerical solver
-rounding remains outside the trusted verifier.
 """
-function extract_sos_gram_sdp(gram::SOS.GramMatrix; polynomial=nothing,
-                              reconstruct_floats::Bool=false,
-                              tolerance=nothing,
-                              max_denominator::Integer=CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR)
-    variables = _certsdp_sos_variables(gram)
-    basis = [_certsdp_exponents(monomial, variables) for monomial in gram.basis.monomials]
-    target = isnothing(polynomial) ? MP.polynomial(gram) : polynomial
-    terms = _certsdp_polynomial_terms(target, variables;
-                                      reconstruct_floats,
-                                      tolerance,
-                                      max_denominator)
-    problem = CertSDP.SOSGramProblem(Symbol.(string.(variables)), basis, terms)
-    return (;
-            problem,
-            gram_matrix=_certsdp_gram_matrix(gram;
-                                             reconstruct_floats,
-                                             tolerance,
-                                             max_denominator),)
+    Problem(; multiplier_index = 1,
+             result_index = 1,
+             reconstruct_floats = false,
+             tolerance = nothing,
+             max_denominator = ...)
+
+`MOI.AbstractConstraintAttribute` returning a NamedTuple
+`(; problem, gram_matrix)` where `problem` is a CertSDP `SOSGramProblem` and
+`gram_matrix` the corresponding rational Gram matrix.
+
+The getter for `SumOfSquares.Bridges.Variable.KernelBridge` reads the target
+polynomial basis from `bridge.set.basis`, the evaluated polynomial coefficients
+via `MOI.ConstraintPrimal`, the gram basis from
+`bridge.set.gram_bases[multiplier_index]` and the Gram matrix via
+`SumOfSquares.GramMatrixAttribute`.
+"""
+Base.@kwdef struct Problem <: MOI.AbstractConstraintAttribute
+    multiplier_index::Int = 1
+    result_index::Int = 1
+    reconstruct_floats::Bool = false
+    tolerance::Union{Nothing,Real} = nothing
+    max_denominator::Integer = CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR
 end
 
 """
-    extract_sos_gram_sdp(cref::JuMP.ConstraintRef; gram_matrix=nothing)
+    SOSCertificate(; multiplier_index = 1,
+                    result_index = 1,
+                    reconstruct_floats = false,
+                    tolerance = nothing,
+                    max_denominator = ...)
 
-Extract the target polynomial, Gram basis, coefficient-matching metadata source,
-and rational Gram matrix for a SumOfSquares constraint. If the model has not
-been optimized, pass an exact `gram_matrix` explicitly.
+`MOI.AbstractConstraintAttribute` returning a `CertSDP.CertifiedResult` for a
+SumOfSquares constraint: the getter queries `Problem` and applies
+`CertSDP.certify_sos` to the extracted problem and rational Gram matrix.
 """
-function extract_sos_gram_sdp(cref::JuMP.ConstraintRef; gram_matrix=nothing,
-                              reconstruct_floats::Bool=false,
-                              tolerance=nothing,
-                              max_denominator::Integer=CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR)
-    object = JuMP.constraint_object(cref)
-    polynomial = _certsdp_constraint_polynomial(object)
-    variables = collect(MP.variables(polynomial))
-
-    gram = if isnothing(gram_matrix)
-        _certsdp_constraint_gram_matrix(cref; require_solved=true)
-    else
-        _certsdp_gram_from_constraint_basis(object, gram_matrix)
-    end
-
-    basis_variables = _certsdp_sos_variables(gram)
-    if Set(string.(basis_variables)) != Set(string.(variables))
-        variables = _certsdp_merge_variables(variables, basis_variables)
-    end
-    basis = [_certsdp_exponents(monomial, variables) for monomial in gram.basis.monomials]
-    terms = _certsdp_polynomial_terms(polynomial, variables;
-                                      reconstruct_floats,
-                                      tolerance,
-                                      max_denominator)
-    problem = CertSDP.SOSGramProblem(Symbol.(string.(variables)), basis, terms)
-    return (;
-            problem,
-            gram_matrix=_certsdp_gram_matrix(gram;
-                                             reconstruct_floats,
-                                             tolerance,
-                                             max_denominator),)
+Base.@kwdef struct SOSCertificate <: MOI.AbstractConstraintAttribute
+    multiplier_index::Int = 1
+    result_index::Int = 1
+    reconstruct_floats::Bool = false
+    tolerance::Union{Nothing,Real} = nothing
+    max_denominator::Integer = CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR
 end
 
-"""
-    extract_sos_gram_sdp(model::JuMP.Model; gram_matrices=nothing)
+MOI.is_set_by_optimize(::Union{Problem,SOSCertificate}) = true
 
-Extract all SOS constraints from a SumOfSquares/JuMP model. A single SOS
-constraint returns one `(problem, gram_matrix)` pair. Multiple constraints return
-a vector of pairs for callers that want to certify each block separately.
-"""
-function extract_sos_gram_sdp(model::JuMP.GenericModel; gram_matrices=nothing,
-                              reconstruct_floats::Bool=false,
-                              tolerance=nothing,
-                              max_denominator::Integer=CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR)
-    refs = _certsdp_sos_constraint_refs(model)
-    isempty(refs) &&
-        throw(ArgumentError("JuMP model contains no SumOfSquares SOS constraints to extract"))
-    if isnothing(gram_matrices)
-        _certsdp_require_solved_model(model)
-        extracted = [extract_sos_gram_sdp(ref;
-                                          reconstruct_floats,
-                                          tolerance,
-                                          max_denominator)
-                     for ref in refs]
-    else
-        length(gram_matrices) == length(refs) ||
-            throw(ArgumentError("gram_matrices has length $(length(gram_matrices)); expected $(length(refs))"))
-        extracted = [extract_sos_gram_sdp(ref;
-                                          gram_matrix=gram_matrices[i],
-                                          reconstruct_floats,
-                                          tolerance,
-                                          max_denominator)
-                     for (i, ref) in enumerate(refs)]
-    end
-    return length(extracted) == 1 ? extracted[1] : extracted
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::Problem,
+    bridge::SOS.Bridges.Variable.KernelBridge{T,M},
+) where {T,M}
+    SOS.check_multiplier_index_bounds(
+        SOS.GramMatrixAttribute(;
+            multiplier_index = attr.multiplier_index,
+            result_index = attr.result_index,
+        ),
+        eachindex(bridge.constraints),
+    )
+    set = bridge.set
+    target_monos = MB.keys_as_monomials(set.basis)
+    target_coeffs = MOI.get(model, MOI.ConstraintPrimal(attr.result_index), bridge)
+    gram = MOI.get(
+        model,
+        SOS.GramMatrixAttribute(;
+            multiplier_index = attr.multiplier_index,
+            result_index = attr.result_index,
+        ),
+        bridge,
+    )
+    gram_monos = MB.keys_as_monomials(set.gram_bases[attr.multiplier_index])
+    return _build_problem(
+        attr, target_monos, target_coeffs, gram_monos, SOS.value_matrix(gram),
+    )
 end
 
-function certify_sos(model::JuMP.GenericModel; gram_matrices=nothing,
-                     reconstruct_floats::Bool=false,
-                     tolerance=nothing,
-                     max_denominator::Integer=CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR)
-    extracted = extract_sos_gram_sdp(model;
-                                     gram_matrices,
-                                     reconstruct_floats,
-                                     tolerance,
-                                     max_denominator)
-    if extracted isa AbstractVector
-        return [CertSDP.certify_sos(item.problem, item.gram_matrix) for item in extracted]
-    end
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::SOSCertificate,
+    bridge::SOS.Bridges.Variable.KernelBridge,
+)
+    extracted = MOI.get(
+        model,
+        Problem(;
+            multiplier_index = attr.multiplier_index,
+            result_index = attr.result_index,
+            reconstruct_floats = attr.reconstruct_floats,
+            tolerance = attr.tolerance,
+            max_denominator = attr.max_denominator,
+        ),
+        bridge,
+    )
     return CertSDP.certify_sos(extracted.problem, extracted.gram_matrix)
 end
 
-function _certsdp_sos_variables(gram::SOS.GramMatrix)
-    return collect(MP.variables(gram))
-end
+# ---------------------------------------------------------------------------
+# Public API — per-constraint convenience wrappers
+# ---------------------------------------------------------------------------
 
-function _certsdp_polynomial_terms(polynomial, variables;
-                                   reconstruct_floats::Bool=false,
-                                   tolerance=nothing,
-                                   max_denominator::Integer=CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR)
-    terms = CertSDP.PolynomialTerm[]
-    for term in MP.terms(polynomial)
-        coefficient = _certsdp_exact_rational(MP.coefficient(term);
-                                              reconstruct_floats,
-                                              tolerance,
-                                              max_denominator,
-                                              path="polynomial coefficient")
-        iszero(coefficient) && continue
-        push!(terms,
-              CertSDP.PolynomialTerm(_certsdp_exponents(term, variables), coefficient))
+function extract_sos_gram_sdp(
+    cref::JuMP.ConstraintRef;
+    gram_matrix = nothing,
+    reconstruct_floats::Bool = false,
+    tolerance = nothing,
+    max_denominator::Integer = CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR,
+)
+    attr = Problem(; reconstruct_floats, tolerance, max_denominator)
+    if isnothing(gram_matrix)
+        return MOI.get(JuMP.owner_model(cref), attr, cref)
     end
-    return terms
+    target_monos, target_coeffs, gram_monos = _constraint_data(cref)
+    return _build_problem(attr, target_monos, target_coeffs, gram_monos, gram_matrix)
 end
 
-function _certsdp_exponents(term, variables)
-    raw_exponents = MP.exponents(term)
-    term_variables = collect(MP.variables(term))
-    length(term_variables) == length(raw_exponents) ||
-        throw(ArgumentError("cannot align monomial exponents from SumOfSquares frontend"))
-
-    by_variable = Dict(string(variable) => Int(exponent)
-                       for (variable, exponent) in zip(term_variables, raw_exponents))
-    return [get(by_variable, string(variable), 0) for variable in variables]
+function certify_sos(
+    cref::JuMP.ConstraintRef;
+    gram_matrix = nothing,
+    reconstruct_floats::Bool = false,
+    tolerance = nothing,
+    max_denominator::Integer = CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR,
+)
+    if isnothing(gram_matrix)
+        attr = SOSCertificate(; reconstruct_floats, tolerance, max_denominator)
+        return MOI.get(JuMP.owner_model(cref), attr, cref)
+    end
+    extracted = extract_sos_gram_sdp(
+        cref;
+        gram_matrix,
+        reconstruct_floats,
+        tolerance,
+        max_denominator,
+    )
+    return CertSDP.certify_sos(extracted.problem, extracted.gram_matrix)
 end
 
-function _certsdp_exact_rational(value;
-                                 reconstruct_floats::Bool=false,
-                                 tolerance=nothing,
-                                 max_denominator::Integer=CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR,
-                                 path::AbstractString="value")
+function extract_sos_gram_sdp(
+    gram::SOS.GramMatrix;
+    polynomial = nothing,
+    reconstruct_floats::Bool = false,
+    tolerance = nothing,
+    max_denominator::Integer = CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR,
+)
+    attr = Problem(; reconstruct_floats, tolerance, max_denominator)
+    target = isnothing(polynomial) ? MP.polynomial(gram) : polynomial
+    return _build_problem(
+        attr,
+        MP.monomials(target),
+        MP.coefficients(target),
+        MB.keys_as_monomials(gram.basis),
+        SOS.value_matrix(gram),
+    )
+end
+
+# ---------------------------------------------------------------------------
+# Internals
+# ---------------------------------------------------------------------------
+
+function _build_problem(attr::Problem, target_monos, target_coeffs, gram_monos, Q)
+    variables = _merge_variables(target_monos, gram_monos)
+    terms = CertSDP.PolynomialTerm[]
+    for (mono, coeff) in zip(target_monos, target_coeffs)
+        rcoeff = _exact_rational(coeff, attr; path = "polynomial coefficient")
+        iszero(rcoeff) && continue
+        push!(terms, CertSDP.PolynomialTerm(_exponents(mono, variables), rcoeff))
+    end
+    basis_exponents = [_exponents(mono, variables) for mono in gram_monos]
+    problem = CertSDP.SOSGramProblem(
+        Symbol.(string.(variables)),
+        basis_exponents,
+        terms,
+    )
+    gram_matrix = [
+        _exact_rational(Q[i, j], attr; path = "Gram matrix entry ($i,$j)") for
+        i in axes(Q, 1), j in axes(Q, 2)
+    ]
+    return (; problem, gram_matrix)
+end
+
+function _constraint_data(cref::JuMP.ConstraintRef)
+    object = JuMP.constraint_object(cref)
+    set = object.set
+    basis = object.shape.basis
+    poly_element = MB.algebra_element(
+        MB.sparse_coefficients(
+            MP.polynomial(object.func, MB.keys_as_monomials(basis)),
+        ),
+        MB.implicit_basis(basis),
+    )
+    reduced = SOS.Certificate.reduced_polynomial(
+        set.certificate, poly_element, set.domain,
+    )
+    gram_basis = SOS.Certificate.gram_basis(
+        set.certificate,
+        SOS.Certificate.with_variables(reduced, set.domain),
+    )
+    poly = MP.polynomial(reduced)
+    return MP.monomials(poly), MP.coefficients(poly), MB.keys_as_monomials(gram_basis)
+end
+
+function _merge_variables(target_monos, gram_monos)
+    vars = collect(MP.variables(target_monos))
+    seen = Set(string.(vars))
+    for v in MP.variables(gram_monos)
+        key = string(v)
+        key in seen && continue
+        push!(vars, v)
+        push!(seen, key)
+    end
+    return vars
+end
+
+function _exact_rational(value, attr::Problem; path::AbstractString = "value")
+    return _exact_rational(
+        value;
+        reconstruct_floats = attr.reconstruct_floats,
+        tolerance = attr.tolerance,
+        max_denominator = attr.max_denominator,
+        path,
+    )
+end
+
+function _exact_rational(
+    value;
+    reconstruct_floats::Bool = false,
+    tolerance = nothing,
+    max_denominator::Integer = CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR,
+    path::AbstractString = "value",
+)
     if value isa Integer
         return Rational{BigInt}(BigInt(value), BigInt(1))
     elseif value isa Rational
-        return Rational{BigInt}(BigInt(numerator(value)), BigInt(denominator(value)))
+        return Rational{BigInt}(
+            BigInt(numerator(value)),
+            BigInt(denominator(value)),
+        )
     elseif value isa AbstractFloat
-        reconstruct_floats ||
-            throw(ArgumentError("SOS Gram extraction found floating-point $path; call with reconstruct_floats=true and an explicit tolerance to build a rational candidate"))
-        return CertSDP.reconstruct_rational_value(value;
-                                                  tolerance,
-                                                  max_denominator,
-                                                  path)
+        reconstruct_floats || throw(
+            ArgumentError(
+                "SOS Gram extraction found floating-point $path; call with `reconstruct_floats=true` and an explicit `tolerance` to build a rational candidate",
+            ),
+        )
+        return CertSDP.reconstruct_rational_value(
+            value;
+            tolerance,
+            max_denominator,
+            path,
+        )
     end
-    throw(ArgumentError("SOS Gram extraction only accepts exact integer/rational coefficients; got $(typeof(value))"))
+    throw(
+        ArgumentError(
+            "SOS Gram extraction only accepts exact integer/rational coefficients; got $(typeof(value))",
+        ),
+    )
 end
 
-function _certsdp_exact_rational(value::JuMP.GenericAffExpr; kwargs...)
-    isempty(value.terms) ||
-        throw(ArgumentError("SOS polynomial coefficient contains JuMP decision variables; provide an exact solved target polynomial before certification"))
-    return _certsdp_exact_rational(value.constant; kwargs...)
+function _exact_rational(value::JuMP.GenericAffExpr; kwargs...)
+    isempty(value.terms) || throw(
+        ArgumentError(
+            "SOS polynomial coefficient contains JuMP decision variables; provide an exact solved target polynomial before certification",
+        ),
+    )
+    return _exact_rational(value.constant; kwargs...)
 end
 
-function _certsdp_exact_rational(value::JuMP.AbstractVariableRef; kwargs...)
-    throw(ArgumentError("SOS polynomial coefficient contains JuMP variable `$value`; provide an exact solved target polynomial before certification"))
+function _exact_rational(value::JuMP.AbstractVariableRef; kwargs...)
+    return throw(
+        ArgumentError(
+            "SOS polynomial coefficient contains JuMP variable `$value`; provide an exact solved target polynomial before certification",
+        ),
+    )
 end
 
-function _certsdp_gram_matrix(gram::SOS.GramMatrix;
-                              reconstruct_floats::Bool=false,
-                              tolerance=nothing,
-                              max_denominator::Integer=CertSDP.DEFAULT_SOS_RATIONAL_RECONSTRUCTION_MAX_DENOMINATOR)
-    Q = SOS.value_matrix(gram)
-    return [_certsdp_exact_rational(Q[i, j];
-                                    reconstruct_floats,
-                                    tolerance,
-                                    max_denominator,
-                                    path="Gram matrix entry ($i,$j)")
-            for i in axes(Q, 1), j in axes(Q, 2)]
-end
-
-function _certsdp_constraint_gram_matrix(cref::JuMP.ConstraintRef;
-                                         require_solved::Bool=false)
-    require_solved && _certsdp_require_solved_model(JuMP.owner_model(cref))
-    try
-        return SOS.gram_matrix(cref)
-    catch err
-        throw(ArgumentError("could not obtain a solved SumOfSquares Gram matrix for constraint `$(JuMP.name(cref))`; pass `gram_matrix=` explicitly for exact certification. Original error: $(sprint(showerror, err))"))
+function _exponents(term, variables)
+    by_variable = Dict{String,Int}()
+    for (v, e) in zip(MP.variables(term), MP.exponents(term))
+        by_variable[string(v)] = Int(e)
     end
-end
-
-function _certsdp_require_solved_model(model::JuMP.GenericModel)
-    result_count = try
-        JuMP.result_count(model)
-    catch err
-        throw(ArgumentError("could not determine whether the SumOfSquares model has solver results; pass exact gram_matrices explicitly. Original error: $(sprint(showerror, err))"))
-    end
-    result_count > 0 ||
-        throw(ArgumentError("SumOfSquares model has no solver result; optimize the model first or pass exact gram_matrices explicitly"))
-    return true
-end
-
-function _certsdp_constraint_polynomial(object)
-    hasproperty(object, :func) ||
-        throw(ArgumentError("unsupported SumOfSquares constraint object without `func`"))
-    hasproperty(object, :shape) ||
-        throw(ArgumentError("unsupported SumOfSquares constraint object without polynomial shape"))
-    shape = object.shape
-    hasproperty(shape, :monomials) ||
-        throw(ArgumentError("unsupported SumOfSquares constraint shape without monomials"))
-    polynomial = MP.polynomial(object.func, shape.monomials)
-    if hasproperty(object, :set) && hasproperty(object.set, :certificate) &&
-       hasproperty(object.set, :domain)
-        polynomial = SOS.Certificate.reduced_polynomial(object.set.certificate,
-                                                        polynomial,
-                                                        object.set.domain)
-    end
-    return polynomial
-end
-
-function _certsdp_gram_from_constraint_basis(object, gram_matrix)
-    polynomial = _certsdp_constraint_polynomial(object)
-    gram_basis = if hasproperty(object, :set) && hasproperty(object.set, :certificate)
-        domain_polynomial = hasproperty(object.set, :domain) ?
-                            SOS.Certificate.with_variables(polynomial,
-                                                           object.set.domain) :
-                            polynomial
-        SOS.Certificate.gram_basis(object.set.certificate, domain_polynomial)
-    else
-        throw(ArgumentError("cannot infer a Gram basis for this SumOfSquares constraint; pass a SumOfSquares.GramMatrix instead"))
-    end
-    return SOS.GramMatrix(gram_matrix, gram_basis.monomials)
-end
-
-function _certsdp_merge_variables(a, b)
-    result = collect(a)
-    seen = Set(string.(result))
-    for variable in b
-        key = string(variable)
-        key in seen && continue
-        push!(result, variable)
-        push!(seen, key)
-    end
-    return result
-end
-
-function _certsdp_sos_constraint_refs(model::JuMP.GenericModel)
-    refs = JuMP.ConstraintRef[]
-    for (F, S) in JuMP.list_of_constraint_types(model)
-        S <: SOS.SOSPolynomialSet || continue
-        append!(refs, JuMP.all_constraints(model, F, S))
-    end
-    return refs
+    return [get(by_variable, string(v), 0) for v in variables]
 end
 
 end

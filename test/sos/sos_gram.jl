@@ -303,7 +303,7 @@
         @test verify_sos(read_certificate(cert_path))
     end
 
-    @testset "SumOfSquares constraint and model extraction with supplied Gram matrices" begin
+    @testset "SumOfSquares per-constraint extraction with supplied Gram matrices" begin
         @eval using DynamicPolynomials
         @eval using SumOfSquares
 
@@ -321,19 +321,14 @@
         @test extracted.problem.basis == [[0], [1]]
         @test extracted.gram_matrix == Rational{BigInt}[1 0; 0 1]
 
-        result = certify_sos(@eval(CERTSDP_SOS_TEST_MODEL);
-                             gram_matrices=[[1//1 0//1; 0//1 1//1]],
+        result = certify_sos(cref;
+                             gram_matrix=[1//1 0//1; 0//1 1//1],
                              reconstruct_floats=true,
                              tolerance=1e-12)
         @test result isa CertifiedResult
         cert = certificate(result)
         @test cert isa SOSGramCertificate
         @test verify_sos(cert)
-
-        unsolved = @eval SOSModel()
-        @eval @constraint($unsolved, x^2 + 1 in SOSCone())
-        @test_throws ArgumentError extract_sos_gram_sdp(unsolved)
-        @test_throws ArgumentError certify_sos(unsolved)
     end
 
     @testset "SumOfSquares extraction rejects floats unless reconstruction is explicit" begin
