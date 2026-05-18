@@ -54,6 +54,41 @@
         @test verify(loaded)
     end
 
+    @testset "certificate hashes preserve stored provenance" begin
+        problem = sample_sos_problem()
+        cert = certificate(certify_sos(problem, [1//1 0//1; 0//1 1//1]))
+        lmi_json = certificate_json_v1(cert.lmi_certificate)
+        stored_lmi_json = merge(lmi_json,
+                                (;
+                                 provenance=merge(lmi_json.provenance,
+                                                  (; julia_version="1.10.11"))))
+        metadata = Dict{Symbol, Any}(:certsdp_version => "1.0.0",
+                                     :julia_version => "1.10.11",
+                                     :schema_version => "1.0",
+                                     :source => "sos_gram_workflow",
+                                     :verifier_version => "1.0.0",
+                                     :lmi_certificate_json => stored_lmi_json)
+        without_hash = SOSGramCertificate(cert.problem, cert.gram_matrix,
+                                          cert.lmi_certificate,
+                                          cert.coefficient_proof,
+                                          cert.decomposition, "", metadata)
+        stored = SOSGramCertificate(cert.problem, cert.gram_matrix,
+                                    cert.lmi_certificate, cert.coefficient_proof,
+                                    cert.decomposition,
+                                    sos_gram_certificate_hash(without_hash),
+                                    metadata)
+
+        json = sos_gram_certificate_json(stored)
+        @test json.provenance.julia_version == "1.10.11"
+        @test json.lmi_certificate.provenance.julia_version == "1.10.11"
+
+        loaded = parse_certificate_json(sos_gram_certificate_json_string(stored))
+        @test loaded isa SOSGramCertificate
+        @test loaded.hash == stored.hash
+        @test loaded.metadata[:julia_version] == "1.10.11"
+        @test verify(loaded)
+    end
+
     @testset "fake coefficient matches are rejected" begin
         problem = sample_sos_problem()
         bad_Q = [1 1; 1 1]

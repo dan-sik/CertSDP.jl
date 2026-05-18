@@ -304,15 +304,9 @@ function _canonical_rational_function_sos_certificate_json(cert::RationalFunctio
                         method=EXPLICIT_RATIONAL_SQUARES_METHOD,
                         numerator_squares=length(cert.numerator_squares),
                         denominator_squares=length(cert.denominator_squares),),),
-            provenance=(;
-                        certsdp_version=string(package_version()),
-                        julia_version=string(VERSION),
-                        schema_version=SCHEMA_V1_VERSION,
-                        source=get(cert.metadata, :source,
-                                   "rational_function_sos_showcase"),),
-            verification=(;
-                          verifier_version=string(package_version()),
-                          verified_at_creation=nothing,),)
+            provenance=_positive_certificate_provenance_json(cert.metadata,
+                                                             "rational_function_sos_showcase"),
+            verification=_positive_certificate_verification_json(cert.metadata),)
 end
 
 function _canonical_positivstellensatz_certificate_json(cert::PositivstellensatzCertificate)
@@ -344,15 +338,26 @@ function _canonical_positivstellensatz_certificate_json(cert::Positivstellensatz
                    sos=(;
                         method=EXPLICIT_RATIONAL_SQUARES_METHOD,
                         multiplier_terms=length(cert.terms),),),
-            provenance=(;
-                        certsdp_version=string(package_version()),
-                        julia_version=string(VERSION),
-                        schema_version=SCHEMA_V1_VERSION,
-                        source=get(cert.metadata, :source,
-                                   "positivstellensatz_showcase"),),
-            verification=(;
-                          verifier_version=string(package_version()),
-                          verified_at_creation=nothing,),)
+            provenance=_positive_certificate_provenance_json(cert.metadata,
+                                                             "positivstellensatz_showcase"),
+            verification=_positive_certificate_verification_json(cert.metadata),)
+end
+
+function _positive_certificate_provenance_json(metadata::Dict{Symbol, Any},
+                                               default_source::AbstractString)
+    return (;
+            certsdp_version=string(get(metadata, :certsdp_version,
+                                       string(package_version()))),
+            julia_version=string(get(metadata, :julia_version, string(VERSION))),
+            schema_version=string(get(metadata, :schema_version, SCHEMA_V1_VERSION)),
+            source=string(get(metadata, :source, default_source)),)
+end
+
+function _positive_certificate_verification_json(metadata::Dict{Symbol, Any})
+    return (;
+            verifier_version=string(get(metadata, :verifier_version,
+                                        string(package_version()))),
+            verified_at_creation=get(metadata, :verified_at_creation, nothing),)
 end
 
 function _parse_positive_certificate_v1_object(parsed, certificate_type::AbstractString)
@@ -405,15 +410,15 @@ function _parse_rational_function_sos_certificate_v1_object(parsed)
                                                           length(problem.variables),
                                                           "denominator_times_target_equals_numerator")
     _validate_positive_certificate_proof(parsed, "root")
-    _require_object(_require_key(parsed, :provenance, "root"), "root.provenance")
-    _require_object(_require_key(parsed, :verification, "root"), "root.verification")
+    provenance = _require_key(parsed, :provenance, "root")
+    verification = _require_key(parsed, :verification, "root")
+    _require_object(provenance, "root.provenance")
+    _require_object(verification, "root.verification")
+    metadata = _positive_certificate_metadata_from_blocks(provenance, verification)
 
     cert = RationalFunctionSOSCertificate(problem.variables, problem.polynomial,
                                           numerator, denominator, coefficient_proof,
-                                          certificate_id,
-                                          _json_object_to_symbol_dict(_require_key(parsed,
-                                                                                   :provenance,
-                                                                                   "root")))
+                                          certificate_id, metadata)
     cert.hash == rational_function_sos_certificate_hash(cert) ||
         throw(ArgumentError("root.certificate_id must match the rational-function SOS certificate hash"))
     return cert
@@ -464,18 +469,26 @@ function _parse_positivstellensatz_certificate_v1_object(parsed)
                                                           length(problem.variables),
                                                           "target_equals_sos_constraint_assembly")
     _validate_positive_certificate_proof(parsed, "root")
-    _require_object(_require_key(parsed, :provenance, "root"), "root.provenance")
-    _require_object(_require_key(parsed, :verification, "root"), "root.verification")
+    provenance = _require_key(parsed, :provenance, "root")
+    verification = _require_key(parsed, :verification, "root")
+    _require_object(provenance, "root.provenance")
+    _require_object(verification, "root.verification")
+    metadata = _positive_certificate_metadata_from_blocks(provenance, verification)
 
     cert = PositivstellensatzCertificate(problem.variables, problem.polynomial,
                                          problem.constraints, terms,
-                                         coefficient_proof, certificate_id,
-                                         _json_object_to_symbol_dict(_require_key(parsed,
-                                                                                  :provenance,
-                                                                                  "root")))
+                                         coefficient_proof, certificate_id, metadata)
     cert.hash == positivstellensatz_certificate_hash(cert) ||
         throw(ArgumentError("root.certificate_id must match the Positivstellensatz certificate hash"))
     return cert
+end
+
+function _positive_certificate_metadata_from_blocks(provenance, verification)
+    metadata = _json_object_to_symbol_dict(provenance)
+    for (key, value) in _json_object_to_symbol_dict(verification)
+        metadata[key] = value
+    end
+    return metadata
 end
 
 function _parse_rational_function_sos_problem_v1_document(value)

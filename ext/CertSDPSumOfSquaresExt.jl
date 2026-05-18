@@ -4,8 +4,11 @@ using CertSDP
 import CertSDP: certify_sos, extract_sos_gram_sdp
 
 using JuMP: JuMP
-import MultivariatePolynomials as MP
-import SumOfSquares as SOS
+using MultivariatePolynomials: MultivariatePolynomials
+using SumOfSquares: SumOfSquares
+
+const MP = MultivariatePolynomials
+const SOS = SumOfSquares
 
 """
     extract_sos_gram_sdp(gram::SumOfSquares.GramMatrix; polynomial=nothing)

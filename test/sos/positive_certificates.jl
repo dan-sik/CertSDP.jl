@@ -63,6 +63,31 @@ using JSON3
     @test length(putinar.terms) == 2
 end
 
+@testset "positive certificate hashes preserve stored provenance" begin
+    target = [PolynomialTerm([2], 1), PolynomialTerm([0], 1)]
+    numerator = [SOSSquare([PolynomialTerm([1], 1)], 1),
+                 SOSSquare([PolynomialTerm([0], 1)], 1)]
+    denominator = [SOSSquare([PolynomialTerm([0], 1)], 1)]
+    metadata = Dict{Symbol, Any}(:certsdp_version => "1.0.0",
+                                 :julia_version => "1.10.11",
+                                 :schema_version => "1.0",
+                                 :source => "cross_version_fixture",
+                                 :verifier_version => "1.0.0")
+    cert = RationalFunctionSOSCertificate([:x], target, numerator, denominator;
+                                          metadata)
+
+    json = certificate_json_v1(cert)
+    @test json.provenance.julia_version == "1.10.11"
+    @test json.verification.verifier_version == "1.0.0"
+
+    loaded = parse_certificate_json(certificate_json_v1_string(cert))
+    @test loaded isa RationalFunctionSOSCertificate
+    @test loaded.hash == cert.hash
+    @test loaded.metadata[:julia_version] == "1.10.11"
+    @test verify(loaded)
+    @test verify_strict_json(certificate_json_v1_string(cert))
+end
+
 @testset "SOSTOOLS-lite converter" begin
     root = normpath(joinpath(@__DIR__, "..", ".."))
     input_path = joinpath(root, "showcases", "sostools",

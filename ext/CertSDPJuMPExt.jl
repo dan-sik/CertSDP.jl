@@ -4,7 +4,9 @@ using CertSDP
 import CertSDP: extract_lmi, extract_moi_lmi, num_blocks, single_lmi_problem
 
 using JuMP: JuMP
-import MathOptInterface as MOI
+using MathOptInterface: MathOptInterface
+
+const MOI = MathOptInterface
 
 const PSD_CONES = Union{MOI.PositiveSemidefiniteConeSquare,
                         MOI.PositiveSemidefiniteConeTriangle}

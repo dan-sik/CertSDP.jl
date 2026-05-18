@@ -244,6 +244,18 @@ struct SOSGramCertificate
     coefficient_proof::Vector{SOSCoefficientMatch}
     decomposition::SOSDecomposition
     hash::String
+    metadata::Dict{Symbol, Any}
+end
+
+function SOSGramCertificate(problem::SOSGramProblem,
+                            gram_matrix::SymmetricRationalMatrix,
+                            lmi_certificate::RationalCertificate,
+                            coefficient_proof::Vector{SOSCoefficientMatch},
+                            decomposition::SOSDecomposition,
+                            hash::AbstractString)
+    return SOSGramCertificate(problem, gram_matrix, lmi_certificate,
+                              coefficient_proof, decomposition, String(hash),
+                              Dict{Symbol, Any}())
 end
 
 function SOSGramCertificate(problem::SOSGramProblem, gram_matrix)
@@ -751,10 +763,24 @@ function _parse_sos_gram_certificate_object(parsed)
                                                           "root"),
                                              length(problem.variables)) :
                     _sos_decomposition_from_gram_matrix(problem, gram)
+    provenance = _require_key(parsed, :provenance, "root")
+    verification = _require_key(parsed, :verification, "root")
+    _require_object(provenance, "root.provenance")
+    _require_object(verification, "root.verification")
+    metadata = _sos_gram_certificate_metadata_from_blocks(provenance, verification)
+    metadata[:lmi_certificate_json] = lmi_certificate_value
     hash = _require_string(parsed, :hash, "root.hash")
 
     return SOSGramCertificate(problem, gram, lmi_certificate, coefficient_proof,
-                              decomposition, hash)
+                              decomposition, hash, metadata)
+end
+
+function _sos_gram_certificate_metadata_from_blocks(provenance, verification)
+    metadata = _json_object_to_symbol_dict(provenance)
+    for (key, value) in _json_object_to_symbol_dict(verification)
+        metadata[key] = value
+    end
+    return metadata
 end
 
 function verify(cert::SOSGramCertificate; io::Union{Nothing, IO}=nothing,
@@ -851,15 +877,30 @@ function _canonical_sos_gram_certificate_json(cert::SOSGramCertificate)
                    psd=(;
                         method="embedded_rational_psd_certificate",
                         certificate_id=cert.lmi_certificate.hash,),),
-            provenance=(;
-                        certsdp_version=string(package_version()),
-                        julia_version=string(VERSION),
-                        schema_version=SCHEMA_V1_VERSION,
-                        source="sos_gram_workflow",),
-            verification=(;
-                          verifier_version=string(package_version()),
-                          verified_at_creation=nothing,),
-            lmi_certificate=certificate_json_v1(cert.lmi_certificate),)
+            provenance=_sos_gram_certificate_provenance_json(cert.metadata),
+            verification=_sos_gram_certificate_verification_json(cert.metadata),
+            lmi_certificate=_sos_gram_lmi_certificate_json(cert),)
+end
+
+function _sos_gram_certificate_provenance_json(metadata::Dict{Symbol, Any})
+    return (;
+            certsdp_version=string(get(metadata, :certsdp_version,
+                                       string(package_version()))),
+            julia_version=string(get(metadata, :julia_version, string(VERSION))),
+            schema_version=string(get(metadata, :schema_version, SCHEMA_V1_VERSION)),
+            source=string(get(metadata, :source, "sos_gram_workflow")),)
+end
+
+function _sos_gram_certificate_verification_json(metadata::Dict{Symbol, Any})
+    return (;
+            verifier_version=string(get(metadata, :verifier_version,
+                                        string(package_version()))),
+            verified_at_creation=get(metadata, :verified_at_creation, nothing),)
+end
+
+function _sos_gram_lmi_certificate_json(cert::SOSGramCertificate)
+    return get(cert.metadata, :lmi_certificate_json,
+               certificate_json_v1(cert.lmi_certificate))
 end
 
 function _canonical_sos_problem_hash_from_certificate(cert::SOSGramCertificate)
