@@ -155,23 +155,6 @@ The public v1 compatibility boundary is intentionally small. See
 [Certificate format](docs/certificate_format.md) before depending on internal
 types.
 
-## Production Gates
-
-The current launch line is organized around eight hard gates:
-
-| Gate | Production status |
-| --- | --- |
-| Strategy boundary | `certify_auto_sos` records named attempts and fails unsupported strategies loudly. |
-| Strict replay boundary | Schema-v1 strict verification rejects numerical trust claims and stale proof fields. |
-| Parrilo-Peyrl SOS round/project | `certify-auto-sos` reconstructs, projects, then verifies coefficient matching and PSD over `QQ`. |
-| Perturbation/compensation | Exact perturbed and compensation identities replay before acceptance. |
-| Number fields | `QQ(alpha)` LMI and algebraic SOS Gram certificates replay signs and PSD obligations. |
-| Noncommutative/quantum path | Word, trace-cyclic, involution, relation, and embedded PSD checks are covered by hard-gate tests. |
-| External adapters | External tools translate into CertSDP certificates; raw logs and solver output are rejected. |
-| Reviewer artifacts | `write_paper_artifact` emits certificate, manifest, strict replay report, LaTeX snippet, and redacted provenance. |
-
-Details are in [Roadmap hard gates](docs/ROADMAP_HARD_GATES.md).
-
 ## Evidence
 
 The tracked validation report is the release evidence contract, not a
