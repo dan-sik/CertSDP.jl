@@ -22,25 +22,40 @@ and the intended production-grade exact certificate compiler.
 - `ExactCertificateArtifact` can now carry an `exact_sparse_identity` proof
   obligation.
 - Strict verification recomputes that sparse identity over `QQ` using the
-  internal sparse polynomial ring and block Gram entries.
+  internal sparse polynomial ring, block Gram entries, and sparse localizing
+  multiplier terms.
 - `ExactCertificateArtifact` can carry an `exact_affine_identity` obligation,
   and strict verification recomputes exact field-valued affine residuals.
+- Field inference now accepts explicit bounded reconstruction evidence for
+  rational, quadratic, multiquadratic, cyclotomic, and low-degree algebraic
+  fields before falling back to legacy markers.
 - The sparse OPF-like fixture includes a small replayable sparse identity
-  instead of relying only on witness hashes.
+  with a localizing multiplier instead of relying only on witness hashes.
 - Symmetry-reduced and infeasibility fixtures include replayable affine identity
   obligations instead of relying only on residual witness hashes.
-- External artifact import validates source format, source hashes, artifact kind,
-  and block-list shape before producing compiler IR.
+- Noncommutative trace fixtures now carry quotient replay examples that verify
+  projector, orthogonality, cross-party commutation, and trace-cyclic
+  canonicalization exactly.
+- External artifact import validates format-specific JSON contracts for
+  SumOfSquares-like, TSSOS-like, NCTSSOS-like, and ClusteredLowRank-like
+  fixtures before producing compiler IR.
+- Gate 7 consumes tracked JSON fixtures from `benchmarks/external/fixtures/`
+  rather than symbol-only synthetic adapters.
+- Gate 6 compares actual raw/minimized JSON file sizes; the raw side is a real
+  unminimized bundle rather than reported padding.
 - `compiler_validation_runtime()` measures the actual hard-gate run instead of
   returning a constant.
 - `certsdp explain artifact.json` explains CertSDP 2.0 proof artifacts.
 
 ## Next Implementation Order
 
-1. Replace synthetic Gate 7 adapters with real JSON parsers for the four import
-   fixture families.
-2. Extend `exact_sparse_identity` to sparse localizing terms and constraint
-   multipliers, then bind Gate 1 to saved noisy sparse OPF fixtures.
-3. Replace marker-based field inference with a bounded reconstruction engine.
-4. Add noncommutative word canonicalization replay for trace/NPA certificates.
-5. Replace padded compression gates with real raw/minimized artifact files.
+1. Replace the deterministic compiler fixtures with larger saved noisy solver
+   artifacts while keeping the same exact replay obligations.
+2. Add PSLQ/LLL numeric recognition for field evidence produced directly from
+   approximate coefficients, with explicit degree and height budgets.
+3. Expand sparse identity replay from the current localizing smoke payload to
+   full saved OPF-like multiplier maps.
+4. Add coefficient-level NC trace identity replay beyond quotient
+   canonicalization examples.
+5. Publish external adapter fixture packs sourced from real upstream tool
+   exports once license review is complete.

@@ -1,0 +1,43 @@
+{
+  "format": "sumofsquares_like",
+  "artifact_kind": "external_tool_export",
+  "seed": 71011,
+  "source_tool": "sumofsquares_like_fixture",
+  "field_evidence": {
+    "kind": "rational",
+    "degree_bound": 1,
+    "basis_support": [
+      []
+    ],
+    "engine": "bounded_exact_reconstruction"
+  },
+  "variables": [
+    "x",
+    "y"
+  ],
+  "gram_blocks": [
+    {
+      "id": "sos_block_1",
+      "dimension": 3,
+      "basis": [
+        "1",
+        "x",
+        "y"
+      ],
+      "entries": [
+        {
+          "i": 1,
+          "j": 1,
+          "value": "1"
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "id": "sos_block_1",
+      "dimension": 3,
+      "rank_hint": 1
+    }
+  ]
+}

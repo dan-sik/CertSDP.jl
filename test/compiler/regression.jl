@@ -5,6 +5,12 @@
               CertSDP.QuadraticField(2)
         @test CertSDP.infer_field(Dict(:field_marker => :sqrt2_sqrt5)) ==
               CertSDP.MultiquadraticField([2, 5])
+        evidence = Dict(:kind => "multiquadratic",
+                        :radicands => [2, 5],
+                        :basis_support => [[], [1], [2], [1, 2]],
+                        :degree_bound => 4)
+        @test CertSDP.infer_field(Dict(:field_evidence => evidence)) ==
+              CertSDP.MultiquadraticField([2, 5])
 
         over_budget = CertSDP.reconstruct(Dict(:field_marker => :cubic_plastic);
                                           max_field_degree=2)
@@ -13,16 +19,15 @@
     end
 
     @testset "import reconstruct minimize replay smoke" begin
-        for (index, (format, seed)) in enumerate(((:sumofsquares_like, 11),
-                                                  (:tssos_like, 12),
-                                                  (:nctssos_like, 13),
-                                                  (:clustered_low_rank_like, 14)))
-            instance = CertSDP.import_artifact(Dict(:format => String(format),
-                                                    :seed => seed))
+        fixtures = CertSDP._external_fixture_paths()
+        for (index, fixture) in enumerate(fixtures)
+            instance = CertSDP.import_artifact(fixture)
             result = CertSDP.reconstruct(instance)
             @test result.status === :ok
             cert = result.certificate
             @test CertSDP.verify(cert; mode=:strict).status === :valid
+            @test haskey(cert.metadata, :source_path)
+            @test haskey(cert.metadata, :field_evidence)
 
             if index == 1
                 minimized = CertSDP.minimize(cert)
@@ -37,6 +42,11 @@
         instance = CertSDP.import_artifact(Dict(:format => "tssos_like",
                                                 :artifact_kind => "external_tool_export",
                                                 :source_hash => "sha256:" * repeat("a", 64),
+                                                :field_evidence => Dict(:kind => "rational",
+                                                                        :basis_support => [[]]),
+                                                :cliques => [[1, 2, 3]],
+                                                :localizing_multipliers => [Dict(:constraint => "g_1")],
+                                                :sparse_gram_blocks => [Dict(:id => "b1")],
                                                 :blocks => [Dict(:id => "b1")],
                                                 :seed => 91))
         @test instance[:kind] === :sparse_opf_like
@@ -47,6 +57,11 @@
                                                                 :seed => 1))
         @test_throws ArgumentError CertSDP.import_artifact(Dict(:format => "tssos_like",
                                                                 :blocks => [],
+                                                                :seed => 1))
+        @test_throws ArgumentError CertSDP.import_artifact(Dict(:format => "nctssos_like",
+                                                                :words => [["A:0:0"]],
+                                                                :relations => [],
+                                                                :trace_blocks => [Dict(:id => "b")],
                                                                 :seed => 1))
     end
 
@@ -95,6 +110,53 @@
         result = CertSDP.verify(bad; mode=:strict)
         @test result.status === :invalid
         @test result.failure_stage === :localizing_identity_error
+
+        identity = deepcopy(cert.certificate[:exact_sparse_identity])
+        identity[:rhs_terms][2][:constraint][1][:coefficient] = "2"
+        certificate = copy(cert.certificate)
+        certificate[:exact_sparse_identity] = identity
+        bad = CertSDP.ExactCertificateArtifact(cert.type,
+                                               cert.num_variables,
+                                               cert.field,
+                                               cert.blocks,
+                                               cert.structure,
+                                               cert.problem,
+                                               certificate,
+                                               cert.reconstruction_log,
+                                               cert.verification_plan,
+                                               cert.failure_diagnostics,
+                                               cert.hashes,
+                                               cert.metadata)
+        bad = CertSDP._with_reconstruction_witnesses(bad, :sparse_opf_like, 31)
+        result = CertSDP.verify(bad; mode=:strict)
+        @test result.status === :invalid
+        @test result.failure_stage === :localizing_identity_error
+    end
+
+    @testset "NC trace quotient replay is checked" begin
+        cert = CertSDP.compile_fixture(:nc_trace_npa; seed=73)
+        @test CertSDP.verify(cert; mode=:strict).status === :valid
+
+        certificate = copy(cert.certificate)
+        replay = deepcopy(certificate[:nc_trace_quotient_replay])
+        replay[:examples][1][:canonical] = ["B:2:0", "A:0:1"]
+        certificate[:nc_trace_quotient_replay] = replay
+        bad = CertSDP.ExactCertificateArtifact(cert.type,
+                                               cert.num_variables,
+                                               cert.field,
+                                               cert.blocks,
+                                               cert.structure,
+                                               cert.problem,
+                                               certificate,
+                                               cert.reconstruction_log,
+                                               cert.verification_plan,
+                                               cert.failure_diagnostics,
+                                               cert.hashes,
+                                               cert.metadata)
+        bad = CertSDP._with_reconstruction_witnesses(bad, :nc_trace_npa, 73)
+        result = CertSDP.verify(bad; mode=:strict)
+        @test result.status === :invalid
+        @test result.failure_stage === :trace_quotient_error
     end
 
     @testset "exact affine identity is replayed, not trusted" begin

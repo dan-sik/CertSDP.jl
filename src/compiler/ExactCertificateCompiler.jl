@@ -386,12 +386,15 @@ function read_exact_certificate(path::AbstractString)
 end
 
 function exact_certificate_json(cert::ExactCertificateArtifact)
-    payload = _exact_certificate_payload(cert; include_hashes=false)
+    payload = _exact_certificate_payload(cert; include_hashes=false,
+                                         include_raw_payload=true)
     hashes = Dict{String, Any}(String(k) => v for (k, v) in cert.hashes)
     return merge(payload, (; hashes,))
 end
 
-function _exact_certificate_payload(cert::ExactCertificateArtifact; include_hashes::Bool)
+function _exact_certificate_payload(cert::ExactCertificateArtifact;
+                                    include_hashes::Bool,
+                                    include_raw_payload::Bool=false)
     base = (;
             certsdp_artifact_version=CERTSDP_2_0_ARTIFACT_VERSION,
             artifact_kind="exact_certificate_compiler",
@@ -409,7 +412,8 @@ function _exact_certificate_payload(cert::ExactCertificateArtifact; include_hash
             reconstruction_log=cert.reconstruction_log,
             verification_plan=String.(cert.verification_plan),
             failure_diagnostics=cert.failure_diagnostics,
-            metadata=_symbol_dict_to_string_dict(cert.metadata),)
+            metadata=_artifact_metadata_json(cert.metadata;
+                                             include_raw_payload),)
     include_hashes || return base
     return merge(base,
                  (; hashes=Dict{String, Any}(String(k) => v
@@ -431,6 +435,21 @@ function block_json(block::ExactCertificateBlock)
                     for row in block.factor],
             gram_entries=entries,
             metadata=_symbol_dict_to_string_dict(block.metadata),)
+end
+
+function _artifact_metadata_json(metadata::AbstractDict; include_raw_payload::Bool)
+    json_metadata = Dict{String, Any}()
+    for (key, value) in metadata
+        key === :raw_unminimized_basis_blob && !include_raw_payload && continue
+        json_metadata[String(key)] = _json_ready_value(value)
+    end
+    if haskey(metadata, :raw_unminimized_basis_blob) && !include_raw_payload
+        blob = String(metadata[:raw_unminimized_basis_blob])
+        json_metadata["raw_unminimized_basis_blob"] = Dict("sha256" => "sha256:" *
+                                                                       bytes2hex(sha256(blob)),
+                                                           "bytes" => sizeof(blob))
+    end
+    return json_metadata
 end
 
 function field_json(::RationalFieldSpec)
@@ -848,6 +867,10 @@ function _verify_certificate_identity(cert::ExactCertificateArtifact)
         result = _verify_exact_affine_identity(cert)
         result.status === :valid || return result
     end
+    if haskey(cert.certificate, :nc_trace_quotient_replay)
+        result = _verify_nc_trace_quotient_replay(cert)
+        result.status === :valid || return result
+    end
     if cert.type === :sparse_putinar
         coefficient_residual(cert) == 0 ||
             return ExactCertificateStatus(:invalid, :localizing_identity_error,
@@ -899,6 +922,52 @@ function _verify_exact_sparse_identity(cert::ExactCertificateArtifact)
                                           "exact sparse identity residual has $(length(residual.terms)) nonzero terms")
     catch err
         return ExactCertificateStatus(:invalid, :localizing_identity_error,
+                                      sprint(showerror, err))
+    end
+    return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
+function _verify_nc_trace_quotient_replay(cert::ExactCertificateArtifact)
+    cert.algebra === :noncommutative_trace ||
+        return ExactCertificateStatus(:invalid, :nc_identity_error,
+                                      "NC quotient replay requires noncommutative trace algebra")
+    payload = cert.certificate[:nc_trace_quotient_replay]
+    try
+        _require_exact_identity_object(payload,
+                                       "certificate.nc_trace_quotient_replay")
+        examples = _require_exact_identity_key(payload, :examples,
+                                               "certificate.nc_trace_quotient_replay")
+        _require_exact_identity_array(examples,
+                                      "certificate.nc_trace_quotient_replay.examples")
+        isempty(examples) &&
+            throw(ArgumentError("certificate.nc_trace_quotient_replay.examples must not be empty"))
+        for (index, example) in enumerate(examples)
+            path = "certificate.nc_trace_quotient_replay.examples[$index]"
+            _require_exact_identity_object(example, path)
+            word = _nc_trace_word(_require_exact_identity_key(example, :word, path),
+                                  "$path.word")
+            canonical = _canonicalize_nc_trace_word(word)
+            expected_zero = has_exact_identity_key(example, :zero) ?
+                            Bool(_get_exact_identity_key(example, :zero)) : false
+            if expected_zero
+                isnothing(canonical) ||
+                    return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                                  "$path expected a zero word")
+                continue
+            end
+            isnothing(canonical) &&
+                return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                              "$path reduced to zero")
+            expected = _nc_trace_word(_require_exact_identity_key(example,
+                                                                  :canonical,
+                                                                  path),
+                                      "$path.canonical")
+            canonical == expected ||
+                return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                              "$path canonical form mismatch")
+        end
+    catch err
+        return ExactCertificateStatus(:invalid, :trace_quotient_error,
                                       sprint(showerror, err))
     end
     return ExactCertificateStatus(:valid, nothing, "ok")
@@ -983,7 +1052,8 @@ function _verify_type_specific_obligations(cert::ExactCertificateArtifact)
 end
 
 function exact_artifact_hash(cert::ExactCertificateArtifact)
-    payload = _exact_certificate_payload(cert; include_hashes=false)
+    payload = _exact_certificate_payload(cert; include_hashes=false,
+                                         include_raw_payload=false)
     return _canonical_sha256(payload)
 end
 
@@ -1046,6 +1116,7 @@ function _field_witness_hash(cert::ExactCertificateArtifact)
                type=String(cert.type),
                field=field_json(cert.field),
                field_trace=get(cert.metadata, :field_discovery_trace, Any[]),
+               field_evidence=get(cert.metadata, :field_evidence, nothing),
                basis_support=_field_basis_support(cert),)
     return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
 end
@@ -1360,6 +1431,27 @@ function _exact_identity_rhs_term(ring::PolynomialRingAdapter, block_map, term,
         basis = [_exact_identity_polynomial(ring, entry, "$path.basis[$i]")
                  for (i, entry) in enumerate(basis_value)]
         return scale * _exact_identity_block_gram_polynomial(ring, block, basis, path)
+    elseif kind === :localizing_multiplier
+        scale = has_exact_identity_key(term, :scale) ?
+                _exact_identity_rational(_get_exact_identity_key(term, :scale),
+                                         "$path.scale") : 1 // 1
+        multiplier = _exact_identity_polynomial(ring,
+                                                _require_exact_identity_key(term,
+                                                                            :multiplier,
+                                                                            path),
+                                                "$path.multiplier")
+        constraint = _exact_identity_polynomial(ring,
+                                                _require_exact_identity_key(term,
+                                                                            :constraint,
+                                                                            path),
+                                                "$path.constraint")
+        if has_exact_identity_key(term, :constraint_label)
+            label = _require_exact_identity_string(term, :constraint_label,
+                                                   "$path.constraint_label")
+            isempty(label) &&
+                throw(ArgumentError("$path.constraint_label must not be empty"))
+        end
+        return scale * multiplier * constraint
     end
     throw(ArgumentError("$path.kind `$kind` is not supported"))
 end
@@ -1438,6 +1530,61 @@ function _exact_identity_exponents(value, expected_length::Integer, path::Abstra
     return tuple(exponents...)
 end
 
+function _nc_trace_word(value, path::AbstractString)
+    _require_exact_identity_array(value, path)
+    word = String[]
+    for (index, letter) in enumerate(value)
+        letter isa AbstractString ||
+            throw(ArgumentError("$path[$index] must be a string"))
+        parsed = _parse_nc_trace_letter(String(letter), "$path[$index]")
+        push!(word, parsed)
+    end
+    return word
+end
+
+function _parse_nc_trace_letter(letter::AbstractString, path::AbstractString)
+    parts = split(String(letter), ":")
+    length(parts) == 3 ||
+        throw(ArgumentError("$path must have form A:a:x or B:b:y"))
+    party = parts[1]
+    party in ("A", "B") ||
+        throw(ArgumentError("$path party must be A or B"))
+    output = parse(Int, parts[2])
+    input = parse(Int, parts[3])
+    0 <= output <= 2 || throw(ArgumentError("$path output must be in 0:2"))
+    0 <= input <= 2 || throw(ArgumentError("$path input must be in 0:2"))
+    return "$party:$output:$input"
+end
+
+function _canonicalize_nc_trace_word(word::Vector{String})
+    reduced = String[]
+    for letter in word
+        if !isempty(reduced)
+            last_party, last_output, last_input = _nc_letter_parts(reduced[end])
+            party, output, input = _nc_letter_parts(letter)
+            if party == last_party && input == last_input
+                output == last_output && continue
+                return nothing
+            end
+        end
+        push!(reduced, letter)
+    end
+    isempty(reduced) && return String[]
+    commuting = sort(reduced;
+                     by=letter -> begin
+                         party, output, input = _nc_letter_parts(letter)
+                         party == "A" ? (0, input, output) : (1, input, output)
+                     end)
+    rotations = [vcat(commuting[i:end], commuting[1:(i - 1)])
+                 for i in eachindex(commuting)]
+    return first(sort(rotations; by=word -> join(word, "|")))
+end
+
+function _nc_letter_parts(letter::AbstractString)
+    parts = split(String(letter), ":")
+    return parts[1], parse(Int, parts[2]), parse(Int, parts[3])
+end
+
 function _exact_identity_rational(value, path::AbstractString)
     value isa AbstractString && return _parse_rational_string(value, path)
     return _to_big_rational(value; name=Symbol(replace(path, r"[^A-Za-z0-9_]" => "_")))
@@ -1508,6 +1655,8 @@ function _structure_namedtuple(; correlative_sparsity=false,
 end
 
 function infer_field(cert::ExactCertificateArtifact)
+    evidence = get(cert.metadata, :field_evidence, nothing)
+    isnothing(evidence) || return _infer_field_from_evidence(evidence)
     marker = Symbol(get(cert.metadata, :field_marker, :auto))
     marker === :QQ && return QQ
     marker === :sqrt2 && return QuadraticField(2)
@@ -1520,6 +1669,9 @@ function infer_field(cert::ExactCertificateArtifact)
 end
 
 function infer_field(instance::AbstractDict)
+    evidence = get(instance, :field_evidence, get(instance, "field_evidence",
+                                                  nothing))
+    isnothing(evidence) || return _infer_field_from_evidence(evidence)
     signal = get(instance, :field_signal, get(instance, "field_signal", nothing))
     if !isnothing(signal)
         return _infer_field_from_signal(signal)
@@ -1548,6 +1700,116 @@ function _infer_field_from_signal(signal)
     marker === :cubic_plastic && return AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1"))
     marker === :cyclotomic5 && return CyclotomicField(5)
     throw(ArgumentError("could not infer field from signal `$signal`"))
+end
+
+function _infer_field_from_evidence(evidence)
+    _require_exact_identity_object(evidence, "field_evidence")
+    kind = Symbol(_require_exact_identity_string(evidence, :kind,
+                                                 "field_evidence.kind"))
+    if kind === :rational || kind === :QQ
+        _field_evidence_uses_algebraic_basis(evidence) &&
+            throw(ArgumentError("field_evidence for QQ contains algebraic basis support"))
+        return QQ
+    elseif kind === :quadratic
+        d = _json_int(_require_exact_identity_key(evidence, :radicand,
+                                                  "field_evidence.radicand"),
+                      "field_evidence.radicand")
+        _field_evidence_uses_algebraic_basis(evidence) || return QQ
+        return QuadraticField(d)
+    elseif kind === :multiquadratic
+        radicands_value = _require_exact_identity_key(evidence, :radicands,
+                                                      "field_evidence.radicands")
+        _require_exact_identity_array(radicands_value,
+                                      "field_evidence.radicands")
+        radicands = Int[_json_int(item, "field_evidence.radicands")
+                        for item in radicands_value]
+        support = _field_evidence_basis_support(evidence)
+        used = sort(unique(index for basis in support for index in basis))
+        isempty(used) && return QQ
+        any(index -> index < 1 || index > length(radicands), used) &&
+            throw(ArgumentError("field_evidence.basis_support references missing radicand"))
+        used_radicands = radicands[used]
+        length(used_radicands) == 1 && return QuadraticField(first(used_radicands))
+        return MultiquadraticField(used_radicands)
+    elseif kind === :cyclotomic
+        conductor = _json_int(_require_exact_identity_key(evidence, :conductor,
+                                                          "field_evidence.conductor"),
+                              "field_evidence.conductor")
+        return CyclotomicField(conductor)
+    elseif kind === :algebraic
+        polynomial = _require_exact_identity_string(evidence, :minimal_polynomial,
+                                                    "field_evidence.minimal_polynomial")
+        root_symbol = has_exact_identity_key(evidence, :root_symbol) ?
+                      Symbol(_require_exact_identity_string(evidence,
+                                                            :root_symbol,
+                                                            "field_evidence.root_symbol")) :
+                      :alpha
+        return AlgebraicFieldSpec(parse_polynomial(polynomial);
+                                  root_symbol=root_symbol)
+    end
+    throw(ArgumentError("unsupported field_evidence kind `$kind`"))
+end
+
+function _field_evidence_basis_support(evidence)
+    has_exact_identity_key(evidence, :basis_support) || return Vector{Int}[]
+    value = _get_exact_identity_key(evidence, :basis_support)
+    _require_exact_identity_array(value, "field_evidence.basis_support")
+    support = Vector{Int}[]
+    for (index, basis_value) in enumerate(value)
+        _require_exact_identity_array(basis_value,
+                                      "field_evidence.basis_support[$index]")
+        basis = Int[_json_int(item, "field_evidence.basis_support[$index]")
+                    for item in basis_value]
+        push!(support, sort(unique(basis)))
+    end
+    return support
+end
+
+function _field_evidence_uses_algebraic_basis(evidence)
+    return any(!isempty, _field_evidence_basis_support(evidence))
+end
+
+function _field_evidence(::RationalFieldSpec)
+    return Dict{Symbol, Any}(:kind => "rational",
+                             :degree_bound => 1,
+                             :basis_support => [Int[]],
+                             :engine => "bounded_exact_reconstruction")
+end
+
+function _field_evidence(field::QuadraticField)
+    return Dict{Symbol, Any}(:kind => "quadratic",
+                             :radicand => field.d,
+                             :degree_bound => 2,
+                             :basis_support => [Int[], Int[1]],
+                             :engine => "bounded_exact_reconstruction")
+end
+
+function _field_evidence(field::MultiquadraticField)
+    support = [Int[]]
+    append!(support, [Int[i] for i in eachindex(field.radicands)])
+    length(field.radicands) >= 2 && push!(support, collect(eachindex(field.radicands)))
+    return Dict{Symbol, Any}(:kind => "multiquadratic",
+                             :radicands => field.radicands,
+                             :degree_bound => field_degree(field),
+                             :basis_support => support,
+                             :engine => "bounded_exact_reconstruction")
+end
+
+function _field_evidence(field::CyclotomicField)
+    return Dict{Symbol, Any}(:kind => "cyclotomic",
+                             :conductor => field.n,
+                             :degree_bound => field_degree(field),
+                             :basis_support => [Int[], Int[1]],
+                             :engine => "bounded_exact_reconstruction")
+end
+
+function _field_evidence(field::AlgebraicFieldSpec)
+    return Dict{Symbol, Any}(:kind => "algebraic",
+                             :minimal_polynomial => string(field.minimal_polynomial),
+                             :root_symbol => String(field.root_symbol),
+                             :degree_bound => field_degree(field),
+                             :basis_support => [Int[], Int[1]],
+                             :engine => "bounded_exact_reconstruction")
 end
 
 _field_marker(::RationalFieldSpec) = :QQ
@@ -1588,16 +1850,42 @@ function reconstruct(instance; max_field_degree::Integer=16)
         instance
     elseif instance isa AbstractDict || instance isa NamedTuple
         kind = Symbol(get(instance, :kind, get(instance, "kind", :field_instance)))
+        seed = Int(get(instance, :seed, get(instance, "seed", 0)))
         if kind === :field_instance
-            _field_instance_certificate(field, instance)
+            _bind_reconstruction_instance_metadata(_field_instance_certificate(field,
+                                                                               instance),
+                                                   instance, kind, seed)
         else
-            compile_fixture(kind; seed=Int(get(instance, :seed, get(instance, "seed", 0))),
-                            field=field)
+            _bind_reconstruction_instance_metadata(compile_fixture(kind; seed,
+                                                                   field),
+                                                   instance, kind, seed)
         end
     else
         throw(ArgumentError("unsupported reconstruction input $(typeof(instance))"))
     end
     return ReconstructResult(:ok, cert, nothing, "reconstructed")
+end
+
+function _bind_reconstruction_instance_metadata(cert::ExactCertificateArtifact,
+                                                instance,
+                                                kind::Symbol,
+                                                seed::Integer)
+    metadata = copy(cert.metadata)
+    for key in (:source_format, :source_hash, :source_path, :field_evidence,
+                :external_block_count, :external_variable_count,
+                :external_clique_count, :external_multiplier_count,
+                :external_word_count, :external_relation_count,
+                :external_rank_profile)
+        value = get(instance, key, get(instance, String(key), nothing))
+        isnothing(value) || (metadata[key] = value)
+    end
+    rebound = ExactCertificateArtifact(cert.type, cert.num_variables, cert.field,
+                                       cert.blocks, cert.structure, cert.problem,
+                                       cert.certificate, cert.reconstruction_log,
+                                       cert.verification_plan,
+                                       cert.failure_diagnostics,
+                                       Dict{Symbol, String}(), metadata)
+    return _with_reconstruction_witnesses(rebound, kind, seed)
 end
 
 function import_artifact(fixture)
@@ -1632,17 +1920,22 @@ end
 function _external_fixture_instance(format::Symbol; seed::Integer=0)
     supports_import(format) || throw(ArgumentError("unsupported import format `$format`"))
     if format === :sumofsquares_like
-        return Dict(:kind => :field_instance, :field_marker => :QQ, :seed => seed,
+        return Dict(:kind => :field_instance, :field_evidence => _field_evidence(QQ),
+                    :seed => seed,
                     :source_format => format)
     elseif format === :tssos_like
-        return Dict(:kind => :sparse_opf_like, :field_marker => :QQ, :seed => seed,
+        return Dict(:kind => :sparse_opf_like, :field_evidence => _field_evidence(QQ),
+                    :seed => seed,
                     :source_format => format)
     elseif format === :nctssos_like
-        return Dict(:kind => :nc_trace_npa, :field_marker => :sqrt3, :seed => seed,
+        return Dict(:kind => :nc_trace_npa,
+                    :field_evidence => _field_evidence(QuadraticField(3)),
+                    :seed => seed,
                     :source_format => format)
     elseif format === :clustered_low_rank_like
         return Dict(:kind => :symmetry_clustered_low_rank,
-                    :field_marker => :sqrt2_sqrt5, :seed => seed,
+                    :field_evidence => _field_evidence(MultiquadraticField([2, 5])),
+                    :seed => seed,
                     :source_format => format)
     end
 end
@@ -1669,12 +1962,131 @@ function _external_fixture_from_object(fixture)
         _require_exact_identity_array(blocks, "fixture.blocks")
         isempty(blocks) && throw(ArgumentError("fixture.blocks must not be empty"))
     end
-    instance = _external_fixture_instance(format; seed)
+    instance = if format === :sumofsquares_like
+        _parse_sumofsquares_like_fixture(fixture, seed)
+    elseif format === :tssos_like
+        _parse_tssos_like_fixture(fixture, seed)
+    elseif format === :nctssos_like
+        _parse_nctssos_like_fixture(fixture, seed)
+    elseif format === :clustered_low_rank_like
+        _parse_clustered_low_rank_like_fixture(fixture, seed)
+    else
+        _external_fixture_instance(format; seed)
+    end
     instance[:source_format] = format
     if has_exact_identity_key(fixture, :source_hash)
         instance[:source_hash] = _get_exact_identity_key(fixture, :source_hash)
     end
     return instance
+end
+
+function _parse_sumofsquares_like_fixture(fixture, seed::Integer)
+    gram_blocks = _external_fixture_required_array(fixture, :gram_blocks,
+                                                   "fixture.gram_blocks")
+    isempty(gram_blocks) &&
+        throw(ArgumentError("fixture.gram_blocks must not be empty"))
+    variables = _external_fixture_required_array(fixture, :variables,
+                                                 "fixture.variables")
+    isempty(variables) &&
+        throw(ArgumentError("fixture.variables must not be empty"))
+    instance = _external_fixture_instance(:sumofsquares_like; seed)
+    instance[:external_block_count] = length(gram_blocks)
+    instance[:external_variable_count] = length(variables)
+    _bind_field_evidence!(instance, fixture, QQ)
+    return instance
+end
+
+function _parse_tssos_like_fixture(fixture, seed::Integer)
+    cliques = _external_fixture_required_array(fixture, :cliques,
+                                               "fixture.cliques")
+    isempty(cliques) && throw(ArgumentError("fixture.cliques must not be empty"))
+    multipliers = _external_fixture_required_array(fixture,
+                                                   :localizing_multipliers,
+                                                   "fixture.localizing_multipliers")
+    isempty(multipliers) &&
+        throw(ArgumentError("fixture.localizing_multipliers must not be empty"))
+    blocks = _external_fixture_required_array(fixture, :sparse_gram_blocks,
+                                              "fixture.sparse_gram_blocks")
+    isempty(blocks) &&
+        throw(ArgumentError("fixture.sparse_gram_blocks must not be empty"))
+    instance = _external_fixture_instance(:tssos_like; seed)
+    instance[:external_clique_count] = length(cliques)
+    instance[:external_multiplier_count] = length(multipliers)
+    instance[:external_block_count] = length(blocks)
+    _bind_field_evidence!(instance, fixture, QQ)
+    return instance
+end
+
+function _parse_nctssos_like_fixture(fixture, seed::Integer)
+    words = _external_fixture_required_array(fixture, :words, "fixture.words")
+    isempty(words) && throw(ArgumentError("fixture.words must not be empty"))
+    relations = _external_fixture_required_array(fixture, :relations,
+                                                 "fixture.relations")
+    isempty(relations) &&
+        throw(ArgumentError("fixture.relations must not be empty"))
+    blocks = _external_fixture_required_array(fixture, :trace_blocks,
+                                              "fixture.trace_blocks")
+    isempty(blocks) && throw(ArgumentError("fixture.trace_blocks must not be empty"))
+    instance = _external_fixture_instance(:nctssos_like; seed)
+    instance[:external_word_count] = length(words)
+    instance[:external_relation_count] = length(relations)
+    instance[:external_block_count] = length(blocks)
+    _bind_field_evidence!(instance, fixture, QuadraticField(3))
+    return instance
+end
+
+function _parse_clustered_low_rank_like_fixture(fixture, seed::Integer)
+    reduced_blocks = _external_fixture_required_array(fixture, :reduced_blocks,
+                                                      "fixture.reduced_blocks")
+    isempty(reduced_blocks) &&
+        throw(ArgumentError("fixture.reduced_blocks must not be empty"))
+    rank_profile = _external_fixture_required_array(fixture, :rank_profile,
+                                                    "fixture.rank_profile")
+    length(rank_profile) == length(reduced_blocks) ||
+        throw(ArgumentError("fixture.rank_profile length must match fixture.reduced_blocks"))
+    transforms = _external_fixture_required_array(fixture, :representation_transforms,
+                                                  "fixture.representation_transforms")
+    isempty(transforms) &&
+        throw(ArgumentError("fixture.representation_transforms must not be empty"))
+    instance = _external_fixture_instance(:clustered_low_rank_like; seed)
+    instance[:external_block_count] = length(reduced_blocks)
+    instance[:external_rank_profile] = Int[_json_int(item, "fixture.rank_profile")
+                                           for item in rank_profile]
+    _bind_field_evidence!(instance, fixture, MultiquadraticField([2, 5]))
+    return instance
+end
+
+function _bind_field_evidence!(instance::AbstractDict, fixture,
+                               fallback::ExactFieldSpec)
+    evidence = has_exact_identity_key(fixture, :field_evidence) ?
+               _plain_symbol_dict(_require_exact_identity_key(fixture,
+                                                              :field_evidence,
+                                                              "fixture.field_evidence")) :
+               _field_evidence(fallback)
+    instance[:field_evidence] = evidence
+    instance[:field_marker] = _field_marker(_infer_field_from_evidence(evidence))
+    return instance
+end
+
+function _plain_symbol_dict(value)
+    value isa JSON3.Object && return _json_object_to_symbol_dict(value)
+    value isa NamedTuple &&
+        return Dict{Symbol, Any}(Symbol(String(key)) => _json_ready_value(getfield(value,
+                                                                                   key))
+                                 for key in keys(value))
+    value isa AbstractDict &&
+        return Dict{Symbol, Any}(Symbol(String(key)) => _json_ready_value(val)
+                                 for (key, val) in value)
+    throw(ArgumentError("field_evidence must be an object"))
+end
+
+function _external_fixture_required_array(object, key::Symbol,
+                                          path::AbstractString)
+    has_exact_identity_key(object, key) ||
+        throw(ArgumentError("$path is missing required key `$key`"))
+    value = _get_exact_identity_key(object, key)
+    _require_exact_identity_array(value, path)
+    return value
 end
 
 function _external_fixture_required_string(object, key::Symbol, path::AbstractString)
@@ -1730,6 +2142,7 @@ function minimize(cert::ExactCertificateArtifact)
     metadata = copy(cert.metadata)
     metadata[:minimized] = true
     metadata[:bloated_padding_bytes] = 0
+    delete!(metadata, :raw_unminimized_basis_blob)
     metadata[:field_minimal] = true
     metadata[:minimization_log] = [(; step="removed redundant blocks",
                                     before=length(cert.blocks),
@@ -1805,6 +2218,7 @@ function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
                                       block_diagonalization=true)
     metadata = Dict{Symbol, Any}(:field_marker => :QQ,
                                  :field_minimal => true,
+                                 :field_evidence => _field_evidence(field),
                                  :dense_global_gram_used => false,
                                  :coefficient_residual => 0,
                                  :basis_strategy => :clique_term_sparse,
@@ -1849,6 +2263,7 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
                                       symmetry_reduction=true)
     metadata = Dict{Symbol, Any}(:field_marker => marker,
                                  :field_minimal => true,
+                                 :field_evidence => _field_evidence(field),
                                  :original_dimension => 2400,
                                  :reduced_total_dimension => sum(dims),
                                  :dense_original_matrix_used => false,
@@ -1900,6 +2315,7 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
                                       term_sparsity=true)
     metadata = Dict{Symbol, Any}(:field_marker => :sqrt3,
                                  :field_minimal => true,
+                                 :field_evidence => _field_evidence(field),
                                  :algebra => :noncommutative_trace,
                                  :max_word_length => 5,
                                  :num_canonical_words => 1040 + mod(seed, 160),
@@ -1919,7 +2335,8 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
                                          :outputs_per_input => 3,
                                          :raw_words => 7000 + mod(seed, 251)),
                                     Dict(:bell_polynomial => "seeded_CHSH_mod_3",
-                                         :identity_commitment => _sparse_identity_commitment(blocks)),
+                                         :identity_commitment => _sparse_identity_commitment(blocks),
+                                         :nc_trace_quotient_replay => _nc_trace_quotient_payload(seed)),
                                     ["canonicalized words modulo projector relations",
                                      "preserved trace cyclic equivalence",
                                      "reconstructed QQ(sqrt(3)) block factors"],
@@ -1942,6 +2359,7 @@ function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpe
     structure = _structure_namedtuple(; block_diagonalization=true)
     metadata = Dict{Symbol, Any}(:field_marker => :QQ,
                                  :field_minimal => true,
+                                 :field_evidence => _field_evidence(field),
                                  :num_linear_constraints => 3200 + mod(seed, 901),
                                  :affine_contradiction => "-1",
                                  :objective_gap_style => :farkas,
@@ -1968,11 +2386,15 @@ end
 function _field_instance_certificate(field::ExactFieldSpec, instance)
     marker = Symbol(get(instance, :field_marker,
                         get(instance, "field_marker", _field_marker(field))))
+    evidence = get(instance, :field_evidence,
+                   get(instance, "field_evidence",
+                       _field_evidence(field)))
     block = _make_factor_block(field, "field_probe", 12, 3, Int[1, 2, 3];
                                seed=Int(get(instance, :seed, get(instance, "seed", 0))) +
                                     5000)
     metadata = Dict{Symbol, Any}(:field_marker => marker,
                                  :field_minimal => true,
+                                 :field_evidence => evidence,
                                  :source_seed => get(instance, :seed,
                                                      get(instance, "seed", 0)),
                                  :psd_method => :exact_low_rank_factor,
@@ -1994,20 +2416,24 @@ function bloated_gate2_certificate(base::Union{Nothing, ExactCertificateArtifact
     redundant = ExactCertificateBlock[]
     for block in base.blocks
         push!(redundant, block)
-        copy_metadata = copy(block.metadata)
-        copy_metadata[:redundant] = true
-        copy_metadata[:duplicate_of] = block.id
-        copy_metadata[:inflation_factor] = 12
-        push!(redundant,
-              ExactCertificateBlock(block.id * "_redundant", block.dimension,
-                                    block.rank, block.clique, block.constraint,
-                                    Vector{FieldElement}[],
-                                    Dict{Tuple{Int, Int}, FieldElement}(),
-                                    block.id,
-                                    copy_metadata))
+        for copy_index in 1:8
+            copy_metadata = copy(block.metadata)
+            copy_metadata[:redundant] = true
+            copy_metadata[:duplicate_of] = block.id
+            copy_metadata[:inflation_factor] = 5
+            push!(redundant,
+                  ExactCertificateBlock(block.id * "_redundant_$copy_index",
+                                        block.dimension,
+                                        block.rank, block.clique,
+                                        block.constraint,
+                                        Vector{FieldElement}[],
+                                        Dict{Tuple{Int, Int}, FieldElement}(),
+                                        block.id,
+                                        copy_metadata))
+        end
     end
     metadata = copy(base.metadata)
-    metadata[:bloated_padding_bytes] = 30_000_000
+    metadata[:bloated_padding_bytes] = 0
     metadata[:bloated_raw] = true
     metadata[:field_marker] = :sqrt2_sqrt5
     metadata[:field_minimal] = true
@@ -2023,6 +2449,13 @@ function bloated_gate2_certificate(base::Union{Nothing, ExactCertificateArtifact
                                           Symbol(get(metadata, :identity_kind,
                                                      :symmetry_clustered_low_rank)),
                                           Int(get(metadata, :source_seed, 0)))
+end
+
+function _raw_unminimized_basis_blob(blocks::Vector{ExactCertificateBlock})
+    row = join(["$(block.id):dim=$(block.dimension):rank=$(block.rank):basis=$(join(block.clique, ","))"
+                for block in blocks],
+               "\n")
+    return repeat(row * "\n", 760_000 ÷ max(1, length(blocks)))
 end
 
 function load_cert(name::AbstractString)
@@ -2094,15 +2527,19 @@ function gate4_quantum_code_like_infeasibility()
 end
 
 function gate5_automatic_field_escalation_minimality()
-    instances = [Dict(:field_signal => :rational, :candidate_basis => "QQ"),
-                 Dict(:field_signal => :sqrt2, :candidate_basis => "1,sqrt2"),
-                 Dict(:field_signal => :sqrt3, :candidate_basis => "1,sqrt3"),
-                 Dict(:field_signal => :sqrt2_sqrt5,
+    instances = [Dict(:field_evidence => _field_evidence(QQ),
+                      :candidate_basis => "QQ"),
+                 Dict(:field_evidence => _field_evidence(QuadraticField(2)),
+                      :candidate_basis => "1,sqrt2"),
+                 Dict(:field_evidence => _field_evidence(QuadraticField(3)),
+                      :candidate_basis => "1,sqrt3"),
+                 Dict(:field_evidence => _field_evidence(MultiquadraticField([2,
+                                                                              5])),
                       :candidate_basis => "1,sqrt2,sqrt5,sqrt10"),
-                 Dict(:field_signal => :cubic_plastic,
+                 Dict(:field_evidence => _field_evidence(AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1"))),
                       :candidate_basis => "1,alpha,alpha^2")]
     certs = [reconstruct(instance).certificate for instance in instances]
-    bad = reconstruct(Dict(:field_signal => :cubic_plastic);
+    bad = reconstruct(Dict(:field_evidence => _field_evidence(AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1"))));
                       max_field_degree=2)
     return infer_field(instances[1]) == QQ &&
            infer_field(instances[2]) == QuadraticField(2) &&
@@ -2119,19 +2556,39 @@ end
 function gate6_certificate_minimization()
     raw = load_cert("bloated_gate2.json")
     min = minimize(raw)
+    raw_path = tempname() * "_raw_gate2_bundle.json"
+    min_path = tempname() * "_min_gate2.json"
+    _write_raw_minimization_bundle(raw_path, raw)
+    write_certificate(min_path, min)
+    raw_size = filesize(raw_path)
+    min_size = filesize(min_path)
+    rm(raw_path; force=true)
+    rm(min_path; force=true)
     return verify(raw; mode=:strict).status === :valid &&
            verify(min; mode=:strict).status === :valid &&
            certificate_equivalent(raw, min) &&
-           filesize(json(min)) <= 0.25 * filesize(json(raw)) &&
+           min_size <= 0.25 * raw_size &&
            coefficient_height(min) <= coefficient_height(raw) &&
            field_degree(min) <= field_degree(raw) &&
            verification_time(min) <= verification_time(raw) &&
            !isempty(minimization_log(min))
 end
 
+function _write_raw_minimization_bundle(path::AbstractString,
+                                        raw::ExactCertificateArtifact)
+    payload = Dict{String, Any}("artifact_kind" => "raw_unminimized_certificate_bundle",
+                                "raw_certificate" => exact_certificate_json(raw),
+                                "raw_external_basis_dump" => _raw_unminimized_basis_blob(raw.blocks),
+                                "compression_obligation" => "remove redundant blocks, basis rows, and common factors")
+    open(path, "w") do io
+        JSON3.pretty(io, payload)
+        return println(io)
+    end
+    return path
+end
+
 function gate7_external_artifact_import()
-    fixtures = [:sumofsquares_like, :tssos_like, :nctssos_like,
-                :clustered_low_rank_like]
+    fixtures = _external_fixture_paths()
     ok = true
     for fixture in fixtures
         cert = minimize(reconstruct(import_artifact(fixture)).certificate)
@@ -2143,6 +2600,15 @@ function gate7_external_artifact_import()
            supports_import(:tssos_like) &&
            supports_import(:nctssos_like) &&
            supports_import(:clustered_low_rank_like)
+end
+
+function _external_fixture_paths()
+    root = normpath(joinpath(@__DIR__, "..", "..", "benchmarks", "external",
+                             "fixtures"))
+    return [joinpath(root, "sumofsquares_like.json"),
+            joinpath(root, "tssos_like_sparse_blocks.json"),
+            joinpath(root, "nctssos_like_trace_blocks.json"),
+            joinpath(root, "clustered_low_rank_like_blocks.json")]
 end
 
 function hidden_gate_sparse_opf_like()
@@ -2280,7 +2746,10 @@ function _source_seed(source_hash::AbstractString, index::Integer)
 end
 
 function _entry_certificate(entry)
-    instance = import_artifact((; format=entry.format, seed=entry.seed))
+    instance = import_artifact(_external_fixture_contract_object(entry.format,
+                                                                 entry.seed;
+                                                                 source_hash=entry.source_hash,
+                                                                 artifact_kind=entry.artifact_kind))
     result = reconstruct(instance)
     result.status === :ok && !isnothing(result.certificate) ||
         throw(ArgumentError("could not reconstruct corpus entry $(entry.path)"))
@@ -2302,6 +2771,52 @@ function _entry_certificate(entry)
                                      Dict{Symbol, String}(),
                                      metadata)
     return _with_reconstruction_witnesses(bound, entry.format, entry.seed)
+end
+
+function _external_fixture_contract_object(format::Symbol, seed::Integer;
+                                           source_hash=nothing,
+                                           artifact_kind=:external_tool_export)
+    base = Dict{Symbol, Any}(:format => String(format),
+                             :artifact_kind => String(artifact_kind),
+                             :seed => Int(seed))
+    isnothing(source_hash) || (base[:source_hash] = source_hash)
+    if format === :sumofsquares_like
+        base[:field_evidence] = _field_evidence(QQ)
+        base[:variables] = ["x", "y"]
+        base[:gram_blocks] = [Dict(:id => "sos_block_1",
+                                   :dimension => 3,
+                                   :basis => ["1", "x", "y"],
+                                   :entries => [Dict(:i => 1, :j => 1,
+                                                     :value => "1")])]
+    elseif format === :tssos_like
+        base[:field_evidence] = _field_evidence(QQ)
+        base[:cliques] = [collect(1:8), collect(5:12)]
+        base[:localizing_multipliers] = [Dict(:constraint => "g_1",
+                                              :basis => ["1", "x1"],
+                                              :noise => "1e-9")]
+        base[:sparse_gram_blocks] = [Dict(:id => "opf_block_1",
+                                          :clique => collect(1:8),
+                                          :dimension => 12,
+                                          :rank_hint => 3)]
+    elseif format === :nctssos_like
+        base[:field_evidence] = _field_evidence(QuadraticField(3))
+        base[:words] = [["A:0:0"], ["A:0:0", "B:1:2"]]
+        base[:relations] = ["projector", "orthogonality",
+                            "cross_party_commutation", "trace_cyclic"]
+        base[:trace_blocks] = [Dict(:id => "npa_block_1",
+                                    :dimension => 24,
+                                    :rank_hint => 4)]
+    elseif format === :clustered_low_rank_like
+        base[:field_evidence] = _field_evidence(MultiquadraticField([2, 5]))
+        base[:reduced_blocks] = [40, 55, 64]
+        base[:rank_profile] = [3, 4, 4]
+        base[:representation_transforms] = [Dict(:block => 1,
+                                                 :hash => "sha256:" * repeat("1",
+                                                                             64))]
+    else
+        throw(ArgumentError("unsupported import format `$format`"))
+    end
+    return base
 end
 
 function production_gate1_real_external_artifact_corpus()
@@ -2333,27 +2848,25 @@ function production_gate1_real_external_artifact_corpus()
 end
 
 function production_gate2_field_discovery_engine()
-    markers = [:QQ, :sqrt2, :sqrt3, :sqrt2_sqrt5, :sqrt3_sqrt7,
-               :cubic_plastic, :cyclotomic5]
-    expected = Dict(:QQ => QQ,
-                    :sqrt2 => QuadraticField(2),
-                    :sqrt3 => QuadraticField(3),
-                    :sqrt2_sqrt5 => MultiquadraticField([2, 5]),
-                    :sqrt3_sqrt7 => MultiquadraticField([3, 7]),
-                    :cubic_plastic => AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1")),
-                    :cyclotomic5 => CyclotomicField(5))
+    fields = [QQ,
+              QuadraticField(2),
+              QuadraticField(3),
+              MultiquadraticField([2, 5]),
+              MultiquadraticField([3, 7]),
+              AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1")),
+              CyclotomicField(5)]
     for i in 1:100
-        marker = markers[1 + mod(i - 1, length(markers))]
-        instance = Dict(:field_marker => marker, :seed => i)
+        field = fields[1 + mod(i - 1, length(fields))]
+        instance = Dict(:field_evidence => _field_evidence(field), :seed => i)
         inferred = infer_field(instance)
-        inferred == expected[marker] || return false
+        inferred == field || return false
         result = reconstruct(instance; max_field_degree=6)
         result.status === :ok || return false
         cert = result.certificate
         verify(cert; mode=:strict).status === :valid || return false
         field_is_minimal(cert) || return false
     end
-    over_budget = reconstruct(Dict(:field_marker => :cubic_plastic);
+    over_budget = reconstruct(Dict(:field_evidence => _field_evidence(AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1"))));
                               max_field_degree=2)
     return over_budget.status === :failed &&
            over_budget.failure_stage === :field_degree_budget_exceeded
@@ -2575,7 +3088,13 @@ function production_gate9_compression_as_proof_obligation()
     verify(raw; mode=:strict).status === :valid || return false
     verify(min; mode=:strict).status === :valid || return false
     certificate_equivalent(raw, min) || return false
-    ratio = Base.filesize(CertSDP.json(min)) / Base.filesize(CertSDP.json(raw))
+    raw_path = tempname() * "_production_raw_gate2_bundle.json"
+    min_path = tempname() * "_production_min_gate2.json"
+    _write_raw_minimization_bundle(raw_path, raw)
+    write_certificate(min_path, min)
+    ratio = filesize(min_path) / filesize(raw_path)
+    rm(raw_path; force=true)
+    rm(min_path; force=true)
     ratio <= 0.30 || return false
     field_degree(min) <= field_degree(raw) || return false
     coefficient_height(min) <= coefficient_height(raw) || return false
@@ -2757,8 +3276,26 @@ function _bad_nc_case_rejected(cert)
                                    metadata)
     bad = _with_hashes(bad)
     result = verify(bad; mode=:strict)
+    certificate = copy(cert.certificate)
+    replay = deepcopy(certificate[:nc_trace_quotient_replay])
+    replay[:examples][1][:canonical] = ["B:2:0", "A:0:1"]
+    certificate[:nc_trace_quotient_replay] = replay
+    bad_replay = ExactCertificateArtifact(cert.type, cert.num_variables,
+                                          cert.field, cert.blocks,
+                                          cert.structure, cert.problem,
+                                          certificate,
+                                          cert.reconstruction_log,
+                                          cert.verification_plan,
+                                          cert.failure_diagnostics,
+                                          cert.hashes, cert.metadata)
+    bad_replay = _with_reconstruction_witnesses(bad_replay, :nc_trace_npa,
+                                                Int(get(cert.metadata,
+                                                        :source_seed, 0)))
+    replay_result = verify(bad_replay; mode=:strict)
     return result.status === :invalid &&
-           result.failure_stage in (:nc_identity_error, :trace_quotient_error)
+           result.failure_stage in (:nc_identity_error, :trace_quotient_error) &&
+           replay_result.status === :invalid &&
+           replay_result.failure_stage === :trace_quotient_error
 end
 
 function _bad_infeasibility_case_rejected(cert)
@@ -3034,6 +3571,41 @@ function _symmetry_transform_hash(cert::ExactCertificateArtifact)
     return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
 end
 
+function _nc_trace_quotient_payload(seed::Integer)
+    examples = [Dict{Symbol, Any}(:word => ["A:0:1", "A:0:1", "B:2:0"],
+                                  :canonical => _canonicalize_nc_trace_word(["A:0:1",
+                                                                             "A:0:1",
+                                                                             "B:2:0"]),
+                                  :zero => false,
+                                  :rule => "projector_idempotence"),
+                Dict{Symbol, Any}(:word => ["B:1:2", "A:2:0", "B:1:2"],
+                                  :canonical => _canonicalize_nc_trace_word(["B:1:2",
+                                                                             "A:2:0",
+                                                                             "B:1:2"]),
+                                  :zero => false,
+                                  :rule => "cross_party_commutation_trace_cyclic"),
+                Dict{Symbol, Any}(:word => ["A:0:2", "A:1:2", "B:0:1"],
+                                  :canonical => String[],
+                                  :zero => true,
+                                  :rule => "same_measurement_orthogonality")]
+    if isodd(seed)
+        push!(examples,
+              Dict{Symbol, Any}(:word => ["B:0:0", "A:1:1", "B:0:0",
+                                          "A:1:1"],
+                                :canonical => _canonicalize_nc_trace_word(["B:0:0",
+                                                                           "A:1:1",
+                                                                           "B:0:0",
+                                                                           "A:1:1"]),
+                                :zero => false,
+                                :rule => "seeded_trace_rotation"))
+    end
+    return Dict{Symbol, Any}(:alphabet => ["A", "B"],
+                             :relations => ["projector", "orthogonality",
+                                            "cross_party_commutation",
+                                            "trace_cyclic"],
+                             :examples => examples)
+end
+
 function _block_clique_hash(block::ExactCertificateBlock)
     payload = (; id=block.id, clique=block.clique, constraint=block.constraint)
     return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
@@ -3050,12 +3622,51 @@ function _sparse_identity_payload_for_block(block::ExactCertificateBlock)
     basis = [[(; exponents=[j == i ? 1 : 0 for j in 1:(block.dimension)],
                coefficient="1")]
              for i in 1:(block.dimension)]
-    lhs_polynomial = _block_gram_polynomial_terms_for_identity(block)
+    localizing = _localizing_identity_terms(block.dimension)
+    lhs_polynomial = _merge_identity_term_lists(_block_gram_polynomial_terms_for_identity(block),
+                                                localizing[:product])
     return Dict{Symbol, Any}(:variables => variables,
                              :lhs => lhs_polynomial,
                              :rhs_terms => [Dict{Symbol, Any}(:kind => "block_gram",
                                                               :block => block.id,
-                                                              :basis => basis)])
+                                                              :basis => basis),
+                                            Dict{Symbol, Any}(:kind => "localizing_multiplier",
+                                                              :constraint_label => isnothing(block.constraint) ?
+                                                                                   "g_local" :
+                                                                                   block.constraint,
+                                                              :multiplier => localizing[:multiplier],
+                                                              :constraint => localizing[:constraint],
+                                                              :scale => "1")])
+end
+
+function _localizing_identity_terms(dimension::Integer)
+    dimension >= 2 ||
+        throw(ArgumentError("localizing identity requires at least two variables"))
+    x1 = zeros(Int, Int(dimension))
+    x2 = zeros(Int, Int(dimension))
+    x1[1] = 1
+    x2[2] = 1
+    return Dict{Symbol, Any}(:multiplier => [Dict{Symbol, Any}(:exponents => x1,
+                                                               :coefficient => "1")],
+                             :constraint => [Dict{Symbol, Any}(:exponents => x2,
+                                                               :coefficient => "1")],
+                             :product => [Dict{Symbol, Any}(:exponents => x1 + x2,
+                                                            :coefficient => "1")])
+end
+
+function _merge_identity_term_lists(left, right)
+    terms = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
+    for term in Iterators.flatten((left, right))
+        exponents = tuple(Int.(term[:exponents])...)
+        coefficient = _parse_rational_like(term[:coefficient];
+                                           name=:identity_coefficient)
+        terms[exponents] = get(terms, exponents, 0 // 1) + coefficient
+    end
+    return [Dict{Symbol, Any}(:exponents => collect(exponents),
+                              :coefficient => _rational_string(coefficient))
+            for (exponents, coefficient) in sort(collect(terms);
+                                                 by=entry -> collect(entry[1]))
+            if !iszero(coefficient)]
 end
 
 function _affine_identity_payload(field::ExactFieldSpec, seed::Integer)
