@@ -56,5 +56,6 @@ certsdp_include("release_audit_scripts.jl", "tooling", "release_smoke")
 certsdp_include("release_hardening.jl", "release_smoke")
 certsdp_include("readme_snippets.jl", "essential", "docs", "release_smoke")
 certsdp_include("docs/public_docs.jl", "docs", "release_smoke")
+certsdp_include("hardgate_4_0.jl", "hardgate", "contract")
 certsdp_include("production_gates_2_1.jl", "production", "validation",
                 "compiler")

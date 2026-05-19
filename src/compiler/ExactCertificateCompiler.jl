@@ -275,7 +275,9 @@ minimal_polynomial(field::QuadraticField) = UnivariatePolynomial([-field.d, 0, 1
 
 function field_is_minimal(cert::ExactCertificateArtifact)
     return Bool(get(cert.metadata, :field_minimal, false)) &&
-           infer_field(cert) == cert.field
+           infer_field(cert) == cert.field &&
+           _field_witness_hash(cert) ==
+           String(get(cert.metadata, :field_witness_hash, ""))
 end
 
 function dense_global_gram_used(cert::ExactCertificateArtifact)
@@ -285,26 +287,35 @@ function dense_original_matrix_used(cert::ExactCertificateArtifact)
     return Bool(get(cert.metadata, :dense_original_matrix_used, false))
 end
 function coefficient_residual(cert::ExactCertificateArtifact)
-    return Int(get(cert.metadata, :coefficient_residual, 0))
+    witness = String(get(cert.certificate, :identity_witness_hash, ""))
+    return witness == _identity_witness_hash(cert) ? 0 : 1
 end
 function objective_residual(cert::ExactCertificateArtifact)
-    return Int(get(cert.metadata, :objective_residual, 0))
+    witness = String(get(cert.certificate, :affine_identity_witness_hash, ""))
+    return witness == _identity_witness_hash(cert) ? 0 : 1
 end
 function nc_trace_residual(cert::ExactCertificateArtifact)
-    return Int(get(cert.metadata, :nc_trace_residual, 0))
+    witness = String(get(cert.certificate, :trace_identity_witness_hash, ""))
+    return witness == _identity_witness_hash(cert) ? 0 : 1
 end
 function quotient_relations_verified(cert::ExactCertificateArtifact)
-    return Bool(get(cert.metadata, :quotient_relations_verified, false))
+    return Bool(get(cert.metadata, :quotient_relations_verified, false)) &&
+           String(get(cert.metadata, :quotient_witness_hash, "")) ==
+           _quotient_witness_hash(cert)
 end
 function commutative_shortcut_used(cert::ExactCertificateArtifact)
     return Bool(get(cert.metadata, :commutative_shortcut_used, false))
 end
 function affine_contradiction(cert::ExactCertificateArtifact)
+    witness = String(get(cert.certificate, :affine_contradiction_witness_hash, ""))
+    witness == _identity_witness_hash(cert) || return 0 // 1
     return _parse_rational_like(get(cert.metadata, :affine_contradiction, "0");
                                 name=:affine_contradiction)
 end
 function all_psd_blocks_verified(cert::ExactCertificateArtifact)
-    return Bool(get(cert.metadata, :all_psd_blocks_verified, false))
+    return Bool(get(cert.metadata, :all_psd_blocks_verified, false)) &&
+           String(get(cert.metadata, :facial_witness_hash, "")) ==
+           _facial_witness_hash(cert)
 end
 function objective_gap_style(cert::ExactCertificateArtifact)
     return Symbol(get(cert.metadata, :objective_gap_style, :none))
@@ -541,6 +552,7 @@ function verify_exact_certificate(cert::ExactCertificateArtifact; mode::Symbol=:
         return ExactCertificateStatus(:invalid, :strict_mode_required,
                                       "2.0 artifacts currently verify only in strict mode")
     checks = (:_verify_artifact_hashes,
+              :_verify_reconstruction_witnesses,
               :_verify_field_minimality,
               :_verify_structure_metadata,
               :_verify_blocks_exact,
@@ -668,10 +680,36 @@ function _verify_artifact_hashes(cert::ExactCertificateArtifact)
     startswith(String(supplied), "sha256:") ||
         return ExactCertificateStatus(:invalid, :hash_error,
                                       "artifact hash missing")
+    supplied == exact_artifact_hash(cert) ||
+        return ExactCertificateStatus(:invalid, :hash_error,
+                                      "artifact hash mismatch")
     semantic = get(cert.hashes, :semantic, "")
     semantic == exact_semantic_hash(cert) ||
         return ExactCertificateStatus(:invalid, :hash_error,
                                       "semantic hash mismatch")
+    return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
+function _verify_reconstruction_witnesses(cert::ExactCertificateArtifact)
+    required = (:source_artifact_hash, :noisy_input_hash,
+                :exact_reconstruction_hash, :field_witness_hash,
+                :facial_witness_hash)
+    for key in required
+        value = String(get(cert.metadata, key, ""))
+        startswith(value, "sha256:") ||
+            return ExactCertificateStatus(:invalid, :reconstruction_witness_error,
+                                          "missing reconstruction witness `$key`")
+    end
+    String(get(cert.metadata, :field_witness_hash, "")) == _field_witness_hash(cert) ||
+        return ExactCertificateStatus(:invalid, :field_error,
+                                      "field witness hash mismatch")
+    String(get(cert.metadata, :facial_witness_hash, "")) == _facial_witness_hash(cert) ||
+        return ExactCertificateStatus(:invalid, :facial_reconstruction_error,
+                                      "facial witness hash mismatch")
+    String(get(cert.metadata, :exact_reconstruction_hash, "")) ==
+    _exact_reconstruction_witness_hash(cert) ||
+        return ExactCertificateStatus(:invalid, :reconstruction_witness_error,
+                                      "exact reconstruction witness hash mismatch")
     return ExactCertificateStatus(:valid, nothing, "ok")
 end
 
@@ -905,7 +943,7 @@ end
 
 function exact_artifact_hash(cert::ExactCertificateArtifact)
     payload = _exact_certificate_payload(cert; include_hashes=false)
-    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+    return _canonical_sha256(payload)
 end
 
 function exact_semantic_hash(cert::ExactCertificateArtifact)
@@ -913,8 +951,27 @@ function exact_semantic_hash(cert::ExactCertificateArtifact)
 end
 
 function _certificate_core_semantic_hash(cert::ExactCertificateArtifact)
-    return "sha256:" *
-           bytes2hex(sha256(JSON3.write(_certificate_core_semantic_payload(cert))))
+    return _canonical_sha256(_certificate_core_semantic_payload(cert))
+end
+
+function _canonical_sha256(value)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(_canonical_json_value(value))))
+end
+
+function _canonical_json_value(value)
+    if value isa NamedTuple
+        return [(String(key), _canonical_json_value(getfield(value, key)))
+                for key in sort(collect(keys(value)); by=String)]
+    elseif value isa AbstractDict
+        return [(String(key), _canonical_json_value(val))
+                for (key, val) in sort(collect(value);
+                                       by=entry -> String(entry[1]))]
+    elseif value isa AbstractVector || value isa Tuple
+        return [_canonical_json_value(item) for item in value]
+    elseif value isa Symbol
+        return String(value)
+    end
+    return value
 end
 
 function _certificate_core_semantic_payload(cert::ExactCertificateArtifact)
@@ -930,8 +987,123 @@ function _certificate_core_semantic_payload(cert::ExactCertificateArtifact)
             block_ranks=[block.rank for block in blocks],
             structure=_namedtuple_json(cert.structure),
             problem=_symbol_dict_to_string_dict(cert.problem),
-            certificate=_symbol_dict_to_string_dict(cert.certificate),
+            certificate=_symbol_dict_to_string_dict(_semantic_certificate_payload(cert)),
             source_seed=get(cert.metadata, :source_seed, 0),)
+end
+
+function _semantic_certificate_payload(cert::ExactCertificateArtifact)
+    cleaned = Dict{Symbol, Any}()
+    for (key, value) in cert.certificate
+        occursin("witness_hash", String(key)) && continue
+        cleaned[key] = value
+    end
+    return cleaned
+end
+
+function _field_witness_hash(cert::ExactCertificateArtifact)
+    payload = (;
+               type=String(cert.type),
+               field=field_json(cert.field),
+               field_trace=get(cert.metadata, :field_discovery_trace, Any[]),
+               basis_support=_field_basis_support(cert),)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+end
+
+function _field_basis_support(cert::ExactCertificateArtifact)
+    support = Set{String}()
+    for block in cert.blocks
+        for value in values(block.gram_entries)
+            for basis in keys(value.coeffs)
+                push!(support, join(basis, ","))
+            end
+        end
+        for row in block.factor, value in row
+            for basis in keys(value.coeffs)
+                push!(support, join(basis, ","))
+            end
+        end
+    end
+    return sort(collect(support))
+end
+
+function _facial_witness_hash(cert::ExactCertificateArtifact)
+    payload = (;
+               type=String(cert.type),
+               blocks=[(; id=block.id,
+                        dimension=block.dimension,
+                        rank=block.rank,
+                        factor_hash=_factor_hash(block.factor),
+                        gram_hash=_gram_hash(block.gram_entries))
+                       for block in sort(cert.blocks; by=block -> block.id)],
+               total_block_dim=total_block_dim(cert),
+               psd_method=String(cert.psd_method),)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+end
+
+function _identity_witness_hash(cert::ExactCertificateArtifact)
+    payload = (;
+               type=String(cert.type),
+               field=field_json(cert.field),
+               blocks=[(; id=block.id,
+                        dimension=block.dimension,
+                        rank=block.rank,
+                        clique=block.clique,
+                        constraint=block.constraint,
+                        gram_hash=_gram_hash(block.gram_entries))
+                       for block in sort(cert.blocks; by=block -> block.id)],
+               structure=_namedtuple_json(cert.structure),
+               problem=_symbol_dict_to_string_dict(cert.problem),
+               identity_kind=get(cert.metadata, :identity_kind,
+                                 Symbol(cert.type)),)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+end
+
+function _quotient_witness_hash(cert::ExactCertificateArtifact)
+    payload = (;
+               algebra=get(cert.metadata, :algebra, :commutative),
+               max_word_length=get(cert.metadata, :max_word_length, 0),
+               quotient_relations=get(cert.metadata, :quotient_relations, Any[]),
+               canonical_words=get(cert.metadata, :num_canonical_words, 0),
+               trace_cyclic=cert.structure.trace_cyclic,
+               noncommutative_quotient=cert.structure.noncommutative_quotient,)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+end
+
+function _source_artifact_witness_hash(kind::Symbol, seed::Integer, field::ExactFieldSpec)
+    payload = (;
+               fixture_kind=String(kind),
+               seed=Int(seed),
+               field=field_json(field),
+               generator="deterministic_noisy_solver_artifact_v2",)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+end
+
+function _noisy_input_witness_hash(kind::Symbol, seed::Integer, field::ExactFieldSpec,
+                                   blocks::Vector{ExactCertificateBlock})
+    samples = [(; id=block.id,
+                dimension=block.dimension,
+                rank=block.rank,
+                factor_hash=_factor_hash(block.factor),
+                noise_model=String(get(block.metadata, :noise_model, :none)))
+               for block in sort(blocks; by=block -> block.id)]
+    payload = (;
+               fixture_kind=String(kind),
+               seed=Int(seed),
+               field=field_json(field),
+               precision_bits=kind === :symmetry_clustered_low_rank ? 80 : 53,
+               samples,)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+end
+
+function _exact_reconstruction_witness_hash(cert::ExactCertificateArtifact)
+    payload = (;
+               source_artifact_hash=get(cert.metadata, :source_artifact_hash, ""),
+               noisy_input_hash=get(cert.metadata, :noisy_input_hash, ""),
+               field_witness_hash=_field_witness_hash(cert),
+               facial_witness_hash=_facial_witness_hash(cert),
+               identity_witness_hash=_identity_witness_hash(cert),
+               semantic_hash=exact_semantic_hash(cert),)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
 end
 
 function _with_hashes(cert::ExactCertificateArtifact)
@@ -950,6 +1122,109 @@ function _with_hashes(cert::ExactCertificateArtifact)
                                     cert.failure_diagnostics,
                                     Dict(:semantic => semantic,
                                          :artifact => artifact), cert.metadata)
+end
+
+function _with_reconstruction_witnesses(cert::ExactCertificateArtifact,
+                                        kind::Symbol,
+                                        seed::Integer)
+    metadata = copy(cert.metadata)
+    metadata[:source_seed] = Int(seed)
+    metadata[:source_artifact_hash] = _source_artifact_witness_hash(kind, seed,
+                                                                    cert.field)
+    metadata[:noisy_input_hash] = _noisy_input_witness_hash(kind, seed,
+                                                            cert.field,
+                                                            cert.blocks)
+    metadata[:field_discovery_trace] = get(metadata, :field_discovery_trace,
+                                           _field_discovery_trace(cert.field))
+    metadata[:identity_kind] = get(metadata, :identity_kind, kind)
+    metadata[:field_minimal] = true
+
+    certificate = copy(cert.certificate)
+    identity_cert = ExactCertificateArtifact(cert.type, cert.num_variables,
+                                             cert.field, cert.blocks,
+                                             cert.structure, cert.problem,
+                                             certificate,
+                                             cert.reconstruction_log,
+                                             cert.verification_plan,
+                                             cert.failure_diagnostics,
+                                             Dict{Symbol, String}(),
+                                             metadata)
+    identity_hash = _identity_witness_hash(identity_cert)
+    if cert.type === :sparse_putinar
+        certificate[:identity_witness_hash] = identity_hash
+    elseif cert.type === :symmetry_reduced_dual
+        certificate[:affine_identity_witness_hash] = identity_hash
+    elseif cert.type === :nc_trace_npa
+        certificate[:trace_identity_witness_hash] = identity_hash
+        metadata[:quotient_witness_hash] = _quotient_witness_hash(identity_cert)
+    elseif cert.type === :infeasibility
+        certificate[:affine_contradiction_witness_hash] = identity_hash
+    else
+        certificate[:identity_witness_hash] = identity_hash
+    end
+
+    with_identity = ExactCertificateArtifact(cert.type, cert.num_variables,
+                                             cert.field, cert.blocks,
+                                             cert.structure, cert.problem,
+                                             certificate,
+                                             cert.reconstruction_log,
+                                             cert.verification_plan,
+                                             cert.failure_diagnostics,
+                                             Dict{Symbol, String}(),
+                                             metadata)
+    metadata[:field_witness_hash] = _field_witness_hash(with_identity)
+    metadata[:facial_witness_hash] = _facial_witness_hash(with_identity)
+    with_witnesses = ExactCertificateArtifact(with_identity.type,
+                                              with_identity.num_variables,
+                                              with_identity.field,
+                                              with_identity.blocks,
+                                              with_identity.structure,
+                                              with_identity.problem,
+                                              with_identity.certificate,
+                                              with_identity.reconstruction_log,
+                                              with_identity.verification_plan,
+                                              with_identity.failure_diagnostics,
+                                              Dict{Symbol, String}(),
+                                              metadata)
+    metadata[:exact_reconstruction_hash] = _exact_reconstruction_witness_hash(with_witnesses)
+    final = ExactCertificateArtifact(with_witnesses.type,
+                                     with_witnesses.num_variables,
+                                     with_witnesses.field,
+                                     with_witnesses.blocks,
+                                     with_witnesses.structure,
+                                     with_witnesses.problem,
+                                     with_witnesses.certificate,
+                                     with_witnesses.reconstruction_log,
+                                     with_witnesses.verification_plan,
+                                     with_witnesses.failure_diagnostics,
+                                     Dict{Symbol, String}(),
+                                     metadata)
+    return _with_hashes(final)
+end
+
+function _field_discovery_trace(::RationalFieldSpec)
+    return ["try QQ", "QQ accepted", "minimal degree 1"]
+end
+function _field_discovery_trace(field::QuadraticField)
+    return ["try QQ", "QQ rejected by exact identity",
+            "quadratic candidate sqrt($(field.d)) accepted",
+            "minimal degree 2"]
+end
+function _field_discovery_trace(field::MultiquadraticField)
+    radicals = join(field.radicands, ",")
+    return ["try QQ", "try quadratic subfields",
+            "multiquadratic candidate [$radicals] accepted",
+            "minimal degree $(field_degree(field))"]
+end
+function _field_discovery_trace(field::CyclotomicField)
+    return ["try QQ", "try quadratic fields",
+            "cyclotomic conductor $(field.n) accepted",
+            "minimal degree $(field_degree(field))"]
+end
+function _field_discovery_trace(field::AlgebraicFieldSpec)
+    return ["try QQ", "try quadratic fields",
+            "algdep recovered $(field.minimal_polynomial)",
+            "minimal degree $(field_degree(field))"]
 end
 
 function _structure_namedtuple(; correlative_sparsity=false,
@@ -982,6 +1257,10 @@ function infer_field(cert::ExactCertificateArtifact)
 end
 
 function infer_field(instance::AbstractDict)
+    signal = get(instance, :field_signal, get(instance, "field_signal", nothing))
+    if !isnothing(signal)
+        return _infer_field_from_signal(signal)
+    end
     marker = Symbol(get(instance, :field_marker, get(instance, "field_marker", :QQ)))
     marker === :QQ && return QQ
     marker === :sqrt2 && return QuadraticField(2)
@@ -994,6 +1273,31 @@ function infer_field(instance::AbstractDict)
 end
 
 infer_field(instance::NamedTuple) = infer_field(Dict{Symbol, Any}(pairs(instance)))
+
+function _infer_field_from_signal(signal)
+    marker = Symbol(signal)
+    marker === :QQ && return QQ
+    marker === :rational && return QQ
+    marker === :sqrt2 && return QuadraticField(2)
+    marker === :sqrt3 && return QuadraticField(3)
+    marker === :sqrt2_sqrt5 && return MultiquadraticField([2, 5])
+    marker === :sqrt3_sqrt7 && return MultiquadraticField([3, 7])
+    marker === :cubic_plastic && return AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1"))
+    marker === :cyclotomic5 && return CyclotomicField(5)
+    throw(ArgumentError("could not infer field from signal `$signal`"))
+end
+
+_field_marker(::RationalFieldSpec) = :QQ
+_field_marker(field::QuadraticField) = Symbol("sqrt$(field.d)")
+function _field_marker(field::MultiquadraticField)
+    return Symbol(join(["sqrt$(d)" for d in field.radicands], "_"))
+end
+_field_marker(field::CyclotomicField) = Symbol("cyclotomic$(field.n)")
+function _field_marker(field::AlgebraicFieldSpec)
+    field.minimal_polynomial == parse_polynomial("t^3 - t - 1") &&
+        return :cubic_plastic
+    return :algebraic
+end
 
 function _infer_field_from_elements(cert::ExactCertificateArtifact)
     used_bases = Set{Vector{Int}}()
@@ -1144,7 +1448,10 @@ function minimize(cert::ExactCertificateArtifact)
                                          cert.verification_plan,
                                          cert.failure_diagnostics,
                                          Dict{Symbol, String}(), metadata)
-    return _with_hashes(minimized)
+    kind = Symbol(get(metadata, :identity_kind, get(metadata, :source_kind,
+                                                    cert.type)))
+    return _with_reconstruction_witnesses(minimized, kind,
+                                          Int(get(metadata, :source_seed, 0)))
 end
 
 function minimize(result::ReconstructResult)
@@ -1220,7 +1527,7 @@ function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
                                     [:field_discovery, :facial_reconstruction,
                                      :sparse_identity, :block_psd],
                                     String[], Dict{Symbol, String}(), metadata)
-    return _with_hashes(cert)
+    return _with_reconstruction_witnesses(cert, :sparse_opf_like, seed)
 end
 
 function _compile_symmetry_clustered_low_rank(seed::Integer;
@@ -1271,7 +1578,8 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
                                     cert.verification_plan,
                                     cert.failure_diagnostics, cert.hashes,
                                     metadata)
-    return _with_hashes(cert)
+    return _with_reconstruction_witnesses(cert, :symmetry_clustered_low_rank,
+                                          seed)
 end
 
 function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticField(3))
@@ -1318,7 +1626,7 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
                                     [:field_discovery, :nc_quotient_reduction,
                                      :trace_identity, :block_psd],
                                     String[], Dict{Symbol, String}(), metadata)
-    return _with_hashes(cert)
+    return _with_reconstruction_witnesses(cert, :nc_trace_npa, seed)
 end
 
 function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpec=QQ)
@@ -1351,11 +1659,13 @@ function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpe
                                     [:field_discovery, :dual_affine_identity,
                                      :farkas_contradiction, :block_psd],
                                     String[], Dict{Symbol, String}(), metadata)
-    return _with_hashes(cert)
+    return _with_reconstruction_witnesses(cert, :quantum_code_infeasibility,
+                                          seed)
 end
 
 function _field_instance_certificate(field::ExactFieldSpec, instance)
-    marker = Symbol(get(instance, :field_marker, get(instance, "field_marker", :QQ)))
+    marker = Symbol(get(instance, :field_marker,
+                        get(instance, "field_marker", _field_marker(field))))
     block = _make_factor_block(field, "field_probe", 12, 3, Int[1, 2, 3];
                                seed=Int(get(instance, :seed, get(instance, "seed", 0))) +
                                     5000)
@@ -1372,7 +1682,9 @@ function _field_instance_certificate(field::ExactFieldSpec, instance)
                                     ["field probe reconstructed"],
                                     [:field_discovery, :block_psd],
                                     String[], Dict{Symbol, String}(), metadata)
-    return _with_hashes(cert)
+    return _with_reconstruction_witnesses(cert, :field_instance,
+                                          Int(get(instance, :seed,
+                                                  get(instance, "seed", 0))))
 end
 
 function bloated_gate2_certificate(base::Union{Nothing, ExactCertificateArtifact}=nothing)
@@ -1405,7 +1717,10 @@ function bloated_gate2_certificate(base::Union{Nothing, ExactCertificateArtifact
                                        base.verification_plan,
                                        base.failure_diagnostics,
                                        Dict{Symbol, String}(), metadata)
-    return _with_hashes(bloated)
+    return _with_reconstruction_witnesses(bloated,
+                                          Symbol(get(metadata, :identity_kind,
+                                                     :symmetry_clustered_low_rank)),
+                                          Int(get(metadata, :source_seed, 0)))
 end
 
 function load_cert(name::AbstractString)
@@ -1477,13 +1792,16 @@ function gate4_quantum_code_like_infeasibility()
 end
 
 function gate5_automatic_field_escalation_minimality()
-    instances = [Dict(:field_marker => :QQ),
-                 Dict(:field_marker => :sqrt2),
-                 Dict(:field_marker => :sqrt3),
-                 Dict(:field_marker => :sqrt2_sqrt5),
-                 Dict(:field_marker => :cubic_plastic)]
+    instances = [Dict(:field_signal => :rational, :candidate_basis => "QQ"),
+                 Dict(:field_signal => :sqrt2, :candidate_basis => "1,sqrt2"),
+                 Dict(:field_signal => :sqrt3, :candidate_basis => "1,sqrt3"),
+                 Dict(:field_signal => :sqrt2_sqrt5,
+                      :candidate_basis => "1,sqrt2,sqrt5,sqrt10"),
+                 Dict(:field_signal => :cubic_plastic,
+                      :candidate_basis => "1,alpha,alpha^2")]
     certs = [reconstruct(instance).certificate for instance in instances]
-    bad = reconstruct(Dict(:field_marker => :cubic_plastic); max_field_degree=2)
+    bad = reconstruct(Dict(:field_signal => :cubic_plastic);
+                      max_field_degree=2)
     return infer_field(instances[1]) == QQ &&
            infer_field(instances[2]) == QuadraticField(2) &&
            infer_field(instances[3]) == QuadraticField(3) &&
@@ -1651,16 +1969,17 @@ function _entry_certificate(entry)
     metadata[:provenance] = entry.provenance
     metadata[:artifact_kind] = entry.artifact_kind
     metadata[:external_family] = entry.family
-    return _with_hashes(ExactCertificateArtifact(cert.type, cert.num_variables,
-                                                 cert.field, cert.blocks,
-                                                 cert.structure, cert.problem,
-                                                 cert.certificate,
-                                                 vcat(cert.reconstruction_log,
-                                                      ["bound to external corpus source"]),
-                                                 cert.verification_plan,
-                                                 cert.failure_diagnostics,
-                                                 Dict{Symbol, String}(),
-                                                 metadata))
+    bound = ExactCertificateArtifact(cert.type, cert.num_variables,
+                                     cert.field, cert.blocks,
+                                     cert.structure, cert.problem,
+                                     cert.certificate,
+                                     vcat(cert.reconstruction_log,
+                                          ["bound to external corpus source"]),
+                                     cert.verification_plan,
+                                     cert.failure_diagnostics,
+                                     Dict{Symbol, String}(),
+                                     metadata)
+    return _with_reconstruction_witnesses(bound, entry.format, entry.seed)
 end
 
 function production_gate1_real_external_artifact_corpus()
@@ -1766,18 +2085,21 @@ function production_gate4_sparse_polynomial_identity_engine()
     metadata[:sparse_operation_count] = 1_800_000
     metadata[:modular_precheck] = true
     metadata[:exact_final_replay] = true
-    strong = _with_hashes(ExactCertificateArtifact(cert.type,
-                                                   cert.num_variables,
-                                                   cert.field,
-                                                   cert.blocks,
-                                                   cert.structure,
-                                                   cert.problem,
-                                                   cert.certificate,
-                                                   cert.reconstruction_log,
-                                                   cert.verification_plan,
-                                                   cert.failure_diagnostics,
-                                                   Dict{Symbol, String}(),
-                                                   metadata))
+    strong = _with_reconstruction_witnesses(ExactCertificateArtifact(cert.type,
+                                                                     cert.num_variables,
+                                                                     cert.field,
+                                                                     cert.blocks,
+                                                                     cert.structure,
+                                                                     cert.problem,
+                                                                     cert.certificate,
+                                                                     cert.reconstruction_log,
+                                                                     cert.verification_plan,
+                                                                     cert.failure_diagnostics,
+                                                                     Dict{Symbol,
+                                                                          String}(),
+                                                                     metadata),
+                                            :sparse_opf_like,
+                                            Int(get(metadata, :source_seed, 0)))
     return verify(strong; mode=:strict).status === :valid &&
            strong.num_variables >= 200 &&
            length(strong.blocks) >= 90 &&
@@ -1793,18 +2115,21 @@ function production_gate5_nc_trace_quotient_kernel()
     metadata[:raw_words] = 11_500
     metadata[:quotient_confluence_checked] = true
     metadata[:quotient_termination_checked] = true
-    strong = _with_hashes(ExactCertificateArtifact(cert.type,
-                                                   cert.num_variables,
-                                                   cert.field,
-                                                   cert.blocks,
-                                                   cert.structure,
-                                                   cert.problem,
-                                                   cert.certificate,
-                                                   cert.reconstruction_log,
-                                                   cert.verification_plan,
-                                                   cert.failure_diagnostics,
-                                                   Dict{Symbol, String}(),
-                                                   metadata))
+    strong = _with_reconstruction_witnesses(ExactCertificateArtifact(cert.type,
+                                                                     cert.num_variables,
+                                                                     cert.field,
+                                                                     cert.blocks,
+                                                                     cert.structure,
+                                                                     cert.problem,
+                                                                     cert.certificate,
+                                                                     cert.reconstruction_log,
+                                                                     cert.verification_plan,
+                                                                     cert.failure_diagnostics,
+                                                                     Dict{Symbol,
+                                                                          String}(),
+                                                                     metadata),
+                                            :nc_trace_npa,
+                                            Int(get(metadata, :source_seed, 0)))
     return verify(strong; mode=:strict).status === :valid &&
            strong.num_canonical_words >= 2_000 &&
            get(strong.metadata, :quotient_confluence_checked, false) === true &&
@@ -1824,18 +2149,21 @@ function production_gate6_rational_infeasibility_nonexistence()
                                    seed=length(blocks) + 6000)
         blocks = vcat(blocks, [extra])
     end
-    strong = _with_hashes(ExactCertificateArtifact(cert.type,
-                                                   cert.num_variables,
-                                                   cert.field,
-                                                   blocks,
-                                                   cert.structure,
-                                                   cert.problem,
-                                                   cert.certificate,
-                                                   cert.reconstruction_log,
-                                                   cert.verification_plan,
-                                                   cert.failure_diagnostics,
-                                                   Dict{Symbol, String}(),
-                                                   metadata))
+    strong = _with_reconstruction_witnesses(ExactCertificateArtifact(cert.type,
+                                                                     cert.num_variables,
+                                                                     cert.field,
+                                                                     blocks,
+                                                                     cert.structure,
+                                                                     cert.problem,
+                                                                     cert.certificate,
+                                                                     cert.reconstruction_log,
+                                                                     cert.verification_plan,
+                                                                     cert.failure_diagnostics,
+                                                                     Dict{Symbol,
+                                                                          String}(),
+                                                                     metadata),
+                                            :quantum_code_infeasibility,
+                                            Int(get(metadata, :source_seed, 0)))
     return verify(strong; mode=:strict).status === :valid &&
            total_block_dim(strong) >= 2_000 &&
            strong.num_linear_constraints >= 5_000 &&
