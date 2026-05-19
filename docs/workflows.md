@@ -24,7 +24,7 @@ candidate came from, but they cannot make verification pass.
 
 | Field group | What it records | What verifier recomputes |
 | --- | --- | --- |
-| Schema and hashes | `certsdp_certificate_version`, `certificate_type`, `certificate_id`, `problem_hash` | v1.0 shape, embedded problem hash, certificate hash |
+| Schema and hashes | `certsdp_certificate_version`, `certificate_type`, `certificate_id`, `problem_hash` | supported shape, embedded problem hash, certificate hash |
 | Problem data | Exact LMI, block LMI, or SOS Gram problem | Canonical exact problem and dimensions |
 | Solution data | Rational coordinates or one-root algebraic representation | Coordinate parsing, root isolation, exact field arithmetic |
 | Proof data | PSD method, pivots/minors/Schur data, block proofs, SOS matches | Exact substitution, determinants, signs, Schur complements, coefficient matching |
@@ -52,7 +52,7 @@ Failure results are first-class diagnostics:
 bad = certify(P, [-10//1, 0//1])
 
 verify(bad)       # false
-diagnose(bad)     # v1.0 failure-report data
+diagnose(bad)     # structured failure-report data
 ```
 
 Use `verify(result)` to branch in application code rather than matching on
@@ -70,8 +70,8 @@ concrete wrapper types.
 | Exported SOS Gram JSON | `certify_sos(problem, gram)` | `certsdp certify-sos problem.json --solution gram.json` | `sos_gram_certificate` |
 | Approximate SOS Gram JSON | `CertSDP.certify_auto_sos(problem, gram; tolerance=...)` | `certsdp certify-auto-sos problem.json --solution gram.json --tolerance tol` | `sos_gram_certificate` after round-project exactification |
 | SumOfSquares-style extraction | Optional extension extraction, then `certify_sos` | Validation harness source fixture or extracted JSON | `sos_gram_certificate` |
-| Algebraic SOS Gram over `QQ(alpha)` | Internal hard-gate constructor, then `verify` | Schema-v1 replay after translation | `algebraic_sos_gram_certificate` |
-| Positive-polynomial identity | Explicit rational squares and multipliers | Schema-v1 replay or showcase fixtures | `rational_function_sos_certificate`, `positivstellensatz_certificate`, or `perturbation_compensation_sos_certificate` |
+| Algebraic SOS Gram over `QQ(alpha)` | Module-qualified constructor, then `verify` | Legacy-schema replay after translation | `algebraic_sos_gram_certificate` |
+| Positive-polynomial identity | Explicit rational squares and multipliers | Certificate replay or showcase fixtures | `rational_function_sos_certificate`, `positivstellensatz_certificate`, or `perturbation_compensation_sos_certificate` |
 | External exact-certificate ecosystem | Translate with adapter boundary, then `verify` | External replay artifact fixture | CertSDP certificate embedded in `ExternalReplayArtifact` |
 | Reviewer artifact directory | `CertSDP.write_paper_artifact(dir, cert)` | `certsdp bundle` / `certsdp replay` for zip bundles | Data-only artifact, not a new certificate family |
 
@@ -86,7 +86,8 @@ the resulting JSON artifact.
 
 Other roadmap strategies, such as perturbation/compensation, field-extension
 low-rank SOS, noncommutative projection, and quantum-bound bridges, are held
-behind hard gates until their proof obligations are replayable by CertSDP.
+module-qualified until their proof obligations are replayable by CertSDP's
+stable public API.
 
 ## External Adapter Boundary
 
@@ -97,7 +98,7 @@ on the translated CertSDP certificate.
 
 An external replay artifact is accepted only when:
 
-- the embedded translated certificate is schema-v1 data;
+- the embedded translated certificate is CertSDP certificate data;
 - `verify --strict` accepts that certificate;
 - the artifact hash matches the translated data;
 - forbidden trust fields such as raw solver output, backend logs, session

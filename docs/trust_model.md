@@ -61,7 +61,7 @@ Strict mode is invoked as:
 certsdp verify --strict cert.json
 ```
 
-It requires schema v1.0, an embedded problem, a matching `problem_hash`, a
+It requires a supported certificate shape, an embedded problem, a matching `problem_hash`, a
 `certificate_id`, and complete exact proof fields.
 
 ## Not Trusted
@@ -92,7 +92,7 @@ certificate in an environment with no numerical solver and no `msolve`.
 For an LMI certificate, strict verification does:
 
 ```text
-schema v1.0 gate
+schema and certificate-family check
 problem hash recomputation
 certificate hash recomputation
 exact solution reconstruction
@@ -113,16 +113,16 @@ translated CertSDP certificate passes the same strict boundary.
 profiles, incidence systems, algebraic backends, and saved artifacts. Its output
 is not trusted until `verify` accepts it.
 
-`verify --strict` is the independent replay boundary. It rejects legacy certificate
-shapes and requires the v1.0 exact proof surface so that success is independent
+`verify --strict` is the independent replay boundary. It rejects unsupported certificate
+shapes and requires a complete exact proof surface so that success is independent
 of solver availability and backend artifacts.
 
 ## External Adapter Boundary
 
 External adapters are intentionally untrusted translators. A RealCertify,
 NCTSSOS, ClusteredLowRankSolver.jl, CertifiedQuantumBounds, or paper-benchmark
-artifact can contribute exact candidate data only after it is converted into a
-CertSDP schema-v1 certificate or external replay artifact. The parser rejects
+artifact can contribute exact candidate data only after it is converted into
+CertSDP certificate data or an external replay artifact. The parser rejects
 raw solver output, backend logs, floating residuals, and session transcripts in
 the proof surface. Metadata may describe where a candidate came from, but only
 CertSDP replay can make it accepted.

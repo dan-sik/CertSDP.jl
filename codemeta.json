@@ -2,14 +2,14 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "name": "CertSDP.jl",
-  "description": "Post-solver exact replay layer for numerical semidefinite-programming and sum-of-squares certificate workflows.",
+  "description": "Adaptive exact-certificate compiler for SDP/SOS artifacts, with solver-free strict replay, field discovery, facial reconstruction, structure preservation, minimization, and proof-carrying JSON.",
   "codeRepository": "https://github.com/dan-sik/CertSDP.jl",
   "issueTracker": "https://github.com/dan-sik/CertSDP.jl/issues",
   "softwareHelp": "https://github.com/dan-sik/CertSDP.jl#readme",
   "programmingLanguage": "Julia",
   "runtimePlatform": "Julia 1.10 or newer",
-  "softwareVersion": "1.0.0",
-  "datePublished": "2026-05-14",
+  "softwareVersion": "2.1.0",
+  "datePublished": "2026-05-19",
   "license": "https://spdx.org/licenses/Apache-2.0.html",
   "author": [
     {
@@ -21,6 +21,8 @@
     "semidefinite programming",
     "sum-of-squares",
     "exact certification",
+    "certificate compiler",
+    "proof-carrying artifacts",
     "rational arithmetic",
     "algebraic certificates",
     "Julia"

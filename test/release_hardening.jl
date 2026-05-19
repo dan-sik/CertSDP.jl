@@ -59,13 +59,13 @@ using TOML
                        read(joinpath(repo_root, "CONTRIBUTING.md"), String))
         @test occursin("Contributor Covenant",
                        read(joinpath(repo_root, "CODE_OF_CONDUCT.md"), String))
-        @test strip(read(joinpath(repo_root, "VERSION"), String)) == "1.0.0"
-        @test occursin("## v1.0.0", read(joinpath(repo_root, "CHANGELOG.md"), String))
+        @test strip(read(joinpath(repo_root, "VERSION"), String)) == "2.1.0"
+        @test occursin("## v2.1.0", read(joinpath(repo_root, "CHANGELOG.md"), String))
         @test occursin("Pkg.test",
                        read(joinpath(repo_root, ".github", "workflows", "ci.yml"), String))
         @test occursin("Windows verifier-only smoke",
                        read(joinpath(repo_root, ".github", "workflows", "ci.yml"), String))
-        @test occursin("scripts/run_validation.jl",
+        @test occursin("Pkg.test",
                        read(joinpath(repo_root, ".github", "workflows", "ci.yml"),
                             String))
         @test occursin("Documenter build",
@@ -155,28 +155,26 @@ using TOML
         @test occursin("bin/certsdp certify", readme)
         @test occursin("certify-sos", readme)
         @test occursin("rational rounding", lowercase(readme))
-        @test occursin("Exact replay for numerical SDP/SOS certificates",
+        @test occursin("Exact certificates for SDP/SOS results",
                        readme)
-        @test occursin("A solver finds a candidate. CertSDP makes it replayable",
+        @test occursin("candidate evidence in, exact replayable certificate out",
                        readme)
-        @test occursin("Where CertSDP Fits", readme)
-        @test occursin("Current Validation Snapshot", readme)
-        @test occursin("Signature Demo", readme)
-        @test occursin("Showcases", readme)
+        @test occursin("Ecosystem Fit", readme)
+        @test occursin("Validation", readme)
+        @test occursin("Capabilities", readme)
         @test occursin("Platform Support", readme)
-        @test occursin("generic large-scale SDP solver", readme)
-        @test occursin("Limitations", readme)
-        @test occursin("Why CertSDP Exists", readme)
+        @test occursin("Boundaries", readme)
+        @test occursin("Why It Exists", readme)
         @test occursin("Citation", readme)
         @test occursin("infeasibility", lowercase(readme))
         @test occursin("scripts/run_validation.jl", readme)
         @test occursin("API_STABILITY", readme)
         @test occursin("License", readme)
         @test occursin("Apache License 2.0", readme)
-        @test occursin("v1.0", readme)
         @test occursin("Validation", readme)
         @test !occursin("stress", lowercase(readme))
-        @test !occursin("frontier", lowercase(readme))
+        @test !occursin("production gate", lowercase(readme))
+        @test !occursin("hard gate", lowercase(readme))
     end
 
     @testset "public API exports are hard-frozen" begin

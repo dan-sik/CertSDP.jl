@@ -11,7 +11,7 @@
     @test occursin("strict_fake_certificate_sample", drill_text)
     @test occursin("package_registration_dry_run", drill_text)
     @test occursin("Apache License", drill_text)
-    @test occursin("v1 Release Audit", drill_text)
+    @test occursin("CertSDP Release Audit", drill_text)
     @test !occursin("Beta " * "Review" * "er", drill_text)
 
     fresh_text = read(fresh_script, String)

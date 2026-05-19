@@ -27,7 +27,7 @@
               Rational{BigInt}[1 0; 0 1]
     end
 
-    @testset "experimental strategies fail loudly behind hard gates" begin
+    @testset "experimental strategies fail loudly before promotion" begin
         result = CertSDP.certify_auto_sos(problem,
                                           [1 0; 0 1];
                                           strategies=[:perturb_compensate])
@@ -37,7 +37,7 @@
         @test report.attempts[1].stage === :hard_gate
     end
 
-    @testset "hard gates are introspectable" begin
+    @testset "assurance checks are introspectable" begin
         gates = CertSDP.exactification_hard_gates()
         @test length(gates) == 8
         @test any(gate -> gate.id === :round_project_sos, gates)

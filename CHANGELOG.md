@@ -2,6 +2,36 @@
 
 All notable changes to CertSDP.jl are documented here.
 
+## v2.1.0 - 2026-05-19
+
+CertSDP is now positioned as an exact-certificate compiler for SDP/SOS
+artifacts: candidate evidence enters from numerical, sparse, algebraic,
+noncommutative, or external workflows; accepted output is proof-carrying JSON
+that can be replayed with exact arithmetic.
+
+### Added
+
+- Proof-carrying artifact path with reconstruction logs, verification plans,
+  diagnostics, hashes, minimization metadata, and solver-free replay.
+- Field-discovery and field-minimization coverage for rational, quadratic,
+  multiquadratic, cyclotomic, and low-degree algebraic examples.
+- Structure-preserving compiler paths for sparse SOS, symmetry-reduced
+  low-rank SDP, noncommutative trace certificates, and rational
+  infeasibility artifacts.
+- Artifact minimization and import normalization workflows for
+  SumOfSquares-like, sparse-SOS-like, noncommutative-like, and clustered
+  low-rank-like certificate data.
+- Public documentation and validation report rewritten around the product
+  promise: exact replayable certificates from candidate evidence.
+
+### Changed
+
+- Version metadata is now `2.1.0`.
+- Validation reporting now emphasizes reproducibility evidence, accepted
+  certificate families, structured rejection, and trust boundaries.
+- The public README and documentation describe CertSDP as a certificate
+  compiler rather than a narrow replay utility.
+
 ## v1.0.0 - 2026-05-14
 
 First v1.0 release of the post-solver exact replay layer for numerical SDP/SOS
@@ -101,7 +131,7 @@ Initial research prototype release.
 - Numerical `ApproxSolution` diagnostics and rank-profile detection used only
   for candidate selection.
 - Internal polynomial-system representation and incidence-system builder.
-- Optional external `msolve` adapter plus end-to-end toy certifier pipeline.
+- Optional external `msolve` adapter plus end-to-end prototype certifier pipeline.
 - CLI commands: `certify`, `certify-sos`, `verify`, and `inspect`.
 - Exported SOS Gram workflow with exact coefficient matching and embedded
   rational PSD certificate.

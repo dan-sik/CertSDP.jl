@@ -1,23 +1,25 @@
 cff-version: 1.2.0
 message: "If CertSDP.jl helps your research, please cite the software and the method paper listed here."
-title: "CertSDP.jl: exact replay for SDP and SOS certificates"
+title: "CertSDP.jl: adaptive exact-certificate compiler for SDP and SOS artifacts"
 type: software
 authors:
   - name: "CertSDP contributors"
-version: "1.0.0"
-date-released: "2026-05-14"
+version: "2.1.0"
+date-released: "2026-05-19"
 license: "Apache-2.0"
 repository-code: "https://github.com/dan-sik/CertSDP.jl"
 url: "https://github.com/dan-sik/CertSDP.jl"
 abstract: >-
-  CertSDP.jl is an exact replay layer for semidefinite programming and
-  sum-of-squares workflows. Numerical solvers and algebraic backends may
-  construct candidates, but acceptance is by exact verifier replay over
-  rational and supported algebraic data.
+  CertSDP.jl is an adaptive exact-certificate compiler for semidefinite
+  programming and sum-of-squares artifacts. It reconstructs noisy solver or
+  external-tool output into compressed proof-carrying JSON, then accepts only
+  by solver-free exact replay over rational and algebraic data.
 keywords:
   - semidefinite programming
   - sum-of-squares
   - exact certification
+  - certificate compiler
+  - proof-carrying artifact
   - rational arithmetic
   - algebraic certificates
   - Julia

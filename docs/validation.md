@@ -1,11 +1,10 @@
 # Validation
 
-CertSDP ships one public validation suite. It is intended to answer a simple
-question:
+CertSDP validation is a reproducibility contract for exact certificate replay.
+It answers a practical question:
 
 ```text
-Can this repository reproduce the exact certificates and exact rejections that
-the package claims to support?
+Can this checkout turn certificate evidence into exact proof-carrying artifacts and reject malformed proof data?
 ```
 
 Run it from the repository root:
@@ -15,163 +14,158 @@ bin/certsdp doctor
 julia --project scripts/run_validation.jl
 ```
 
-`doctor` checks the local runtime, optional packages, algebraic backend,
-CPU/RAM diagnostics, cache state, and validation metadata before the suite is
-run. `scripts/run_validation.jl` develops the checkout in a temporary Julia
-environment and installs the optional Clarabel numerical oracle used by the
-solve -> diagnose -> certify validation row. Strict certificate replay remains
-solver-free.
+`doctor` checks Julia, CertSDP, CPU/RAM diagnostics, optional packages, backend
+paths, cache state, and validation metadata. Candidate construction may use
+optional tools; strict replay of accepted certificates is solver-free.
 
-The report is written to:
+The tracked report is written to:
 
 ```text
 benchmarks/VALIDATION_REPORT.md
 ```
 
+## Local Test Profiles
+
+The default package test is intentionally fast:
+
+```bash
+julia --project test/runtests.jl
+```
+
+It runs command smoke tests, core exact replay regressions, and a compact
+compiler regression suite. Focused profiles are available when you only need
+one surface:
+
+```bash
+julia --project test/runtests.jl cli
+julia --project test/runtests.jl regression
+julia --project test/runtests.jl docs
+```
+
+Heavier checks are explicit:
+
+```bash
+julia --project test/runtests.jl validation
+julia --project test/runtests.jl release_smoke
+julia --project test/runtests.jl all
+```
+
+Use `validation` for replay evidence, `release_smoke` before packaging, and
+`all` for the complete current test suite. The `all` profile is deliberately
+limited to active validation, command, regression, release, and documentation
+checks; retired compatibility specimens are not part of it.
+
 ## Current Evidence
 
-The validation suite includes:
+The validation suite covers:
 
-- rational LMI certificate construction and strict verification;
-- multi-block blockwise PSD proof replay;
-- algebraic certificate replay where bounded rational rounding fails;
-- certifier-generated algebraic certificates from approximate candidates;
-- exact SOS Gram certificates with coefficient matching;
-- strategy-based SOS round/project exactification;
-- algebraic SOS Gram replay over explicit `QQ(alpha)` data;
-- perturbation/compensation positive-polynomial identity replay;
-- noncommutative word, trace-cyclic, and relation-reduction replay gates;
-- external adapter replay artifacts for translated third-party certificates;
-- reviewer artifact generation with strict replay text and manifests;
-- SDPA sparse import;
-- JuMP/MOI extracted multi-block SDP;
-- SumOfSquares-style extracted SOS Gram workflow;
-- numerical solve -> diagnose -> certify examples;
-- fake certificate rejection and structured failure reports.
+- rational LMI and block LMI certificates;
+- algebraic LMI and SOS Gram certificates where rational rounding is
+  insufficient;
+- sparse SOS and Putinar-style identities with preserved block structure;
+- symmetry-reduced and low-rank SDP certificate replay;
+- noncommutative and trace-polynomial certificate replay;
+- Farkas-style infeasibility certificates;
+- external artifact import, normalization, JSON export, and replay;
+- artifact minimization with equivalence checks;
+- structured rejection of malformed hashes, fields, quotient data, affine
+  identities, PSD factors, and adapter formats.
 
-The tracked report opens with a reader-facing replay snapshot:
+## Reader-Facing Snapshot
 
-| Reader question | Current evidence |
+| Reader question | Validation evidence |
 | --- | --- |
-| Did accepted certificates replay exactly? | 15 / 15 certified rows passed strict replay. |
-| Does validation include rejection evidence? | 3 expected rejection/failure rows passed. |
-| Does the algebraic path cover rational-rounding failure? | 4 certified rows failed bounded rational rounding first. |
-| Is the full numerical-to-exact path exercised? | 1 solve -> diagnose -> certify workflow passed. |
-
-Current validation highlights:
-
-| Area | Evidence |
-| --- | --- |
-| Certifier-generated algebraic certificate | Dimension 10, algebraic degree 4, two effective variables, bounded rational rounding fails, strict verification passes. |
-| Algebraic replay | Dimension 20, algebraic degree 6, bounded rational rounding fails, strict verification passes. |
-| Multi-block SDP | Total PSD dimension 60, with blockwise exact proof replay. |
-| SOS Gram | Rational and non-diagonal Gram certificates with exact coefficient matching. |
-| JuMP/MOI extraction | Total PSD dimension 48, generated by executing a source script rather than reading hand-written JSON. |
+| Did accepted artifacts replay exactly? | Strict replay recomputes exact identities, field arithmetic, quotient reductions, hashes, and PSD obligations. |
+| Are invalid artifacts rejected? | The suite mutates certificate coordinates, fields, structure labels, quotient rules, multipliers, hashes, and import formats. |
+| Does structure survive certification? | Sparse, block, symmetry-reduced, low-rank, and noncommutative metadata are part of the replay surface. |
+| Is minimization safe? | Minimized artifacts must verify and remain semantically equivalent to their source artifact. |
+| Is external output treated carefully? | External formats are normalized into CertSDP IR before strict replay can accept them. |
 
 ## Paper-Artifact Coverage
 
-The suite is meant to read like a paper artifact rather than a speed contest:
+The suite is organized around the kinds of evidence a mathematical software
+artifact should provide:
 
-| Evidence class | Validation instance family | Evidence meaning |
-| --- | --- | --- |
-| Paper-derived degenerate SDP mechanism | `algebraic_sqrt2_unique`, `algebraic_certifier_quartic_dim10_n2`, `algebraic_direct_degree6_dim20` | Exercises the degenerate/incidence-style setting where rational rounding may fail and algebraic replay matters. |
-| SDPA/SDPLIB-style imported SDP | `workflow_sdpa_import_multiblock`, `multiblock_sdpa_two_blocks`, `multiblock_dense_dim60_n20` | Shows sparse block SDP data entering through the same public import boundary used by SDPA-style workflows. |
-| SumOfSquares-style workflow | `workflow_sumofsquares_extracted_sos`, `sos_x2_plus_1`, `sos_xy_square_nondiagonal` | Checks exact Gram coefficient matching, non-diagonal Gram replay, and exported SOS decomposition paths. |
-| Full pipeline evidence | `workflow_solve_certify_sqrt2_random_objective` | Runs numerical solve, diagnosis, algebraic certification, and strict replay as separate stages. |
-| Negative controls | fake rational/SOS certificates and invalid approximation rows | Demonstrates that validation includes expected rejection, not only happy-path acceptance. |
+| Evidence class | What is demonstrated |
+| --- | --- |
+| Exact replay | Accepted artifacts pass by exact arithmetic, not numerical tolerance. |
+| Algebraic reconstruction | Certificates can carry field data when rational coordinates are not enough. |
+| Structure preservation | Sparse, block, quotient, and symmetry metadata are replay obligations, not decoration. |
+| Negative controls | Known-invalid artifacts fail with localized diagnostics. |
+| Reproducibility | Generated artifacts can be exported, minimized, and replayed from JSON. |
 
 ## Mutation Matrix
 
-The validation report records visible fake-certificate rows. The adversarial
-test gate goes deeper and mutates the proof surface directly:
-
-| Mutation surface | Rejection gate |
+| Mutation surface | Expected rejection |
 | --- | --- |
-| Problem hash and certificate hash | Strict verifier recomputes both before exact replay. |
-| Rational coordinates and substituted matrices | LMI substitution is recomputed from the embedded problem. |
-| Principal minors, LDL pivots, and Schur-zero data | PSD proof data is recomputed and fake pivots/minors are rejected. |
-| Algebraic minimal polynomial, root interval, and coordinate functions | Root isolation and exact algebraic equality/sign checks are replayed. |
-| SOS coefficient table and Gram PSD proof | Coefficient matching and the embedded Gram PSD certificate are recomputed. |
-| External adapter artifacts | Raw solver logs, transcripts, and floating residuals are rejected before replay. |
-| Noncommutative relation reductions | Recorded fingerprints and reduced word identities must match recomputation. |
-
-## Hard-Gate Evidence
-
-The roadmap hard-gate tests complement the public validation rows. They check
-that newly added research-facing paths are production-complete at the verifier
-boundary before they are promoted as user-facing claims:
-
-- exactification strategies expose bounded attempt diagnostics;
-- unsupported experimental strategies fail loudly instead of producing partial
-  certificates;
-- external adapter wrappers accept only translated CertSDP certificates;
-- reviewer artifact directories are generated only after strict replay accepts;
-- NC and algebraic SOS replay paths reject stale or mismatched proof metadata.
+| Problem or certificate hash | Rejected before mathematical replay. |
+| Rational coordinate or affine multiplier | Rejected by exact identity mismatch. |
+| Algebraic field declaration | Rejected by field or minimality checks. |
+| Sparse clique or localizing constraint label | Rejected by structure or localizing-identity checks. |
+| Symmetry transform metadata | Rejected by reconstruction metadata checks. |
+| Noncommutative commutation or trace quotient | Rejected by NC/trace identity checks. |
+| PSD block factor or rank data | Rejected by exact PSD replay. |
+| Unsupported external format | Rejected before entering the trusted proof surface. |
 
 ## Raw Artifacts And DOI
 
-`benchmarks/VALIDATION_REPORT.md` is the tracked report. Re-running the suite
-with `--generated-dir benchmarks/generated` emits raw certificates, failure
-reports, and extracted frontend artifacts; that directory is intentionally
-ignored by git because it is reproducible.
+`benchmarks/VALIDATION_REPORT.md` is the tracked reader-facing report.
+Re-running the benchmark command can emit a compact table to a temporary path:
 
-For shareable artifacts, use `certsdp bundle` and `certsdp replay`. The bundle
-contains data and redacted sidecar metadata, while replay still accepts only by
-strict exact verification.
+```bash
+bin/certsdp benchmark benchmarks/ --suite validation --out /tmp/certsdp-validation-report.md
+```
+
+Generated certificates, failure reports, and extracted intermediates should go
+under `benchmarks/generated/`, which is intentionally ignored by git.
 
 The repository includes `CITATION.cff` and `codemeta.json`. A DOI should be
-minted from the tagged public archive, then recorded in those files and the
-release notes. Until that happens, the DOI status is explicitly pending rather
-than guessed.
+minted from a tagged public archive after tests, docs, and validation pass.
 
 ## Trust Boundary
 
-Validation reports distinguish how a certificate was obtained:
+Candidate sources may include numerical solvers, algebraic backends, external
+tools, reference fixtures, or user-supplied artifacts. Acceptance comes only
+from strict exact replay of certificate data.
 
-- `verify_only`: the fixture provides exact certificate data and CertSDP
-  replays it.
-- `certify_from_approx`: CertSDP starts from an approximate candidate and
-  generates a certificate.
-- `solve_diagnose_certify`: CertSDP first runs the numerical oracle, diagnoses
-  the candidate, then attempts exact certification.
+Fields treated as provenance only:
 
-This distinction matters. Algebraic certificate replay is strong verifier
-evidence; certifier-generated rows are evidence for the full candidate-to-proof
-pipeline.
+- solver status and residuals;
+- approximate eigenvalues and ranks;
+- backend logs and transcripts;
+- cache hits;
+- source paths and human-readable claims.
+
+Fields replayed exactly:
+
+- problem, artifact, and semantic hashes;
+- field arithmetic and minimality evidence;
+- sparse coefficient and affine identities;
+- quotient reductions;
+- low-rank PSD factors;
+- minimization equivalence witnesses.
 
 ## Interpreting Failures
 
-A rejected row in the validation report is not necessarily a bug. Some
-fixtures intentionally exercise unsupported or adversarial cases, such as fake
-certificates, unstable rank profiles, oversized algebraic systems, or backend
-timeouts. These rows pass validation when they produce the expected structured
-failure instead of crashing, hanging, or accepting invalid proof data.
+A rejected row is not automatically a bug. Several rows are designed to fail in
+structured ways. A validation failure is serious when the observed status
+differs from the expected status, when an invalid artifact is accepted, or when
+an exact proof obligation is silently skipped.
 
-For a saved failure report, use:
+For a saved failure report:
 
 ```bash
 bin/certsdp explain failure.json
 ```
 
-The explanation is capped at 30 lines and is meant for audit notes, shared
-debugging, or bug reports.
-
-## Artifact Replay
-
-Certificates can be packaged for independent replay:
-
-```bash
-bin/certsdp bundle cert.json --out artifact.zip
-bin/certsdp replay artifact.zip
-```
-
-The bundle contains the certificate, embedded or supplied problem data,
-optional approximation data, strict verification report, version metadata,
-backend logs when supplied, a manifest, and a README. Replay runs strict exact
-verification on the certificate inside the artifact.
+The explanation is capped and intended for audit notes, issue reports, and
+reviewer communication.
 
 ## Scope
 
-CertSDP is not claiming to solve arbitrary SDP instances. The validation suite
-demonstrates exact replay for the supported SDP/SOS certificate workflows and
-exact rejection for known failure modes.
+The shipped validation suite exercises the compiler, verifier, import
+normalization, minimization, and rejection behavior using reproducible fixtures
+in this repository and reference-backed artifacts under `references/`. Future
+public benchmark packs can add native upstream outputs from additional solver
+ecosystems without changing the acceptance rule: external tools may produce
+candidates, but exact replay accepts certificates.

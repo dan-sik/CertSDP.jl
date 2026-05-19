@@ -6,7 +6,7 @@ certificate.
 
 ## CLI Exit Codes
 
-The v1.0 CLI exit codes are:
+The CLI exit codes are:
 
 - `0`: command succeeded, certificate accepted, or benchmark expectations met;
 - `1`: verification rejected a certificate;

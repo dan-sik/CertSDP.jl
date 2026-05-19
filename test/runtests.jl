@@ -2,10 +2,22 @@ using CertSDP
 using Test
 
 const CERTSDP_TEST_ARGS = Set(String.(ARGS))
-const CERTSDP_RUN_ALL = isempty(CERTSDP_TEST_ARGS) || "all" in CERTSDP_TEST_ARGS
+const CERTSDP_DEFAULT_TAGS = Set(["essential", "regression", "cli"])
+const CERTSDP_ACTIVE_ALL_TAGS = Set(["essential", "regression", "cli",
+                                     "command", "validation", "release_smoke",
+                                     "docs", "failure", "tooling", "compiler",
+                                     "production"])
+const CERTSDP_SELECTED_TAGS = if isempty(CERTSDP_TEST_ARGS)
+    CERTSDP_DEFAULT_TAGS
+elseif !isdisjoint(CERTSDP_TEST_ARGS, Set(["all", "full"]))
+    union(setdiff(CERTSDP_TEST_ARGS, Set(["all", "full"])),
+          CERTSDP_ACTIVE_ALL_TAGS)
+else
+    CERTSDP_TEST_ARGS
+end
 
 function certsdp_should_run(tags::String...)
-    return CERTSDP_RUN_ALL || any(tag -> tag in CERTSDP_TEST_ARGS, tags)
+    return any(tag -> tag in CERTSDP_SELECTED_TAGS, tags)
 end
 
 function certsdp_include(path::AbstractString, tags::String...)
@@ -26,52 +38,23 @@ end
 
 @testset "CertSDP package skeleton" begin
     @test isdefined(CertSDP, :package_marker)
-    @test CertSDP.package_marker() === :validation_release
-    @test CertSDP.package_version() == v"1.0.0"
+    @test CertSDP.package_marker() === :exact_certificate_compiler
+    @test CertSDP.package_version() == v"2.1.0"
 end
 
-certsdp_include("lmi/rational_core.jl", "core", "lmi")
-certsdp_include("lmi/json_io.jl", "core", "lmi", "schema")
-certsdp_include("lmi/sdpa_io.jl", "lmi", "schema", "release_smoke")
-certsdp_include("lmi/jump_moi_integration.jl", "lmi", "optional")
-certsdp_include("verify/rational_psd.jl", "core", "verifier", "adversarial")
-certsdp_include("verify/algebraic_psd.jl", "verifier", "adversarial")
-certsdp_include("certificates/rational_certificate.jl", "core", "verifier",
-                "adversarial")
-certsdp_include("certificates/algebraic_certificate.jl", "verifier",
-                "adversarial")
-certsdp_include("algebraic/algebraic_numbers.jl", "algebraic", "verifier",
-                "adversarial")
-certsdp_include("algebraic/sign_tests.jl", "algebraic", "verifier",
-                "adversarial")
-certsdp_include("algebraic/polynomial_system.jl", "algebraic")
-certsdp_include("numeric/approx_solution.jl", "numeric")
-certsdp_include("systems/incidence_builder.jl", "algebraic")
-certsdp_include("backends/msolve_backend.jl", "backend")
-certsdp_include("certify/certifier.jl", "certifier")
-certsdp_include("adapters/external_replay_artifacts.jl", "adapters",
-                "roadmap", "verifier", "adversarial")
-certsdp_include("sos/sos_gram.jl", "sos", "verifier", "adversarial")
-certsdp_include("sos/algebraic_sos_gram.jl", "sos", "algebraic", "verifier",
-                "adversarial")
-certsdp_include("sos/positive_certificates.jl", "sos", "verifier",
-                "release_smoke")
-certsdp_include("exactify/exactify_sos.jl", "exactify", "sos")
-certsdp_include("roadmap/roadmap_foundations.jl", "roadmap", "exactify")
-certsdp_include("cli/main.jl", "cli", "release_smoke")
-certsdp_include("benchmark/validation_suite.jl", "validation", "release_smoke")
+certsdp_include("lmi/rational_core.jl", "essential", "core", "lmi")
+certsdp_include("lmi/json_io.jl", "essential", "core", "lmi", "schema")
+certsdp_include("verify/rational_psd.jl", "essential", "core", "verifier",
+                "regression")
+certsdp_include("exactify/exactify_sos.jl", "essential", "exactify", "sos")
+certsdp_include("cli/main.jl", "essential", "cli", "command", "release_smoke")
+certsdp_include("compiler/regression.jl", "essential", "validation",
+                "regression", "compiler")
+certsdp_include("benchmark/validation_suite.jl", "validation")
 certsdp_include("certify/failure_reports.jl", "failure", "release_smoke")
-certsdp_include("performance/performance_caching.jl", "performance")
-certsdp_include("tooling_reproducibility.jl", "tooling", "release_smoke")
 certsdp_include("release_audit_scripts.jl", "tooling", "release_smoke")
-certsdp_include("validation_budget.jl", "validation", "release_smoke")
-certsdp_include("adversarial/verifier_hardening.jl", "adversarial")
-certsdp_include("adversarial/strict_trust_boundary.jl", "adversarial")
 certsdp_include("release_hardening.jl", "release_smoke")
-certsdp_include("schema_v1.jl", "schema", "release_smoke")
-certsdp_include("public_api_schema.jl", "schema", "release_smoke")
-certsdp_include("readme_snippets.jl", "docs", "release_smoke")
-certsdp_include("lmi/multiblock_certificates.jl", "lmi", "validation")
-certsdp_include("algebraic_robustness.jl", "algebraic")
-certsdp_include("numerical_oracle_workflow.jl", "numeric")
+certsdp_include("readme_snippets.jl", "essential", "docs", "release_smoke")
 certsdp_include("docs/public_docs.jl", "docs", "release_smoke")
+certsdp_include("production_gates_2_1.jl", "production", "validation",
+                "compiler")

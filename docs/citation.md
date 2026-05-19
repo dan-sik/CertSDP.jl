@@ -7,10 +7,10 @@ the degenerate SDP certification workflow.
 
 ```bibtex
 @software{CertSDPjl,
-  title   = {CertSDP.jl: Exact replay for SDP and SOS certificates},
+  title   = {CertSDP.jl: Exact certificate compiler for SDP and SOS artifacts},
   author  = {{CertSDP contributors}},
   year    = {2026},
-  version = {1.0.0},
+  version = {2.1.0},
   note    = {Software package}
 }
 ```
@@ -23,10 +23,10 @@ and keep this repository citation as the development-location reference:
 
 ```bibtex
 @software{CertSDPjlArchived,
-  title     = {CertSDP.jl: Exact replay for SDP and SOS certificates},
+  title     = {CertSDP.jl: Exact certificate compiler for SDP and SOS artifacts},
   author    = {{CertSDP contributors}},
   year      = {2026},
-  version   = {1.0.0},
+  version   = {2.1.0},
   doi       = {<archived-software-doi>},
   publisher = {Zenodo or equivalent archive}
 }

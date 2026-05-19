@@ -25,14 +25,14 @@ Current certificate types are:
 - `perturbation_compensation_sos_certificate`: an exact perturbed SOS plus
   compensation identity certificate.
 
-`nc_sos_gram_certificate` is currently an internal hard-gate replay object for
+`nc_sos_gram_certificate` is currently a module-qualified replay object for
 noncommutative and trace-polynomial workflows. It is not part of the stable
-schema-v1 external compatibility surface.
+stable external compatibility surface.
 
-## Top-Level v1 Shape
+## Top-Level Compatibility Shape
 
 This is an abridged example that shows the replay boundary. Complete required
-fields and certificate-family variants are documented in [Schema v1.0](SCHEMA_V1.md).
+fields and certificate-family variants are documented in [Schema reference](SCHEMA_V1.md).
 
 ```json
 {
@@ -43,7 +43,7 @@ fields and certificate-family variants are documented in [Schema v1.0](SCHEMA_V1
   "problem": {
     "embedded": true,
     "type": "lmi_feasibility",
-    "data": { "...": "problem schema v1.0" }
+    "data": { "...": "problem data" }
   },
   "solution": {
     "field": "QQ",
@@ -71,7 +71,7 @@ the substituted matrix, determinant data, Schur complement data, hashes, and
 signs before accepting.
 
 Use `certsdp verify --strict cert.json` for independent replay. Strict mode
-accepts only schema v1.0 certificates with embedded problem hashes and complete
+accepts only supported certificates with embedded problem hashes and complete
 exact proof fields; it does not run or require numerical solvers, `msolve`, or
 backend artifacts. See [Trust model](trust_model.md).
 
@@ -79,7 +79,7 @@ backend artifacts. See [Trust model](trust_model.md).
 
 | JSON area | Audit question | Exact replay obligation |
 | --- | --- | --- |
-| Header | Is this a v1 certificate of a supported family? | Schema gate, certificate type gate, required field check. |
+| Header | Is this a certificate of a supported family? | Schema check, certificate type check, required field check. |
 | Embedded problem | Is the certified problem the one being claimed? | Canonical problem parse and `problem_hash` recomputation. |
 | Solution | Is the candidate exact? | Rational parse or algebraic root isolation plus coordinate reconstruction. |
 | Linear/SOS obligations | Does the point satisfy the exact equations? | Exact LMI substitution or exact SOS coefficient matching. |
@@ -221,7 +221,7 @@ An `ExternalReplayArtifact` is not a new proof system. It is a wrapper around a
 translated CertSDP certificate plus adapter metadata. The trusted checks are:
 
 - the artifact hash matches the wrapped data;
-- the translated certificate is schema-v1 data;
+- the translated certificate is CertSDP certificate data;
 - strict replay accepts the translated certificate;
 - forbidden proof fields such as raw solver output, backend logs, session
   transcripts, and floating residuals are absent.
@@ -231,8 +231,8 @@ ClusteredLowRankSolver.jl, and CertifiedQuantumBounds.
 
 ## Compatibility
 
-`read_certificate` accepts current v1.0 certificates and legacy v0.1
-certificates. `write_certificate` emits the public v1.0 schema for supported
+`read_certificate` accepts current certificates and legacy prototype
+certificates. `write_certificate` emits the public schema for supported
 certificate types.
 
-For schema-level details, see [Schema v1.0](SCHEMA_V1.md).
+For schema-level details, see [Schema reference](SCHEMA_V1.md).

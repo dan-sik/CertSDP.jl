@@ -1,9 +1,10 @@
 module CertSDP
 
 using LinearAlgebra: det, dot
+using Random: MersenneTwister
 
-# The v1.0 compatibility surface is deliberately small. Everything else in this
-# module is internal unless promoted in docs/API_STABILITY.md.
+# The stable public surface is deliberately small. The exact certificate
+# compiler internals stay module-qualified unless promoted in docs/API_STABILITY.md.
 export LMIProblem,
        BlockLMIProblem,
        certify,
@@ -50,6 +51,7 @@ include("exactify/Exactify.jl")
 include("benchmark/Benchmarks.jl")
 include("input/SchemaV1.jl")
 include("verify/StrictVerifier.jl")
+include("compiler/ExactCertificateCompiler.jl")
 include("tooling/ReplayTools.jl")
 include("tooling/PaperArtifacts.jl")
 include("cli/Main.jl")
@@ -59,13 +61,13 @@ package_marker() -> Symbol
 
 Return the current release-line marker.
 """
-package_marker() = :validation_release
+package_marker() = :exact_certificate_compiler
 
 """
     package_version() -> VersionNumber
 
 Return the CertSDP package version for the current release.
 """
-package_version() = v"1.0.0"
+package_version() = v"2.1.0"
 
 end

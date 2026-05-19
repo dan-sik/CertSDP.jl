@@ -7,9 +7,9 @@ between the trusted verifier and optional candidate-generation tools.
 
 | Environment | Current support |
 | --- | --- |
-| Linux | Full package tests, public validation suite, docs build, and formatter check run in CI. |
-| macOS | Full package tests, public validation suite, and docs build run in CI. |
-| Windows | Strict verifier smoke and docs syntax smoke run in CI. |
+| Linux | Fast package tests and formatter checks run in the main CI workflow; validation and docs have dedicated workflows. |
+| macOS | Fast package tests run in the main CI workflow. |
+| Windows | Strict verifier smoke runs in CI. |
 | HPC / other machines | Core verification should run wherever Julia 1.10+ and the package dependencies run. Optional tools depend on local installation. |
 
 This means it is accurate to say that strict exact replay is cross-platform.
@@ -50,7 +50,7 @@ Use this wording in public release notes:
 
 ```text
 Core strict verification supports Linux, macOS, Windows, and other Julia 1.10+
-machines. Full package validation is tested on Linux/macOS; Windows currently
+machines. Full validation has a dedicated Linux CI workflow; Windows currently
 has verifier-only CI coverage.
 ```
 
@@ -63,5 +63,5 @@ runs there in CI.
 | --- | --- |
 | Full validation is supported on every platform. | Core strict replay is cross-platform; full validation CI currently covers Linux/macOS. |
 | Optional backends are bundled or required. | Optional backends are external candidate-generation tools. |
-| Windows has the same validation coverage as Linux/macOS. | Windows currently has verifier-only and docs syntax smoke coverage. |
+| Windows has the same validation coverage as Linux/macOS. | Windows currently has verifier-only CI coverage. |
 | Solver availability changes verifier trust. | Verifier acceptance is independent of optional tool installation. |

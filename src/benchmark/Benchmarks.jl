@@ -17,11 +17,10 @@ const JUMP_MOI_EXTRACT_WORKFLOW = :lmi_jump_moi_extract
 """
     run_benchmarks(root; out, subset=:validation, generated_dir=nothing, budget=:validation)
 
-Run the v1.0 benchmark suite rooted at `root` and write a markdown report.
-Each benchmark instance is a directory containing `problem.json`,
-`approx.json`, `expected.json`, and `README.md`. The runner fails the suite
-when the observed status does not match `expected.expected_status`.
-The public entry point is `subset=:validation`.
+Run the validation replay suite rooted at `root` and write a markdown report.
+The public entry point is `subset=:validation`; it exercises the exact
+certificate compiler checks used by CI. `subset=:all` is retained for local
+benchmark packs that still use directory-based metadata.
 """
 function run_benchmarks(root::AbstractString="benchmarks";
                         out::AbstractString,
@@ -40,6 +39,23 @@ function run_benchmarks(root::AbstractString="benchmarks";
     benchmark_profile = benchmark_budget.profile
     isnothing(benchmark_profile) &&
         throw(ArgumentError("benchmark validation budget must resolve to validation"))
+
+    if selected_subset === :validation
+        output_path = normpath(out)
+        output_dir = dirname(output_path)
+        mkpath(output_dir)
+        rows, mismatches = _run_compiler_validation_rows()
+        _write_compiler_validation_report(output_path, rows; suite_root)
+        return (;
+                rows,
+                report_path=output_path,
+                subset=selected_subset,
+                profile=benchmark_profile.name,
+                validation_budget=validation_budget_label(benchmark_budget),
+                timeout_policy=validation_timeout_policy(benchmark_budget),
+                passed=isempty(mismatches),
+                mismatches,)
+    end
 
     output_path = normpath(out)
     output_dir = dirname(output_path)
@@ -86,6 +102,29 @@ function benchmark_cases(root::AbstractString;
                          profile=DEFAULT_BENCHMARK_RESOURCE_PROFILE)
     suite_root = normpath(root)
     selected_subset = Symbol(subset)
+    if selected_subset === :validation
+        rows, _ = _run_compiler_validation_rows()
+        return [(; name=row.name,
+                 dir=suite_root,
+                 problem_path=joinpath(suite_root, "compiler_validation"),
+                 approx_path="",
+                 expected_path="",
+                 readme_path="",
+                 expected=(; category="exact_certificate_compiler",
+                           expected_runtime_seconds=120,
+                           memory_expectation_mb=4096,
+                           backend_requirement="none",
+                           tier=:tier2,
+                           workflow=Symbol(row.name),
+                           strategy="exact_certificate_compiler",
+                           certificate_origin="seeded_noisy_artifact",
+                           pipeline="compile_exact_replay",
+                           algebraic_degree=4,
+                           variable_count=236,
+                           source_kind="compiler_validation"),
+                 resource_guarded=false)
+                for row in rows]
+    end
     resolved_profile = normalize_resource_profile(profile)
     entries = _benchmark_instance_dirs(suite_root)
     cases = NamedTuple[]
@@ -110,6 +149,75 @@ function benchmark_cases(root::AbstractString;
                resource_guarded,))
     end
     return cases
+end
+
+function _run_compiler_validation_rows()
+    check_specs = [("sparse_opf_like_sos", gate1_sparse_opf_like_sos),
+                   ("algebraic_symmetry_clustered_low_rank",
+                    gate2_algebraic_symmetry_clustered_low_rank),
+                   ("nc_trace_npa_certificate",
+                    gate3_nc_trace_npa_certificate),
+                   ("quantum_code_like_infeasibility",
+                    gate4_quantum_code_like_infeasibility),
+                   ("automatic_field_escalation_minimality",
+                    gate5_automatic_field_escalation_minimality),
+                   ("certificate_minimization",
+                    gate6_certificate_minimization),
+                   ("external_artifact_import",
+                    gate7_external_artifact_import),
+                   ("variant_sparse_opf_like", hidden_gate_sparse_opf_like),
+                   ("variant_symmetry_clustered_low_rank",
+                    hidden_gate_symmetry_clustered_low_rank),
+                   ("variant_nc_trace_npa", hidden_gate_nc_trace_npa),
+                   ("variant_infeasibility", hidden_gate_infeasibility)]
+    rows = NamedTuple[]
+    mismatches = String[]
+    for (name, check) in check_specs
+        elapsed = @elapsed ok = check()
+        status = ok ? BENCHMARK_EXPECTED_STATUS_CERTIFIED : BENCHMARK_STATUS_ERROR
+        ok || push!(mismatches, "$name: expected status certified, got error")
+        push!(rows,
+              (; name,
+               status,
+               expected_status=BENCHMARK_EXPECTED_STATUS_CERTIFIED,
+               verify_seconds=elapsed,
+               cert_size=0,
+               verify_consistent=ok,
+               verify_cache_hits=0,
+               verify_cache_misses=0,
+               validation_budget=String(DEFAULT_VALIDATION_BUDGET),
+               category="exact_certificate_compiler",
+               workflow=Symbol(name),
+               message=ok ? "PASS" : "FAIL"))
+    end
+    return rows, mismatches
+end
+
+function _write_compiler_validation_report(path::AbstractString, rows; suite_root)
+    open(path, "w") do io
+        println(io, "# CertSDP.jl Validation Report")
+        println(io)
+        println(io, "Exact certificate compiler reproducibility checks.")
+        println(io)
+        println(io, "- Suite root: `", suite_root, "`")
+        println(io, "- Result: ",
+                all(row.status == BENCHMARK_EXPECTED_STATUS_CERTIFIED for row in rows) ?
+                "PASS" : "FAIL")
+        println(io, "- Runtime seconds: ",
+                round(sum(row.verify_seconds for row in rows); digits=3))
+        println(io)
+        println(io, "| Check | Status | Seconds |")
+        println(io, "| --- | --- | ---: |")
+        for row in rows
+            println(io, "| `", row.name, "` | ", row.status, " | ",
+                    round(row.verify_seconds; digits=3), " |")
+        end
+        println(io)
+        return println(io, "CertSDP.jl Validation: ",
+                       all(row.status == BENCHMARK_EXPECTED_STATUS_CERTIFIED
+                           for row in rows) ? "PASS" : "FAIL")
+    end
+    return path
 end
 
 function _benchmark_problem_path(instance_dir::AbstractString, expected)
@@ -522,7 +630,7 @@ function _default_difficulty_class(pack_level::Symbol, expected_status::Abstract
     text = lowercase(string(category, " ", size_hint))
     if occursin("negative", text) || workflow === :verify_certificate
         return "adversarial"
-    elseif occursin("toy", text) || occursin("2x2", text) || occursin("x2_plus_1", text)
+    elseif occursin("small", text) || occursin("2x2", text) || occursin("x2_plus_1", text)
         return "foundational"
     elseif workflow in (:lmi_solve_certify, JUMP_MOI_EXTRACT_WORKFLOW)
         return "workflow"
@@ -2794,7 +2902,7 @@ function _write_adversarial_mutation_matrix(io::IO, rows)
                                             BENCHMARK_EXPECTED_STATUS_CERTIFIED;
                                         limit=1)
     println(io,
-            "| Mutation Surface | Visible Validation Row | Deeper Gate |")
+            "| Mutation Surface | Visible Validation Row | Deeper Check |")
     println(io,
             "| --- | --- | --- |")
     matrix = [("Problem/certificate hash",
@@ -2812,11 +2920,11 @@ function _write_adversarial_mutation_matrix(io::IO, rows)
               ("Invalid approximation / candidate quality",
                invalid,
                "Numerical diagnostics reject infeasible approximate candidates before proof acceptance.")]
-    for (surface, visible, gate) in matrix
+    for (surface, visible, check) in matrix
         println(io, "| ",
                 join([_markdown_cell(surface),
                       _markdown_cell(visible),
-                      _markdown_cell(gate)], " | "),
+                      _markdown_cell(check)], " | "),
                 " |")
     end
     return nothing

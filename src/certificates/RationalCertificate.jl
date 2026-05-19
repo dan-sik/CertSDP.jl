@@ -289,6 +289,10 @@ function parse_certificate_json(json_text::AbstractString)
     end
 
     _require_object(parsed, "root")
+    if haskey(parsed, :certsdp_artifact_version) &&
+       String(parsed[:certsdp_artifact_version]) == CERTSDP_2_0_ARTIFACT_VERSION
+        return _parse_exact_certificate_object(parsed)
+    end
     if haskey(parsed, CERTSDP_CERTIFICATE_VERSION_KEY)
         return _parse_certificate_v1_object(parsed)
     end

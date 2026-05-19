@@ -56,6 +56,16 @@ end
 
 function verify_strict(parsed::JSON3.Object; io::Union{Nothing, IO}=nothing,
                        cache::Bool=true, cache_object=nothing)
+    if haskey(parsed, :certsdp_artifact_version) &&
+       String(parsed[:certsdp_artifact_version]) == CERTSDP_2_0_ARTIFACT_VERSION
+        cert = try
+            _parse_exact_certificate_object(parsed)
+        catch err
+            _fail(io, "strict schema error: $(sprint(showerror, err))")
+            return false
+        end
+        return verify(cert; io).status === :valid
+    end
     cert = try
         _strict_validate_certificate_object(parsed)
         _parse_certificate_v1_object(parsed)

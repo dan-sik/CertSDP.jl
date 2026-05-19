@@ -1,6 +1,11 @@
-# Schema v1
+# Compatibility Schema Reference
 
-CertSDP v1.0 JSON is data-only. It never embeds executable code, and verifier
+This page documents the stable JSON compatibility shape used by the public
+read/write API. Some fields intentionally contain the literal version string
+`"1.0"` for backwards-compatible file interchange; that schema string is not
+the CertSDP package version.
+
+CertSDP JSON is data-only. It never embeds executable code, and verifier
 acceptance comes from exact replay rather than trusting proof claims stored in
 the file.
 
@@ -25,7 +30,7 @@ CertSDP's canonicalization exactly. The easiest external workflow is to omit
 hashes, read the file with `read_problem` or `read_certificate`, then re-emit it
 with `write_problem` or `write_certificate`.
 
-## Problem Schema v1.0
+## Problem Object
 
 Top-level LMI feasibility problem JSON:
 
@@ -91,11 +96,11 @@ SDPA stores `sum_i Fi xi - F0 >= 0`. CertSDP stores
 functions are internal; external code should use `read_problem` and
 `write_problem`.
 
-Block problems can also be emitted as JSON schema v1.0 with
+Block problems can also be emitted as JSON with
 `type = "block_lmi_feasibility"`. They store shared variables, objective data,
 `block_struct`, and one exact LMI block per PSD or diagonal block.
 
-## Certificate Schema v1.0
+## Certificate Object
 
 Top-level LMI certificate:
 
@@ -108,7 +113,7 @@ Top-level LMI certificate:
   "problem": {
     "embedded": true,
     "type": "lmi_feasibility",
-    "data": { "...": "problem schema v1.0" }
+    "data": { "...": "problem data" }
   },
   "solution": {
     "field": "QQ",
@@ -139,12 +144,12 @@ Top-level LMI certificate:
     }
   },
   "provenance": {
-    "certsdp_version": "1.0.0",
+    "certsdp_version": "2.1.0",
     "julia_version": "...",
     "schema_version": "1.0"
   },
   "verification": {
-    "verifier_version": "1.0.0",
+    "verifier_version": "2.1.0",
     "verified_at_creation": null
   }
 }
@@ -158,7 +163,7 @@ Required top-level fields:
   `sos_gram_certificate`.
 - `certificate_id`: canonical certificate hash.
 - `problem_hash`: canonical hash of the embedded problem.
-- `problem`: embedded problem object; v1.0 LMI certificates require
+- `problem`: embedded problem object; LMI certificates require
   `"embedded": true`, `"type": "lmi_feasibility"`, and `data`.
 - `solution`: exact solution representation.
 - `proof`: exact proof data. The verifier recomputes proof facts before
@@ -235,7 +240,7 @@ under `proof.psd`; current writers also include a `data` block. Readers accept
 both shapes. In every case, `verify` recomputes the substituted matrix,
 determinants, pivots, Schur complement, and signs.
 
-## SOS Gram Certificate Schema v1.0
+## SOS Gram Certificate Object
 
 Minimal SOS Gram certificate:
 
@@ -281,13 +286,13 @@ Minimal SOS Gram certificate:
     }
   },
   "provenance": {
-    "certsdp_version": "1.0.0",
+    "certsdp_version": "2.1.0",
     "julia_version": "...",
     "schema_version": "1.0",
     "source": "sos_gram_workflow"
   },
   "verification": {
-    "verifier_version": "1.0.0",
+    "verifier_version": "2.1.0",
     "verified_at_creation": null
   },
   "lmi_certificate": {
@@ -307,7 +312,7 @@ polynomial.
 
 ## Positive-Polynomial Showcase Certificates
 
-Schema v1.0 also accepts two exact replay showcase certificate types:
+The compatibility schema also accepts two exact replay showcase certificate types:
 
 - `rational_function_sos_certificate`
 - `positivstellensatz_certificate`
@@ -379,7 +384,7 @@ Minimal shape:
     }
   },
   "provenance": {"schema_version": "1.0"},
-  "verification": {"verifier_version": "1.0.0"}
+  "verification": {"verifier_version": "2.1.0"}
 }
 ```
 
@@ -401,7 +406,7 @@ The public showcase
 1 - x^2 y^2 = y^2(1 - x^2) + 1(1 - y^2).
 ```
 
-## Failure Report Schema v1.0
+## Failure Report Object
 
 Structured non-certification report:
 
@@ -421,7 +426,7 @@ Structured non-certification report:
     "rerun the numerical solver with higher precision"
   ],
   "provenance": {
-    "certsdp_version": "1.0.0",
+    "certsdp_version": "2.1.0",
     "julia_version": "...",
     "schema_version": "1.0"
   }
@@ -435,7 +440,7 @@ provenance, timeout status, and artifact paths.
 ## v0.1 Compatibility
 
 Legacy v0.1 LMI problem JSON is accepted by `read_problem`. Rewriting it with
-`write_problem` emits schema v1.0 JSON.
+`write_problem` emits canonical problem JSON.
 
 The CLI exposes the same boundary:
 
@@ -446,7 +451,7 @@ bin/certsdp migrate legacy-problem.json --out problem-v1.json --kind problem
 
 Legacy v0.1 rational, algebraic, and SOS Gram certificates are accepted by
 `read_certificate` when their exact data are valid. Rewriting them with
-`write_certificate` emits schema v1.0 JSON.
+`write_certificate` emits canonical certificate JSON.
 
 ```bash
 bin/certsdp schema validate cert-v1.json --kind certificate
@@ -454,4 +459,4 @@ bin/certsdp schema migrate legacy-cert.json --out cert-v1.json --kind certificat
 ```
 
 The old v0.1 helper formats remain readable for migration, but new external
-tools should write the v1.0 shapes documented above.
+tools should write the compatibility shapes documented above.

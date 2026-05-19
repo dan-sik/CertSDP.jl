@@ -1,10 +1,10 @@
 # External Adapter Benchmarks
 
 This directory is reserved for replay fixtures imported from external exact
-certificate ecosystems. The gate is deliberately strict: an imported row is not
-accepted because the external tool succeeded; it is accepted only when CertSDP
-translates the artifact into exact problem/certificate data and strict replay
-passes locally.
+certificate ecosystems. The boundary is deliberately strict: an imported row
+is not accepted because the external tool succeeded; it is accepted only when
+CertSDP translates the artifact into exact problem/certificate data and strict
+replay passes locally.
 
 Adapter rows:
 
@@ -26,7 +26,7 @@ Every row must include:
 Raw solver output, session transcripts, floating residuals, and backend logs
 are not accepted proof data. The supported handoff shape is a
 `certsdp_external_artifact_version = "1.0"` JSON object containing a translated
-schema-v1 CertSDP certificate. `parse_external_replay_artifact_json` rejects
+CertSDP certificate. `parse_external_replay_artifact_json` rejects
 raw backend claims and calls `verify_strict_json` on the translated certificate
 before returning an accepted adapter artifact.
 

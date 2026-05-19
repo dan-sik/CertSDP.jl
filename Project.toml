@@ -1,6 +1,6 @@
 name = "CertSDP"
 uuid = "ed312aa7-6e2f-4f9d-9b07-28f4d6d8238e"
-version = "1.0.0"
+version = "2.1.0"
 authors = ["CertSDP contributors"]
 
 [deps]

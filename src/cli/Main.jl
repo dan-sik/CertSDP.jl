@@ -32,6 +32,8 @@ function main(args=ARGS; io::IO=stdout, err::IO=stderr)
         return _cli_doctor(rest; io, err)
     elseif command == "explain"
         return _cli_explain(rest; io, err)
+    elseif command == "minimize"
+        return _cli_minimize(rest; io, err)
     elseif command == "bundle"
         return _cli_bundle(rest; io, err)
     elseif command == "replay"
@@ -257,6 +259,30 @@ function _cli_bundle(args; io::IO, err::IO)
 end
 
 function _cli_replay(args; io::IO, err::IO)
+    if any(arg -> arg == "--no-network" || arg == "--no-solver", args)
+        filtered = [arg for arg in args if arg != "--no-network" && arg != "--no-solver"]
+        if length(filtered) == 1
+            cert = try
+                read_certificate(filtered[1])
+            catch parse_error
+                println(err,
+                        "[FAIL] could not read replay artifact `$(filtered[1])`: $(sprint(showerror, parse_error))")
+                return CLI_EXIT_USAGE
+            end
+            accepted = if cert isa ExactCertificateArtifact
+                replay(cert; mode=:strict).status === :valid
+            else
+                verify(cert; strict=true)
+            end
+            if accepted
+                println(io, "[OK] replay strict verification accepted")
+                return CLI_EXIT_OK
+            end
+            println(err, "[FAIL] replay strict verification rejected")
+            return CLI_EXIT_REJECTED
+        end
+    end
+
     parsed = try
         _parse_replay_args(args)
     catch parse_error
@@ -283,6 +309,60 @@ function _cli_replay(args; io::IO, err::IO)
     end
     println(err, "[FAIL] replay strict verification rejected")
     return CLI_EXIT_REJECTED
+end
+
+function _cli_minimize(args; io::IO, err::IO)
+    input_path = nothing
+    out_path = nothing
+    i = 1
+    while i <= length(args)
+        arg = args[i]
+        if arg == "--out"
+            i += 1
+            i <= length(args) || begin
+                println(err, "[FAIL] --out requires a path")
+                return CLI_EXIT_USAGE
+            end
+            out_path = args[i]
+        elseif isnothing(input_path)
+            input_path = arg
+        else
+            println(err, "[FAIL] minimize received unexpected argument `$arg`")
+            return CLI_EXIT_USAGE
+        end
+        i += 1
+    end
+    isnothing(input_path) && begin
+        println(err, "[FAIL] minimize expects an artifact path")
+        return CLI_EXIT_USAGE
+    end
+    isnothing(out_path) && (out_path = input_path * ".min.json")
+
+    cert = try
+        read_certificate(input_path)
+    catch parse_error
+        println(err,
+                "[FAIL] could not read certificate `$(input_path)`: $(sprint(showerror, parse_error))")
+        return CLI_EXIT_USAGE
+    end
+    cert isa ExactCertificateArtifact || begin
+                                         println(err, "[FAIL] minimize currently expects a CertSDP 2.0 artifact")
+                                         return CLI_EXIT_USAGE
+                                         end
+    minimized = minimize(cert)
+    verify(minimized; mode=:strict).status === :valid || begin
+                                                         println(err, "[FAIL] minimized artifact failed strict verification")
+                                                         return CLI_EXIT_REJECTED
+                                                         end
+    try
+        write_certificate(out_path, minimized)
+    catch write_error
+        println(err,
+                "[FAIL] could not write minimized artifact `$(out_path)`: $(sprint(showerror, write_error))")
+        return CLI_EXIT_USAGE
+    end
+    println(io, "[OK] wrote minimized artifact: ", out_path)
+    return CLI_EXIT_OK
 end
 
 function _cli_schema(args; io::IO, err::IO)
@@ -655,10 +735,6 @@ function _cli_verify(args; io::IO, err::IO)
         return CLI_EXIT_USAGE
     end
 
-    if parsed.strict
-        return verify_strict(parsed.cert_path; io) ? CLI_EXIT_OK : CLI_EXIT_REJECTED
-    end
-
     cert = try
         read_certificate(parsed.cert_path)
     catch parse_error
@@ -667,7 +743,17 @@ function _cli_verify(args; io::IO, err::IO)
         return CLI_EXIT_USAGE
     end
 
-    return verify(cert; io) ? CLI_EXIT_OK : CLI_EXIT_REJECTED
+    if parsed.strict
+        accepted = cert isa ExactCertificateArtifact ?
+                   verify(cert; mode=:strict, io).status === :valid :
+                   verify_strict(parsed.cert_path; io)
+        return accepted ? CLI_EXIT_OK : CLI_EXIT_REJECTED
+    end
+
+    accepted = cert isa ExactCertificateArtifact ?
+               verify(cert; mode=:strict, io).status === :valid :
+               verify(cert; io)
+    return accepted ? CLI_EXIT_OK : CLI_EXIT_REJECTED
 end
 
 function _cli_inspect(args; io::IO, err::IO)

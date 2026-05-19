@@ -14,7 +14,7 @@ const DEFAULT_WITH_MSOLVE_SEED = 42
 
 Base.@kwdef mutable struct DrillOptions
     repo::String = abspath(pwd())
-    out::String = joinpath(abspath(pwd()), "reports", "v1_release_drill")
+    out::String = joinpath(abspath(pwd()), "reports", "certificate_compiler_release_drill")
     mode::Symbol = :full
     seed::Int = DEFAULT_SEED
     with_msolve_seed::Int = DEFAULT_WITH_MSOLVE_SEED
@@ -552,7 +552,7 @@ function _check_load_and_precompile!(checks, issues, repo)
         push!(issues, "Pkg.precompile failed: $(sprint(showerror, err))")
     end
     try
-        CertSDP.package_marker() === :validation_release ||
+        CertSDP.package_marker() === :exact_certificate_compiler ||
             push!(issues, "CertSDP package marker mismatch")
         push!(checks, "CertSDP loads from active project")
     catch err
@@ -773,7 +773,7 @@ function write_drill_report(options::DrillOptions, results;
                             selected_failures=String[])
     path = joinpath(options.out, "release_audit_report.md")
     open(path, "w") do io
-        println(io, "# CertSDP v1 Release Audit Drill Report")
+        println(io, "# CertSDP Release Audit Drill Report")
         println(io)
         println(io, "- Repository: `", options.repo, "`")
         println(io, "- Seed: `", options.seed, "`")

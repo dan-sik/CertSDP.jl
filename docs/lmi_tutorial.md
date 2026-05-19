@@ -55,16 +55,16 @@ bin/certsdp inspect /tmp/certsdp-rational-cert.json
 
 The verifier recomputes the substituted matrix and PSD proof over `QQ`.
 
-## v1 Problem Schema
+## Problem JSON
 
-New integrations should write schema v1.0 through the public API:
+New integrations should write problem JSON through the public API:
 
 ```julia
 using CertSDP
 
 P = read_problem("examples/rational_problem.json")
-write_problem("/tmp/certsdp-rational-problem-v1.json", P)
-Q = read_problem("/tmp/certsdp-rational-problem-v1.json")
+write_problem("/tmp/certsdp-rational-problem.json", P)
+Q = read_problem("/tmp/certsdp-rational-problem.json")
 Q isa LMIProblem
 ```
 

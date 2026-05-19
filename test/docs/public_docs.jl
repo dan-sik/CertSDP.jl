@@ -31,25 +31,24 @@
 
     @testset "README is release oriented" begin
         readme = read(joinpath(repo_root, "README.md"), String)
-        @test occursin("Five-Minute Quickstart", readme)
+        @test occursin("Quickstart", readme)
         @test occursin("bin/certsdp verify --strict /tmp/certsdp-rational-cert.json",
                        readme)
-        @test occursin("Where CertSDP Fits", readme)
-        @test occursin("not another large-scale SDP solver", readme)
+        @test occursin("Ecosystem Fit", readme)
+        @test occursin("candidate evidence in, exact replayable certificate out",
+                       readme)
         @test occursin("Platform Support", readme)
         @test occursin("Validation", readme)
         @test occursin("Citation", readme)
         @test occursin("Kolmogorov", readme)
-        @test occursin("Why CertSDP Exists", readme)
-        @test occursin("A solver residual is not a proof", readme)
-        @test occursin("A solver finds a candidate. CertSDP makes it replayable", readme)
-        @test occursin("Signature Demo", readme)
-        @test occursin("Showcases", readme)
+        @test occursin("Why It Exists", readme)
+        @test occursin("What CertSDP Produces", readme)
+        @test occursin("Capabilities", readme)
         @test occursin("Citation", readme)
         @test occursin("scripts/run_validation.jl", readme)
-        @test occursin("Optional numerical oracle", readme)
         @test !occursin("stress", lowercase(readme))
-        @test !occursin("frontier", lowercase(readme))
+        @test !occursin("production gate", lowercase(readme))
+        @test !occursin("hard gate", lowercase(readme))
     end
 
     @testset "P2 narrative docs cover workflows and limitations honestly" begin
@@ -68,12 +67,9 @@
 
         validation = read(joinpath(repo_root, "docs", "validation.md"), String)
         @test occursin("scripts/run_validation.jl", validation)
-        @test occursin("temporary Julia", validation)
-        @test occursin("environment and installs the optional Clarabel",
-                       validation)
         @test occursin("Paper-Artifact Coverage", validation)
-        @test occursin("SDPA/SDPLIB-style", validation)
-        @test occursin("SumOfSquares-style", validation)
+        @test occursin("Exact replay", validation)
+        @test occursin("Algebraic reconstruction", validation)
         @test occursin("Mutation Matrix", validation)
         @test occursin("Raw Artifacts And DOI", validation)
 
@@ -83,7 +79,7 @@
         @test occursin("Release Boundaries", index)
         @test occursin("Not claimed", index)
         @test occursin("Platform Scope", index)
-        @test occursin("Algebraic multi-block workflows", index)
+        @test occursin("Compiler artifacts", index)
         @test occursin("Infeasibility", index)
 
         platform = read(joinpath(repo_root, "docs", "platform_support.md"), String)
@@ -93,9 +89,8 @@
         @test occursin("Claims To Avoid", platform)
 
         benchmarks = read(joinpath(repo_root, "docs", "benchmarks.md"), String)
-        @test occursin("public release artifact path", benchmarks)
         @test occursin("bin/certsdp benchmark", benchmarks)
-        @test occursin("How To Read One Row", benchmarks)
+        @test occursin("Reading The Report", benchmarks)
 
         trust_model = read(joinpath(repo_root, "docs", "trust_model.md"), String)
         @test occursin("Threat Model / Assumptions", trust_model)

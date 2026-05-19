@@ -10,10 +10,9 @@ function _usage()
       julia scripts/run_validation.jl [--out PATH] [--generated-dir PATH] [--budget validation] [--timeout SECONDS]
 
     Runs the public validation artifact in a temporary Julia environment. The
-    environment develops this checkout and installs the optional Clarabel
-    numerical oracle used by the solve -> diagnose -> certify validation row.
-    Strict certificate replay remains independent of Clarabel, msolve, and
-    backend logs.
+    environment develops this checkout and replays the validation artifacts
+    from exact certificate data. Strict replay remains independent of external
+    SDP solvers, msolve, and backend logs.
     """
 end
 
@@ -52,7 +51,7 @@ function main(args=ARGS)
     println("[INFO] preparing temporary validation environment")
     Pkg.activate(; temp=true)
     Pkg.develop(Pkg.PackageSpec(; path=REPO_ROOT))
-    Pkg.add(; name="Clarabel", version="0.11.1")
+    Pkg.instantiate()
 
     certsdp = Base.require(Base.PkgId(Base.UUID("ed312aa7-6e2f-4f9d-9b07-28f4d6d8238e"),
                                       "CertSDP"))

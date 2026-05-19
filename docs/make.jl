@@ -4,11 +4,13 @@ const DOCS_ROOT = @__DIR__
 const REPO_ROOT = dirname(DOCS_ROOT)
 const BUILD_DIR = joinpath(DOCS_ROOT, "build")
 
-if abspath(Base.active_project()) == abspath(joinpath(DOCS_ROOT, "Project.toml"))
-    using Pkg: Pkg
-    Pkg.develop(Pkg.PackageSpec(; path=REPO_ROOT))
-    Pkg.instantiate()
+using Pkg: Pkg
+
+if abspath(Base.active_project()) != abspath(joinpath(DOCS_ROOT, "Project.toml"))
+    Pkg.activate(DOCS_ROOT)
 end
+Pkg.develop(Pkg.PackageSpec(; path=REPO_ROOT))
+Pkg.instantiate()
 
 using CertSDP
 using Documenter
@@ -34,6 +36,7 @@ const DOC_ORDER = ["index.md",
                    "api_reference.md",
                    "API_STABILITY.md",
                    "SCHEMA_V1.md",
+                   "assurance_model.md",
                    "psd_proofs.md",
                    "why_rational_rounding_fails.md",
                    "citation.md",
@@ -138,7 +141,7 @@ function docs_pages(files::Vector{String})
                                                       "performance.md",
                                                       "psd_proofs.md",
                                                       "why_rational_rounding_fails.md",
-                                                      "ROADMAP_HARD_GATES.md"]),
+                                                      "assurance_model.md"]),
                "Reference" => _group_pages(files,
                                             ["certificate_format.md",
                                              "api_reference.md",

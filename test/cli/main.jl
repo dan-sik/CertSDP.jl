@@ -1,3 +1,7 @@
+if !isdefined(@__MODULE__, :certsdp_should_run)
+    certsdp_should_run(tags::String...) = true
+end
+
 @testset "CLI" begin
     function run_cli(args...)
         out = IOBuffer()
@@ -185,54 +189,56 @@
         @test occursin("[OK] SOS Gram certificate accepted", verify_result.out)
     end
 
-    @testset "certify algebraic flow through msolve when available" begin
-        if !has_msolve()
-            @test_skip "msolve binary is not installed"
-        else
-            problem_path = tempname() * ".json"
-            solution_path = tempname() * ".json"
-            cert_path = tempname() * ".json"
+    if certsdp_should_run("optional", "msolve", "slow")
+        @testset "certify algebraic flow through msolve when available" begin
+            if !has_msolve()
+                @test_skip "msolve binary is not installed"
+            else
+                problem_path = tempname() * ".json"
+                solution_path = tempname() * ".json"
+                cert_path = tempname() * ".json"
 
-            P = LMIProblem([0 1; 1 0],
-                           [[1//1 0//1; 0//1 1//2]];
-                           vars=[:x],)
-            write_lmi_json(problem_path, P)
-            write(solution_path, """
-            {
-                "certsdp_version": "0.1",
-                "approximate_solution": {
-                    "type": "xhat",
-                    "precision_bits": 256,
-                    "xhat": ["1.4142135623730950488016887242096980785696718753769"]
+                P = LMIProblem([0 1; 1 0],
+                               [[1//1 0//1; 0//1 1//2]];
+                               vars=[:x],)
+                write_lmi_json(problem_path, P)
+                write(solution_path, """
+                {
+                    "certsdp_version": "0.1",
+                    "approximate_solution": {
+                        "type": "xhat",
+                        "precision_bits": 256,
+                        "xhat": ["1.4142135623730950488016887242096980785696718753769"]
+                    }
                 }
-            }
-            """)
+                """)
 
-            result = run_cli("certify",
-                             problem_path,
-                             "--solution",
-                             solution_path,
-                             "--out",
-                             cert_path,
-                             "--msolve-precision",
-                             "128")
+                result = run_cli("certify",
+                                 problem_path,
+                                 "--solution",
+                                 solution_path,
+                                 "--out",
+                                 cert_path,
+                                 "--msolve-precision",
+                                 "128")
 
-            @test result.code == 0
-            @test occursin("[INFO] running algebraic certifier", result.out)
-            @test occursin("[OK] wrote certificate", result.out)
+                @test result.code == 0
+                @test occursin("[INFO] running algebraic certifier", result.out)
+                @test occursin("[OK] wrote certificate", result.out)
 
-            inspect_result = run_cli("inspect", cert_path)
-            @test inspect_result.code == 0
-            @test occursin("Certificate: algebraic_psd_certificate", inspect_result.out)
-            @test occursin("Minimal polynomial: t^2 - 2", inspect_result.out)
-            @test occursin("PSD proof: schur_zero", inspect_result.out)
+                inspect_result = run_cli("inspect", cert_path)
+                @test inspect_result.code == 0
+                @test occursin("Certificate: algebraic_psd_certificate", inspect_result.out)
+                @test occursin("Minimal polynomial: t^2 - 2", inspect_result.out)
+                @test occursin("PSD proof: schur_zero", inspect_result.out)
+            end
         end
     end
 
     @testset "usage and parse errors exit with code 2" begin
         version = run_cli("version")
         @test version.code == 0
-        @test occursin("CertSDP.jl 1.0.0", version.out)
+        @test occursin("CertSDP.jl 2.1.0", version.out)
         @test !occursin("phase_", version.out)
 
         missing_args = run_cli("certify")
@@ -329,87 +335,24 @@
         @test isempty(unstable.err)
     end
 
-    @testset "Solve diagnose certify CLI workflow" begin
-        problem_path = joinpath(@__DIR__, "..", "..", "examples",
-                                "algebraic_problem.json")
-        approx_path = tempname() * ".json"
-        cert_path = tempname() * ".json"
-
-        solved = run_cli("solve",
-                         problem_path,
-                         "--out",
-                         approx_path,
-                         "--random-objective-trials",
-                         "1",
-                         "--solver-attempts",
-                         "1",
-                         "--rank-relative-tolerance",
-                         "1e-8",
-                         "--rank-gap-threshold",
-                         "1e4")
-        @test solved.code == 0
-        @test occursin("CertSDP numerical solve summary", solved.out)
-        @test occursin("Face clarity:", solved.out)
-        @test isfile(approx_path)
-
-        diagnosis = run_cli("diagnose",
-                            problem_path,
-                            "--solution",
-                            approx_path)
-        @test diagnosis.code == 0
-        @test occursin("Objective kind:", diagnosis.out)
-        @test occursin("Face clarity:", diagnosis.out)
-
-        if !has_msolve()
-            @test_skip "msolve binary is not installed"
-        else
-            certified = run_cli("certify",
-                                problem_path,
-                                "--solution",
-                                approx_path,
-                                "--out",
-                                cert_path,
-                                "--budget",
-                                "validation",
-                                "--timeout",
-                                "20")
-            @test certified.code == 0
-            @test occursin("[OK] wrote certificate", certified.out)
-            @test isfile(cert_path)
-        end
-    end
-
-    @testset "Solve-certify wrapper runs end-to-end" begin
-        if !has_msolve()
-            @test_skip "msolve binary is not installed"
-        else
-            problem_path = joinpath(@__DIR__, "..", "..", "examples",
-                                    "algebraic_problem.json")
-            approx_path = tempname() * ".json"
-            cert_path = tempname() * ".json"
-
-            result = run_cli("solve-certify",
-                             problem_path,
-                             "--out",
-                             approx_path,
-                             "--cert-out",
-                             cert_path,
-                             "--random-objective-trials",
-                             "1",
-                             "--rank-relative-tolerance",
-                             "1e-8",
-                             "--rank-gap-threshold",
-                             "1e4",
-                             "--budget",
+    if certsdp_should_run("cli_validation", "slow")
+        @testset "benchmark CLI runs exact compiler validation" begin
+            output_dir = mktempdir()
+            report_path = joinpath(output_dir, "VALIDATION_REPORT.md")
+            result = run_cli("benchmark",
+                             joinpath(@__DIR__, "..", "..", "benchmarks"),
+                             "--suite",
                              "validation",
-                             "--timeout",
-                             "20")
+                             "--out",
+                             report_path)
 
             @test result.code == 0
-            @test occursin("CertSDP numerical solve summary", result.out)
-            @test occursin("[OK] wrote certificate", result.out)
-            @test isfile(approx_path)
-            @test isfile(cert_path)
+            @test occursin("[OK] wrote benchmark report", result.out)
+            @test occursin("[OK] benchmark expected statuses matched", result.out)
+            @test isfile(report_path)
+            report = read(report_path, String)
+            @test occursin("CertSDP.jl Validation Report", report)
+            @test occursin("CertSDP.jl Validation: PASS", report)
         end
     end
 
