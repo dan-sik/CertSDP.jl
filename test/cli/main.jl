@@ -33,6 +33,16 @@ end
         return path
     end
 
+    @testset "explain CertSDP 2.0 artifact" begin
+        cert_path = tempname() * ".json"
+        cert = CertSDP.compile_fixture(:sparse_opf_like; seed=44)
+        CertSDP.write_certificate(cert_path, cert)
+        result = run_cli("explain", cert_path)
+        @test result.code == 0
+        @test occursin("CertSDP 2.0 artifact", result.out)
+        @test occursin("exact_sparse_identity: valid", result.out)
+    end
+
     @testset "certify, verify, and inspect rational flow" begin
         problem_path = tempname() * ".json"
         solution_path = tempname() * ".json"
