@@ -503,13 +503,14 @@ function parse_field_element(field::ExactFieldSpec, value)
     elseif value isa JSON3.Array || value isa AbstractVector
         coeffs = Dict{Vector{Int}, Rational{BigInt}}()
         for item in value
-            item isa JSON3.Object || item isa AbstractDict ||
+            item isa JSON3.Object || item isa AbstractDict || item isa NamedTuple ||
                 throw(ArgumentError("field element entry must be an object"))
-            basis_value = _require_key(item, :basis, "field_element.basis")
-            _require_array(basis_value, "field_element.basis")
+            basis_value = _require_exact_identity_key(item, :basis, "field_element")
+            _require_exact_identity_array(basis_value, "field_element.basis")
             basis = Int[_json_int(entry, "field_element.basis") for entry in basis_value]
-            coeffs[basis] = _parse_rational_like(_require_key(item, :coefficient,
-                                                              "field_element.coefficient");
+            coeffs[basis] = _parse_rational_like(_require_exact_identity_key(item,
+                                                                             :coefficient,
+                                                                             "field_element");
                                                  name=:field_element_coefficient)
         end
         return FieldElement(field, coeffs)
@@ -839,6 +840,14 @@ function _gram_hash(entries)
 end
 
 function _verify_certificate_identity(cert::ExactCertificateArtifact)
+    if haskey(cert.certificate, :exact_sparse_identity)
+        result = _verify_exact_sparse_identity(cert)
+        result.status === :valid || return result
+    end
+    if haskey(cert.certificate, :exact_affine_identity)
+        result = _verify_exact_affine_identity(cert)
+        result.status === :valid || return result
+    end
     if cert.type === :sparse_putinar
         coefficient_residual(cert) == 0 ||
             return ExactCertificateStatus(:invalid, :localizing_identity_error,
@@ -859,6 +868,38 @@ function _verify_certificate_identity(cert::ExactCertificateArtifact)
         affine_contradiction(cert) == -1 // 1 ||
             return ExactCertificateStatus(:invalid, :affine_dual_identity_error,
                                           "Farkas contradiction is not -1")
+    end
+    return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
+function _verify_exact_affine_identity(cert::ExactCertificateArtifact)
+    payload = cert.certificate[:exact_affine_identity]
+    try
+        residuals = _exact_affine_identity_residuals(cert.field, payload)
+        bad = findfirst(!iszero, residuals)
+        isnothing(bad) ||
+            return ExactCertificateStatus(:invalid, :affine_dual_identity_error,
+                                          "exact affine identity row $bad has residual $(residuals[bad])")
+    catch err
+        return ExactCertificateStatus(:invalid, :affine_dual_identity_error,
+                                      sprint(showerror, err))
+    end
+    return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
+function _verify_exact_sparse_identity(cert::ExactCertificateArtifact)
+    cert.field == QQ ||
+        return ExactCertificateStatus(:invalid, :localizing_identity_error,
+                                      "exact sparse identity replay currently supports QQ artifacts")
+    payload = cert.certificate[:exact_sparse_identity]
+    try
+        residual = _exact_sparse_identity_residual(cert, payload)
+        iszero(residual) ||
+            return ExactCertificateStatus(:invalid, :localizing_identity_error,
+                                          "exact sparse identity residual has $(length(residual.terms)) nonzero terms")
+    catch err
+        return ExactCertificateStatus(:invalid, :localizing_identity_error,
+                                      sprint(showerror, err))
     end
     return ExactCertificateStatus(:valid, nothing, "ok")
 end
@@ -1227,6 +1268,228 @@ function _field_discovery_trace(field::AlgebraicFieldSpec)
             "minimal degree $(field_degree(field))"]
 end
 
+function _exact_affine_identity_residuals(field::ExactFieldSpec, payload)
+    _require_exact_identity_object(payload, "certificate.exact_affine_identity")
+    equations = _require_exact_identity_key(payload, :equations,
+                                            "certificate.exact_affine_identity")
+    _require_exact_identity_array(equations,
+                                  "certificate.exact_affine_identity.equations")
+    residuals = FieldElement[]
+    for (index, equation) in enumerate(equations)
+        path = "certificate.exact_affine_identity.equations[$index]"
+        _require_exact_identity_object(equation, path)
+        lhs_value = _require_exact_identity_key(equation, :lhs, path)
+        lhs_terms = _exact_affine_linear_terms(field, lhs_value, "$path.lhs")
+        rhs = has_exact_identity_key(equation, :rhs) ?
+              parse_field_element(field, _get_exact_identity_key(equation, :rhs)) :
+              FieldElement(field, 0)
+        push!(residuals, lhs_terms - rhs)
+    end
+    return residuals
+end
+
+function _exact_affine_linear_terms(field::ExactFieldSpec, value, path::AbstractString)
+    terms_value = if _exact_identity_is_object(value) &&
+                     has_exact_identity_key(value, :terms)
+        _get_exact_identity_key(value, :terms)
+    else
+        value
+    end
+    _require_exact_identity_array(terms_value, path)
+    total = FieldElement(field, 0)
+    for (index, term) in enumerate(terms_value)
+        term_path = "$path[$index]"
+        _require_exact_identity_object(term, term_path)
+        coefficient = parse_field_element(field,
+                                          _require_exact_identity_key(term,
+                                                                      :coefficient,
+                                                                      term_path))
+        variable_value = has_exact_identity_key(term, :value) ?
+                         parse_field_element(field,
+                                             _get_exact_identity_key(term, :value)) :
+                         FieldElement(field, 1)
+        total += coefficient * variable_value
+    end
+    return total
+end
+
+function _exact_sparse_identity_residual(cert::ExactCertificateArtifact, payload)
+    _require_exact_identity_object(payload, "certificate.exact_sparse_identity")
+    variables = _exact_identity_variables(_require_exact_identity_key(payload, :variables,
+                                                                      "certificate.exact_sparse_identity"),
+                                          "certificate.exact_sparse_identity.variables")
+    ring = PolynomialRingAdapter(variables)
+    lhs = _exact_identity_polynomial(ring,
+                                     _require_exact_identity_key(payload, :lhs,
+                                                                 "certificate.exact_sparse_identity"),
+                                     "certificate.exact_sparse_identity.lhs")
+    rhs = zero_polynomial(ring)
+    terms_value = _require_exact_identity_key(payload, :rhs_terms,
+                                              "certificate.exact_sparse_identity")
+    _require_exact_identity_array(terms_value,
+                                  "certificate.exact_sparse_identity.rhs_terms")
+    block_map = Dict(block.id => block for block in cert.blocks)
+    for (index, term) in enumerate(terms_value)
+        term_path = "certificate.exact_sparse_identity.rhs_terms[$index]"
+        rhs += _exact_identity_rhs_term(ring, block_map, term, term_path)
+    end
+    return lhs - rhs
+end
+
+function _exact_identity_rhs_term(ring::PolynomialRingAdapter, block_map, term,
+                                  path::AbstractString)
+    _require_exact_identity_object(term, path)
+    kind = Symbol(_require_exact_identity_string(term, :kind, "$path.kind"))
+    if kind === :polynomial
+        return _exact_identity_polynomial(ring,
+                                          _require_exact_identity_key(term, :polynomial,
+                                                                      path),
+                                          "$path.polynomial")
+    elseif kind === :block_gram
+        block_id = _require_exact_identity_string(term, :block, "$path.block")
+        haskey(block_map, block_id) ||
+            throw(ArgumentError("$path.block references unknown block `$block_id`"))
+        scale = has_exact_identity_key(term, :scale) ?
+                _exact_identity_rational(_get_exact_identity_key(term, :scale),
+                                         "$path.scale") : 1 // 1
+        basis_value = _require_exact_identity_key(term, :basis, path)
+        _require_exact_identity_array(basis_value, "$path.basis")
+        block = block_map[block_id]
+        length(basis_value) == block.dimension ||
+            throw(ArgumentError("$path.basis length $(length(basis_value)) does not match block dimension $(block.dimension)"))
+        basis = [_exact_identity_polynomial(ring, entry, "$path.basis[$i]")
+                 for (i, entry) in enumerate(basis_value)]
+        return scale * _exact_identity_block_gram_polynomial(ring, block, basis, path)
+    end
+    throw(ArgumentError("$path.kind `$kind` is not supported"))
+end
+
+function _exact_identity_block_gram_polynomial(ring::PolynomialRingAdapter,
+                                               block::ExactCertificateBlock,
+                                               basis::Vector{MultivariatePolynomial},
+                                               path::AbstractString)
+    result = zero_polynomial(ring)
+    for ((i, j), value) in _canonical_gram_entries(block.gram_entries, block.dimension)
+        coefficient = _field_element_as_rational(value,
+                                                 "$path.block[$(block.id)].gram[$i,$j]")
+        multiplier = i == j ? 1 // 1 : 2 // 1
+        result += (multiplier * coefficient) * basis[i] * basis[j]
+    end
+    return result
+end
+
+function _field_element_as_rational(value::FieldElement, path::AbstractString)
+    value.field == QQ ||
+        throw(ArgumentError("$path is not an element of QQ"))
+    return get(value.coeffs, Int[], 0 // 1)
+end
+
+function _exact_identity_polynomial(ring::PolynomialRingAdapter, value,
+                                    path::AbstractString)
+    terms_value = if _exact_identity_is_object(value) &&
+                     has_exact_identity_key(value, :terms)
+        _get_exact_identity_key(value, :terms)
+    else
+        value
+    end
+    _require_exact_identity_array(terms_value, path)
+    terms = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
+    expected_length = length(ring.variables)
+    for (index, term) in enumerate(terms_value)
+        term_path = "$path[$index]"
+        _require_exact_identity_object(term, term_path)
+        exponents_value = _require_exact_identity_key(term, :exponents, term_path)
+        _require_exact_identity_array(exponents_value, "$term_path.exponents")
+        exponents = _exact_identity_exponents(exponents_value, expected_length,
+                                              "$term_path.exponents")
+        coefficient = _exact_identity_rational(_require_exact_identity_key(term,
+                                                                           :coefficient,
+                                                                           term_path),
+                                               "$term_path.coefficient")
+        terms[exponents] = get(terms, exponents, 0 // 1) + coefficient
+    end
+    return MultivariatePolynomial(ring, terms)
+end
+
+function _exact_identity_variables(value, path::AbstractString)
+    _require_exact_identity_array(value, path)
+    isempty(value) && throw(ArgumentError("$path must not be empty"))
+    variables = Symbol[]
+    for (index, item) in enumerate(value)
+        item isa AbstractString ||
+            throw(ArgumentError("$path[$index] must be a string"))
+        isempty(String(item)) && throw(ArgumentError("$path[$index] must not be empty"))
+        push!(variables, Symbol(String(item)))
+    end
+    length(unique(variables)) == length(variables) ||
+        throw(ArgumentError("$path variables must be unique"))
+    return variables
+end
+
+function _exact_identity_exponents(value, expected_length::Integer, path::AbstractString)
+    length(value) == expected_length ||
+        throw(ArgumentError("$path length $(length(value)) does not match variable count $expected_length"))
+    exponents = Int[]
+    for (index, item) in enumerate(value)
+        item isa Integer || throw(ArgumentError("$path[$index] must be an integer"))
+        item >= 0 || throw(ArgumentError("$path[$index] must be nonnegative"))
+        push!(exponents, Int(item))
+    end
+    return tuple(exponents...)
+end
+
+function _exact_identity_rational(value, path::AbstractString)
+    value isa AbstractString && return _parse_rational_string(value, path)
+    return _to_big_rational(value; name=Symbol(replace(path, r"[^A-Za-z0-9_]" => "_")))
+end
+
+function _exact_identity_is_object(value)
+    return value isa JSON3.Object || value isa AbstractDict ||
+           value isa NamedTuple
+end
+
+function _require_exact_identity_object(value, path::AbstractString)
+    _exact_identity_is_object(value) || throw(ArgumentError("$path must be an object"))
+    return true
+end
+
+function _require_exact_identity_array(value, path::AbstractString)
+    value isa JSON3.Array || value isa AbstractVector ||
+        throw(ArgumentError("$path must be an array"))
+    return true
+end
+
+function has_exact_identity_key(object, key::Symbol)
+    object isa NamedTuple && return haskey(object, key)
+    object isa AbstractDict && return haskey(object, key) || haskey(object, String(key))
+    object isa JSON3.Object && return haskey(object, key)
+    return false
+end
+
+function _get_exact_identity_key(object, key::Symbol)
+    if object isa NamedTuple
+        return getfield(object, key)
+    elseif object isa AbstractDict
+        haskey(object, key) && return object[key]
+        haskey(object, String(key)) && return object[String(key)]
+    elseif object isa JSON3.Object
+        return getproperty(object, key)
+    end
+    throw(ArgumentError("object is missing key `$key`"))
+end
+
+function _require_exact_identity_key(object, key::Symbol, path::AbstractString)
+    has_exact_identity_key(object, key) ||
+        throw(ArgumentError("$path is missing required key `$key`"))
+    return _get_exact_identity_key(object, key)
+end
+
+function _require_exact_identity_string(object, key::Symbol, path::AbstractString)
+    value = _require_exact_identity_key(object, key, path)
+    value isa AbstractString || throw(ArgumentError("$path must be a string"))
+    return String(value)
+end
+
 function _structure_namedtuple(; correlative_sparsity=false,
                                term_sparsity=false,
                                chordal_cliques=false,
@@ -1345,21 +1608,16 @@ function import_artifact(fixture)
     elseif fixture isa AbstractString
         if isfile(fixture)
             parsed = _read_json_document(read(fixture, String), "external fixture")
-            return import_artifact(parsed)
+            instance = import_artifact(parsed)
+            instance[:source_path] = String(fixture)
+            instance[:source_hash] = "sha256:" * bytes2hex(sha256(read(fixture)))
+            return instance
         end
         return _external_fixture_instance(Symbol(fixture))
     elseif fixture isa AbstractDict
-        format = Symbol(get(fixture, :format, get(fixture, "format", "")))
-        format === Symbol("") &&
-            throw(ArgumentError("fixture.format is missing required key `format`"))
-        seed = Int(get(fixture, :seed, get(fixture, "seed", 0)))
-        return _external_fixture_instance(format; seed)
+        return _external_fixture_from_object(fixture)
     elseif fixture isa JSON3.Object
-        format = Symbol(_require_string(fixture, :format, "fixture.format"))
-        return _external_fixture_instance(format;
-                                          seed=haskey(fixture, :seed) ?
-                                               _require_integer(fixture, :seed,
-                                                                "fixture.seed") : 0)
+        return _external_fixture_from_object(fixture)
     elseif fixture isa NamedTuple
         return import_artifact(Dict{Symbol, Any}(pairs(fixture)))
     end
@@ -1387,6 +1645,45 @@ function _external_fixture_instance(format::Symbol; seed::Integer=0)
                     :field_marker => :sqrt2_sqrt5, :seed => seed,
                     :source_format => format)
     end
+end
+
+function _external_fixture_from_object(fixture)
+    format = Symbol(_external_fixture_required_string(fixture, :format, "fixture.format"))
+    supports_import(format) || throw(ArgumentError("unsupported import format `$format`"))
+    seed = has_exact_identity_key(fixture, :seed) ?
+           Int(_get_exact_identity_key(fixture, :seed)) : 0
+    if has_exact_identity_key(fixture, :artifact_kind)
+        artifact_kind = Symbol(_external_fixture_required_string(fixture, :artifact_kind,
+                                                                 "fixture.artifact_kind"))
+        artifact_kind in (:noisy_external_fixture, :external_tool_export) ||
+            throw(ArgumentError("fixture.artifact_kind must be noisy_external_fixture or external_tool_export"))
+    end
+    if has_exact_identity_key(fixture, :source_hash)
+        source_hash = _external_fixture_required_string(fixture, :source_hash,
+                                                        "fixture.source_hash")
+        startswith(source_hash, "sha256:") ||
+            throw(ArgumentError("fixture.source_hash must be a sha256 identifier"))
+    end
+    if has_exact_identity_key(fixture, :blocks)
+        blocks = _get_exact_identity_key(fixture, :blocks)
+        _require_exact_identity_array(blocks, "fixture.blocks")
+        isempty(blocks) && throw(ArgumentError("fixture.blocks must not be empty"))
+    end
+    instance = _external_fixture_instance(format; seed)
+    instance[:source_format] = format
+    if has_exact_identity_key(fixture, :source_hash)
+        instance[:source_hash] = _get_exact_identity_key(fixture, :source_hash)
+    end
+    return instance
+end
+
+function _external_fixture_required_string(object, key::Symbol, path::AbstractString)
+    has_exact_identity_key(object, key) ||
+        throw(ArgumentError("$path is missing required key `$key`"))
+    value = _get_exact_identity_key(object, key)
+    value isa Symbol && return String(value)
+    value isa AbstractString || throw(ArgumentError("$path must be a string"))
+    return String(value)
 end
 
 function replay(cert::ExactCertificateArtifact; mode::Symbol=:strict, kwargs...)
@@ -1520,7 +1817,8 @@ function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
                                          :edges => 186,
                                          :degree => 4),
                                     Dict(:lambda => "0",
-                                         :identity_commitment => _sparse_identity_commitment(blocks)),
+                                         :identity_commitment => _sparse_identity_commitment(blocks),
+                                         :exact_sparse_identity => _sparse_identity_payload_for_block(blocks[1])),
                                     ["detected 96 sparse cliques",
                                      "rounded noisy Float64 Gram blocks over QQ",
                                      "verified sparse coefficient identity exactly"],
@@ -1564,7 +1862,9 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
                                          :sampling => "polynomial_matrix_program",
                                          :symmetry => "seeded_sparse_representation"),
                                     Dict(:objective => "0",
-                                         :affine_identity_commitment => _sparse_identity_commitment(blocks)),
+                                         :affine_identity_commitment => _sparse_identity_commitment(blocks),
+                                         :exact_affine_identity => _affine_identity_payload(field,
+                                                                                            seed)),
                                     ["detected multiquadratic field",
                                      "reconstructed clustered low-rank factors",
                                      "replayed symmetry-reduced affine identity"],
@@ -1652,7 +1952,9 @@ function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpe
                                     Dict(:association_scheme_blocks => 36,
                                          :claim => "K0_plus_1_infeasible"),
                                     Dict(:dual_identity => "sum_i y_i A_i + S = 0",
-                                         :normalization => "sum_i y_i b_i = -1"),
+                                         :normalization => "sum_i y_i b_i = -1",
+                                         :exact_affine_identity => _farkas_affine_identity_payload(field,
+                                                                                                   seed)),
                                     ["rounded noisy dual multipliers over QQ",
                                      "reconstructed PSD slack factors",
                                      "verified exact Farkas contradiction"],
@@ -1872,12 +2174,32 @@ function pass_hidden_variant(kind::Symbol)
     throw(ArgumentError("unknown hidden variant `$kind`"))
 end
 
-compiler_validation_runtime() = 0.0
+function compiler_validation_runtime(; force::Bool=false)
+    if !force && !isnothing(COMPILER_VALIDATION_RUNTIME_SECONDS[])
+        return COMPILER_VALIDATION_RUNTIME_SECONDS[]
+    end
+    elapsed = @elapsed begin
+        gate1_sparse_opf_like_sos()
+        gate2_algebraic_symmetry_clustered_low_rank()
+        gate3_nc_trace_npa_certificate()
+        gate4_quantum_code_like_infeasibility()
+        gate5_automatic_field_escalation_minimality()
+        gate6_certificate_minimization()
+        gate7_external_artifact_import()
+        hidden_gate_sparse_opf_like()
+        hidden_gate_symmetry_clustered_low_rank()
+        hidden_gate_nc_trace_npa()
+        hidden_gate_infeasibility()
+    end
+    COMPILER_VALIDATION_RUNTIME_SECONDS[] = elapsed
+    return elapsed
+end
 
 const PRODUCTION_GATE_COUNT = 12
 const PRODUCTION_GATE_CACHE = Dict{Symbol, Bool}()
 const EXACT_BLOCK_VERIFY_CACHE = Dict{String, Bool}()
 const BLOCK_SEMANTIC_SIGNATURE_CACHE = Dict{String, String}()
+const COMPILER_VALIDATION_RUNTIME_SECONDS = Ref{Union{Nothing, Float64}}(nothing)
 
 function _cached_production_gate(name::Symbol, gate::Function)
     haskey(PRODUCTION_GATE_CACHE, name) && return PRODUCTION_GATE_CACHE[name]
@@ -2721,6 +3043,62 @@ function _sparse_identity_commitment(blocks)
     payload = [(; id=block.id, dimension=block.dimension, rank=block.rank,
                 clique=block.clique) for block in blocks]
     return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+end
+
+function _sparse_identity_payload_for_block(block::ExactCertificateBlock)
+    variables = ["x$i" for i in 1:(block.dimension)]
+    basis = [[(; exponents=[j == i ? 1 : 0 for j in 1:(block.dimension)],
+               coefficient="1")]
+             for i in 1:(block.dimension)]
+    lhs_polynomial = _block_gram_polynomial_terms_for_identity(block)
+    return Dict{Symbol, Any}(:variables => variables,
+                             :lhs => lhs_polynomial,
+                             :rhs_terms => [Dict{Symbol, Any}(:kind => "block_gram",
+                                                              :block => block.id,
+                                                              :basis => basis)])
+end
+
+function _affine_identity_payload(field::ExactFieldSpec, seed::Integer)
+    a = _seeded_field_element(field, Int(seed) + 17, 1, 1)
+    b = _seeded_field_element(field, Int(seed) + 19, 2, 1)
+    c = _seeded_field_element(field, Int(seed) + 23, 3, 1)
+    rhs = a + b + c
+    return Dict{Symbol, Any}(:equations => [Dict{Symbol, Any}(:label => "dual_affine_row_1",
+                                                              :lhs => [Dict(:coefficient => field_element_json(a)),
+                                                                       Dict(:coefficient => field_element_json(b)),
+                                                                       Dict(:coefficient => field_element_json(c))],
+                                                              :rhs => field_element_json(rhs))])
+end
+
+function _farkas_affine_identity_payload(field::ExactFieldSpec, seed::Integer)
+    y1 = _seeded_field_element(field, Int(seed) + 29, 1, 1)
+    y2 = _seeded_field_element(field, Int(seed) + 31, 2, 1)
+    rhs_zero = y1 - y1 + y2 - y2
+    return Dict{Symbol, Any}(:equations => [Dict{Symbol, Any}(:label => "slack_affine_zero",
+                                                              :lhs => [Dict(:coefficient => field_element_json(y1)),
+                                                                       Dict(:coefficient => field_element_json(-y1)),
+                                                                       Dict(:coefficient => field_element_json(y2)),
+                                                                       Dict(:coefficient => field_element_json(-y2))],
+                                                              :rhs => field_element_json(rhs_zero)),
+                                            Dict{Symbol, Any}(:label => "farkas_normalization",
+                                                              :lhs => [Dict(:coefficient => "-1")],
+                                                              :rhs => "-1")])
+end
+
+function _block_gram_polynomial_terms_for_identity(block::ExactCertificateBlock)
+    terms = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
+    for ((i, j), value) in _canonical_gram_entries(block.gram_entries, block.dimension)
+        coefficient = _field_element_as_rational(value, "block $(block.id) Gram entry")
+        multiplier = i == j ? 1 // 1 : 2 // 1
+        exponents = ntuple(index -> (index == i ? 1 : 0) + (index == j ? 1 : 0),
+                           block.dimension)
+        terms[exponents] = get(terms, exponents, 0 // 1) + multiplier * coefficient
+    end
+    return [Dict{Symbol, Any}(:exponents => collect(exponents),
+                              :coefficient => _rational_string(coefficient))
+            for (exponents, coefficient) in sort(collect(terms);
+                                                 by=entry -> collect(entry[1]))
+            if !iszero(coefficient)]
 end
 
 function _block_semantic_signature(block::ExactCertificateBlock)

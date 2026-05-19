@@ -219,6 +219,16 @@ function _cli_explain(args; io::IO, err::IO)
         return CLI_EXIT_USAGE
     end
 
+    cert = try
+        read_certificate(parsed.failure_path)
+    catch
+        nothing
+    end
+    if cert isa ExactCertificateArtifact
+        _print_exact_artifact_explanation(cert; io)
+        return CLI_EXIT_OK
+    end
+
     failure = try
         read_failure_report(parsed.failure_path)
     catch parse_error
@@ -228,6 +238,34 @@ function _cli_explain(args; io::IO, err::IO)
     end
     print_failure_explanation(failure; io, max_lines=parsed.max_lines)
     return _cli_exit_for_failure(failure)
+end
+
+function _print_exact_artifact_explanation(cert::ExactCertificateArtifact; io::IO)
+    result = verify(cert; mode=:strict)
+    println(io, "CertSDP 2.0 artifact")
+    println(io, "- type: ", cert.type)
+    println(io, "- strict_status: ", result.status)
+    println(io, "- field: ", cert.field, " (degree ", field_degree(cert), ")")
+    println(io, "- blocks: ", length(cert.blocks), ", total_dim: ", total_block_dim(cert))
+    println(io, "- structure: ",
+            join([String(key)
+                  for key in keys(cert.structure) if getfield(cert.structure, key)],
+                 ", "))
+    if haskey(cert.certificate, :exact_sparse_identity)
+        identity_result = CertSDP._verify_exact_sparse_identity(cert)
+        println(io, "- exact_sparse_identity: ", identity_result.status)
+    end
+    if result.status !== :valid
+        println(io, "- failure_stage: ", result.failure_stage)
+        println(io, "- message: ", result.message)
+    end
+    if !isempty(cert.reconstruction_log)
+        println(io, "- reconstruction_log:")
+        for entry in cert.reconstruction_log
+            println(io, "  * ", entry)
+        end
+    end
+    return nothing
 end
 
 function _cli_bundle(args; io::IO, err::IO)
@@ -2601,7 +2639,7 @@ end
 
 function _print_explain_usage(io::IO)
     return println(io,
-                   "  certsdp explain failure.json [--max-lines 30]")
+                   "  certsdp explain failure.json [--max-lines 30]\n  certsdp explain artifact.json")
 end
 
 function _print_bundle_usage(io::IO)
