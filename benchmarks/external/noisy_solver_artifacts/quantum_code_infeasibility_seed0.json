@@ -1,0 +1,32 @@
+{
+  "artifact_kind": "saved_noisy_solver_artifact",
+  "name": "quantum_code_infeasibility_seed0",
+  "format": "quantum_code_farkas_like",
+  "seed": 0,
+  "precision_bits": 53,
+  "noise_model": "float64_dual_multiplier_noise_1e-10",
+  "field_evidence": {
+    "kind": "rational",
+    "degree_bound": 1,
+    "basis_support": [
+      []
+    ],
+    "engine": "bounded_exact_reconstruction"
+  },
+  "block_dimensions": [
+    180, 160, 140, 120, 96, 80, 64, 48,
+    32, 24, 24, 24, 24, 24, 24, 24,
+    24, 24, 24, 24, 24, 24, 24, 24,
+    24, 24, 24, 24, 24, 24, 24, 24,
+    24, 24, 24, 24
+  ],
+  "rank_profile": [
+    3, 4, 5, 6, 7, 3, 4, 5,
+    6, 7, 3, 4, 5, 6, 7, 3,
+    4, 5, 6, 7, 3, 4, 5, 6,
+    7, 3, 4, 5, 6, 7, 3, 4,
+    5, 6, 7, 3
+  ],
+  "linear_constraints": 3200,
+  "contradiction": "-1"
+}

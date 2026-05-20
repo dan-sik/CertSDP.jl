@@ -1,0 +1,59 @@
+{
+  "fixture_pack_version": "2026-05-20",
+  "license_policy": "Only public, redistributable, or locally generated fixture data may be committed. Solver logs and third-party exports remain provenance until exact replay accepts the translated artifact.",
+  "packs": [
+    {
+      "family": "sumofsquares_like",
+      "path": "fixtures/sumofsquares_like.json",
+      "source": "locally generated compatibility fixture",
+      "license_status": "repo-owned",
+      "redistributable": true
+    },
+    {
+      "family": "tssos_like",
+      "path": "fixtures/tssos_like_sparse_blocks.json",
+      "source": "locally generated sparse OPF-like adapter fixture",
+      "license_status": "repo-owned",
+      "redistributable": true
+    },
+    {
+      "family": "nctssos_like",
+      "path": "fixtures/nctssos_like_trace_blocks.json",
+      "source": "locally generated trace/NPA adapter fixture",
+      "license_status": "repo-owned",
+      "redistributable": true
+    },
+    {
+      "family": "clustered_low_rank_like",
+      "path": "fixtures/clustered_low_rank_like_blocks.json",
+      "source": "locally generated clustered low-rank adapter fixture",
+      "license_status": "repo-owned",
+      "redistributable": true
+    },
+    {
+      "family": "saved_noisy_solver_artifacts",
+      "path": "noisy_solver_artifacts/*.json",
+      "source": "locally generated noisy artifact manifests matching hard-gate shapes",
+      "license_status": "repo-owned",
+      "redistributable": true
+    }
+  ],
+  "upstream_publish_queue": [
+    {
+      "family": "RealCertify",
+      "status": "awaiting license review and minimized export permission"
+    },
+    {
+      "family": "TSSOS/CS-TSSOS",
+      "status": "awaiting upstream-export fixture curation"
+    },
+    {
+      "family": "NCTSSOS",
+      "status": "awaiting trace certificate export fixture curation"
+    },
+    {
+      "family": "ClusteredLowRankSolver/hybrid-method",
+      "status": "awaiting redistributable reduced artifact selection"
+    }
+  ]
+}
