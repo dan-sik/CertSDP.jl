@@ -2,8 +2,6 @@ name: 2.1R Real Artifact Hard Gate
 
 on:
   pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
