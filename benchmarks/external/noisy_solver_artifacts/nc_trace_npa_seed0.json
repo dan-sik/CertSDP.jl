@@ -1,0 +1,31 @@
+{
+  "artifact_kind": "saved_noisy_solver_artifact",
+  "name": "nc_trace_npa_seed0",
+  "format": "nctssos_trace_npa_like",
+  "seed": 0,
+  "precision_bits": 80,
+  "noise_model": "trace_block_factor_noise_2^-72",
+  "field_evidence": {
+    "kind": "numeric_recognition",
+    "approx_coefficients": [
+      "1.732050807568877293527446342"
+    ],
+    "budget": {
+      "max_degree": 2,
+      "max_height": 10000
+    },
+    "engine": "bounded_pslq_lll"
+  },
+  "block_dimensions": [
+    160, 140, 120, 96, 80, 64, 48, 40,
+    32, 28, 28, 26, 24, 24, 24, 24,
+    24, 24, 24, 24, 24, 24, 24, 24
+  ],
+  "rank_profile": [
+    4, 5, 6, 7, 8, 4, 5, 6,
+    7, 8, 4, 5, 6, 7, 8, 4,
+    5, 6, 7, 8, 4, 5, 6, 7
+  ],
+  "word_count_before_quotient": 7064,
+  "canonical_word_count": 1040
+}

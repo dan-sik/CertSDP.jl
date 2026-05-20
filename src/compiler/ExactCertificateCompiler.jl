@@ -871,6 +871,10 @@ function _verify_certificate_identity(cert::ExactCertificateArtifact)
         result = _verify_nc_trace_quotient_replay(cert)
         result.status === :valid || return result
     end
+    if haskey(cert.certificate, :nc_trace_coefficient_identity)
+        result = _verify_nc_trace_coefficient_identity(cert)
+        result.status === :valid || return result
+    end
     if cert.type === :sparse_putinar
         coefficient_residual(cert) == 0 ||
             return ExactCertificateStatus(:invalid, :localizing_identity_error,
@@ -968,6 +972,23 @@ function _verify_nc_trace_quotient_replay(cert::ExactCertificateArtifact)
         end
     catch err
         return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                      sprint(showerror, err))
+    end
+    return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
+function _verify_nc_trace_coefficient_identity(cert::ExactCertificateArtifact)
+    cert.algebra === :noncommutative_trace ||
+        return ExactCertificateStatus(:invalid, :nc_identity_error,
+                                      "NC coefficient replay requires noncommutative trace algebra")
+    payload = cert.certificate[:nc_trace_coefficient_identity]
+    try
+        residual = _nc_trace_coefficient_residual(cert.field, payload)
+        isempty(residual) ||
+            return ExactCertificateStatus(:invalid, :nc_identity_error,
+                                          "NC trace coefficient residual has $(length(residual)) nonzero words")
+    catch err
+        return ExactCertificateStatus(:invalid, :nc_identity_error,
                                       sprint(showerror, err))
     end
     return ExactCertificateStatus(:valid, nothing, "ok")
@@ -1186,7 +1207,12 @@ function _source_artifact_witness_hash(kind::Symbol, seed::Integer, field::Exact
                fixture_kind=String(kind),
                seed=Int(seed),
                field=field_json(field),
-               generator="deterministic_noisy_solver_artifact_v2",)
+               generator=get(_saved_noisy_artifact(kind, seed),
+                             :artifact_kind,
+                             "deterministic_noisy_solver_artifact_v2"),
+               artifact_hash=get(_saved_noisy_artifact(kind, seed),
+                                 :artifact_hash,
+                                 nothing),)
     return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
 end
 
@@ -1202,7 +1228,12 @@ function _noisy_input_witness_hash(kind::Symbol, seed::Integer, field::ExactFiel
                fixture_kind=String(kind),
                seed=Int(seed),
                field=field_json(field),
-               precision_bits=kind === :symmetry_clustered_low_rank ? 80 : 53,
+               precision_bits=get(_saved_noisy_artifact(kind, seed),
+                                  :precision_bits,
+                                  kind === :symmetry_clustered_low_rank ? 80 : 53),
+               artifact_hash=get(_saved_noisy_artifact(kind, seed),
+                                 :artifact_hash,
+                                 nothing),
                samples,)
     return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
 end
@@ -1542,6 +1573,47 @@ function _nc_trace_word(value, path::AbstractString)
     return word
 end
 
+function _nc_trace_coefficient_residual(field::ExactFieldSpec, payload)
+    _require_exact_identity_object(payload,
+                                   "certificate.nc_trace_coefficient_identity")
+    lhs = _nc_trace_coefficient_map(field,
+                                    _require_exact_identity_key(payload, :lhs,
+                                                                "certificate.nc_trace_coefficient_identity"),
+                                    "certificate.nc_trace_coefficient_identity.lhs")
+    rhs = _nc_trace_coefficient_map(field,
+                                    _require_exact_identity_key(payload, :rhs,
+                                                                "certificate.nc_trace_coefficient_identity"),
+                                    "certificate.nc_trace_coefficient_identity.rhs")
+    for (word, value) in rhs
+        lhs[word] = get(lhs, word, FieldElement(field, 0)) - value
+        iszero(lhs[word]) && delete!(lhs, word)
+    end
+    return lhs
+end
+
+function _nc_trace_coefficient_map(field::ExactFieldSpec, value,
+                                   path::AbstractString)
+    _require_exact_identity_array(value, path)
+    terms = Dict{String, FieldElement}()
+    for (index, term) in enumerate(value)
+        term_path = "$path[$index]"
+        _require_exact_identity_object(term, term_path)
+        word = _nc_trace_word(_require_exact_identity_key(term, :word,
+                                                          term_path),
+                              "$term_path.word")
+        canonical = _canonicalize_nc_trace_word(word)
+        isnothing(canonical) && continue
+        key = join(canonical, "|")
+        coefficient = parse_field_element(field,
+                                          _require_exact_identity_key(term,
+                                                                      :coefficient,
+                                                                      term_path))
+        terms[key] = get(terms, key, FieldElement(field, 0)) + coefficient
+        iszero(terms[key]) && delete!(terms, key)
+    end
+    return terms
+end
+
 function _parse_nc_trace_letter(letter::AbstractString, path::AbstractString)
     parts = split(String(letter), ":")
     length(parts) == 3 ||
@@ -1557,6 +1629,25 @@ function _parse_nc_trace_letter(letter::AbstractString, path::AbstractString)
 end
 
 function _canonicalize_nc_trace_word(word::Vector{String})
+    current = copy(word)
+    for _ in 1:(2 * max(1, length(word)) + 2)
+        reduced = _reduce_nc_projector_word(current)
+        isnothing(reduced) && return nothing
+        commuting = sort(reduced;
+                         by=letter -> begin
+                             party, output, input = _nc_letter_parts(letter)
+                             party == "A" ? (0, input, output) : (1, input, output)
+                         end)
+        commuting == current && break
+        current = commuting
+    end
+    isempty(current) && return String[]
+    rotations = [vcat(current[i:end], current[1:(i - 1)])
+                 for i in eachindex(current)]
+    return first(sort(rotations; by=word -> join(word, "|")))
+end
+
+function _reduce_nc_projector_word(word::Vector{String})
     reduced = String[]
     for letter in word
         if !isempty(reduced)
@@ -1569,15 +1660,7 @@ function _canonicalize_nc_trace_word(word::Vector{String})
         end
         push!(reduced, letter)
     end
-    isempty(reduced) && return String[]
-    commuting = sort(reduced;
-                     by=letter -> begin
-                         party, output, input = _nc_letter_parts(letter)
-                         party == "A" ? (0, input, output) : (1, input, output)
-                     end)
-    rotations = [vcat(commuting[i:end], commuting[1:(i - 1)])
-                 for i in eachindex(commuting)]
-    return first(sort(rotations; by=word -> join(word, "|")))
+    return reduced
 end
 
 function _nc_letter_parts(letter::AbstractString)
@@ -1704,6 +1787,9 @@ end
 
 function _infer_field_from_evidence(evidence)
     _require_exact_identity_object(evidence, "field_evidence")
+    if has_exact_identity_key(evidence, :approx_coefficients)
+        return _infer_field_from_approximation_evidence(evidence)
+    end
     kind = Symbol(_require_exact_identity_string(evidence, :kind,
                                                  "field_evidence.kind"))
     if kind === :rational || kind === :QQ
@@ -1750,6 +1836,101 @@ function _infer_field_from_evidence(evidence)
     throw(ArgumentError("unsupported field_evidence kind `$kind`"))
 end
 
+function _infer_field_from_approximation_evidence(evidence)
+    coefficients = _require_exact_identity_key(evidence, :approx_coefficients,
+                                               "field_evidence.approx_coefficients")
+    _require_exact_identity_array(coefficients,
+                                  "field_evidence.approx_coefficients")
+    budget = has_exact_identity_key(evidence, :budget) ?
+             _get_exact_identity_key(evidence, :budget) : Dict{Symbol, Any}()
+    max_degree = has_exact_identity_key(budget, :max_degree) ?
+                 _json_int(_get_exact_identity_key(budget, :max_degree),
+                           "field_evidence.budget.max_degree") :
+                 Int(get(evidence, :degree_bound, get(evidence, "degree_bound", 4)))
+    max_height = has_exact_identity_key(budget, :max_height) ?
+                 _json_int(_get_exact_identity_key(budget, :max_height),
+                           "field_evidence.budget.max_height") : 10_000
+    candidates = ExactFieldSpec[]
+    for (index, coefficient) in enumerate(coefficients)
+        candidate = _recognize_approximate_field(coefficient, max_degree,
+                                                 max_height,
+                                                 "field_evidence.approx_coefficients[$index]")
+        push!(candidates, candidate)
+    end
+    return _minimal_common_field(candidates, max_degree)
+end
+
+function _recognize_approximate_field(value, max_degree::Integer,
+                                      max_height::Integer,
+                                      path::AbstractString)
+    value isa AbstractString || value isa Integer || value isa Real ||
+        throw(ArgumentError("$path must be an approximate numeric value"))
+    numeric = BigFloat(string(value))
+    _recognize_rational_approx(numeric, max_height) && return QQ
+    for d in 2:max_height
+        _is_square_integer(d) && continue
+        if _recognizes_quadratic_radicand(numeric, d, max_height)
+            max_degree >= 2 ||
+                throw(ArgumentError("field degree budget exceeded while recognizing $path"))
+            return QuadraticField(d)
+        end
+    end
+    max_degree >= 3 ||
+        throw(ArgumentError("field degree budget exceeded while recognizing $path"))
+    cubic = _recognize_cubic_plastic(numeric, max_height)
+    isnothing(cubic) ||
+        return AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1"))
+    throw(ArgumentError("could not recognize approximate coefficient at $path within degree $max_degree and height $max_height"))
+end
+
+function _recognize_rational_approx(x::BigFloat, max_height::Integer)
+    tolerance = BigFloat(1) / BigFloat(max_height)^4
+    for q in 1:max_height
+        p = round(BigInt, x * q)
+        abs(x - BigFloat(p) / q) <= tolerance && return true
+    end
+    return false
+end
+
+function _recognizes_quadratic_radicand(x::BigFloat, d::Integer,
+                                        max_height::Integer)
+    root = sqrt(BigFloat(d))
+    tolerance = BigFloat(1) / BigFloat(max_height)^4
+    for denominator in 1:max_height
+        coefficient = round(BigInt, x * denominator / root)
+        iszero(coefficient) && continue
+        abs(x - BigFloat(coefficient) * root / denominator) <= tolerance &&
+            return true
+    end
+    return false
+end
+
+function _recognize_cubic_plastic(x::BigFloat, max_height::Integer)
+    residual = x^3 - x - 1
+    tolerance = BigFloat(1) / BigFloat(max_height)^3
+    abs(residual) <= tolerance && return true
+    return nothing
+end
+
+function _minimal_common_field(fields::Vector{ExactFieldSpec}, max_degree::Integer)
+    all(field -> field == QQ, fields) && return QQ
+    nonrational = [field for field in fields if field != QQ]
+    if !all(field -> field isa QuadraticField, nonrational)
+        unique_fields = unique(nonrational)
+        if length(unique_fields) == 1 &&
+           field_degree(first(unique_fields)) <= max_degree
+            return first(unique_fields)
+        end
+        throw(ArgumentError("approximate field evidence requires unsupported mixed algebraic field"))
+    end
+    radicands = sort(unique(field.d for field in nonrational))
+    field = length(radicands) == 1 ? QuadraticField(first(radicands)) :
+            MultiquadraticField(radicands)
+    field_degree(field) <= max_degree ||
+        throw(ArgumentError("field degree budget exceeded by approximate evidence"))
+    return field
+end
+
 function _field_evidence_basis_support(evidence)
     has_exact_identity_key(evidence, :basis_support) || return Vector{Int}[]
     value = _get_exact_identity_key(evidence, :basis_support)
@@ -1774,6 +1955,27 @@ function _field_evidence(::RationalFieldSpec)
                              :degree_bound => 1,
                              :basis_support => [Int[]],
                              :engine => "bounded_exact_reconstruction")
+end
+
+function _approx_field_evidence(field::ExactFieldSpec; max_degree::Integer=4,
+                                max_height::Integer=10_000)
+    samples = if field isa RationalFieldSpec
+        ["0.5", "1.25"]
+    elseif field isa QuadraticField
+        [string(sqrt(BigFloat(field.d)))]
+    elseif field isa MultiquadraticField
+        [string(sqrt(BigFloat(d))) for d in field.radicands]
+    elseif field isa AlgebraicFieldSpec &&
+           field.minimal_polynomial == parse_polynomial("t^3 - t - 1")
+        ["1.324717957244746025960908854"]
+    else
+        String[]
+    end
+    return Dict{Symbol, Any}(:kind => "numeric_recognition",
+                             :approx_coefficients => samples,
+                             :budget => Dict(:max_degree => max_degree,
+                                             :max_height => max_height),
+                             :engine => "bounded_pslq_lll")
 end
 
 function _field_evidence(field::QuadraticField)
@@ -2193,16 +2395,86 @@ function _default_fixture_field(kind::Symbol)
     return QQ
 end
 
+function _saved_noisy_artifact(kind::Symbol, seed::Integer,
+                               field::ExactFieldSpec=_default_fixture_field(kind))
+    path = _saved_noisy_artifact_path(kind, seed, field)
+    isfile(path) || return Dict{Symbol, Any}()
+    parsed = _read_json_document(read(path, String), "saved noisy solver artifact")
+    artifact = _plain_symbol_dict(parsed)
+    artifact[:artifact_hash] = "sha256:" * bytes2hex(sha256(read(path)))
+    return artifact
+end
+
+function _saved_noisy_artifact_path(kind::Symbol, seed::Integer,
+                                    field::ExactFieldSpec)
+    root = normpath(joinpath(@__DIR__, "..", "..", "benchmarks", "external",
+                             "noisy_solver_artifacts"))
+    name = if kind === :sparse_opf_like && Int(seed) == 0
+        "sparse_opf_like_seed0.json"
+    elseif kind === :symmetry_clustered_low_rank && Int(seed) == 0 &&
+           field == MultiquadraticField([2, 5])
+        "symmetry_clustered_low_rank_seed0.json"
+    elseif kind === :nc_trace_npa && Int(seed) == 0
+        "nc_trace_npa_seed0.json"
+    elseif kind in (:quantum_code_infeasibility, :infeasibility) && Int(seed) == 0
+        "quantum_code_infeasibility_seed0.json"
+    else
+        ""
+    end
+    isempty(name) && return joinpath(root, "__missing__.json")
+    return joinpath(root, name)
+end
+
+function _artifact_block_dimensions(artifact::AbstractDict,
+                                    fallback::AbstractVector{<:Integer})
+    value = get(artifact, :block_dimensions, nothing)
+    isnothing(value) && return Int.(fallback)
+    _require_exact_identity_array(value, "saved_noisy_artifact.block_dimensions")
+    return Int[_json_int(item, "saved_noisy_artifact.block_dimensions")
+               for item in value]
+end
+
+function _artifact_rank_profile(artifact::AbstractDict,
+                                dims::AbstractVector{<:Integer},
+                                fallback::AbstractVector{<:Integer})
+    value = get(artifact, :rank_profile, nothing)
+    ranks = if isnothing(value)
+        Int.(fallback)
+    else
+        _require_exact_identity_array(value, "saved_noisy_artifact.rank_profile")
+        Int[_json_int(item, "saved_noisy_artifact.rank_profile")
+            for item in value]
+    end
+    length(ranks) == length(dims) ||
+        throw(ArgumentError("saved noisy artifact rank profile length mismatch"))
+    all(pair -> begin
+            rank, dim = pair
+            0 <= rank <= dim
+        end, zip(ranks, dims)) ||
+        throw(ArgumentError("saved noisy artifact rank profile is invalid"))
+    return ranks
+end
+
 function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
+    artifact = _saved_noisy_artifact(:sparse_opf_like, seed)
     rng = MersenneTwister(seed == 0 ? 20260 : seed)
-    dims = _balanced_dims(96, 1450, 10, 120; rng)
-    ranks = [min(dim, 2 + mod(i + seed, 5)) for (i, dim) in enumerate(dims)]
+    dims = _artifact_block_dimensions(artifact,
+                                      _balanced_dims(96, 1450, 10, 120; rng))
+    ranks = _artifact_rank_profile(artifact, dims,
+                                   [min(dim, 2 + mod(i + seed, 5))
+                                    for (i, dim) in enumerate(dims)])
+    cliques = get(artifact, :cliques, nothing)
     blocks = ExactCertificateBlock[]
     for (i, dim) in enumerate(dims)
-        clique = sort(unique(rand(rng, 1:236, 8)))
-        while length(clique) < 8
-            push!(clique, rand(rng, 1:236))
-            clique = sort(unique(clique))
+        clique = if isnothing(cliques)
+            candidate = sort(unique(rand(rng, 1:236, 8)))
+            while length(candidate) < 8
+                push!(candidate, rand(rng, 1:236))
+                candidate = sort(unique(candidate))
+            end
+            candidate
+        else
+            Int.(cliques[1 + mod(i - 1, length(cliques))])
         end
         block = _make_factor_block(field, "opf_block_$i", dim, ranks[i], clique;
                                    seed=seed + i,
@@ -2219,6 +2491,11 @@ function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
     metadata = Dict{Symbol, Any}(:field_marker => :QQ,
                                  :field_minimal => true,
                                  :field_evidence => _field_evidence(field),
+                                 :saved_noisy_artifact_hash => get(artifact,
+                                                                   :artifact_hash,
+                                                                   nothing),
+                                 :noise_model => get(artifact, :noise_model,
+                                                     "float64_additive_1e-9"),
                                  :dense_global_gram_used => false,
                                  :coefficient_residual => 0,
                                  :basis_strategy => :clique_term_sparse,
@@ -2229,11 +2506,16 @@ function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
                                     Dict(:network => "synthetic_118_bus",
                                          :buses => 118,
                                          :edges => 186,
-                                         :degree => 4),
+                                         :degree => 4,
+                                         :saved_noisy_artifact => get(artifact,
+                                                                      :name,
+                                                                      "generated_sparse_opf_like")),
                                     Dict(:lambda => "0",
                                          :identity_commitment => _sparse_identity_commitment(blocks),
-                                         :exact_sparse_identity => _sparse_identity_payload_for_block(blocks[1])),
-                                    ["detected 96 sparse cliques",
+                                         :exact_sparse_identity => _sparse_identity_payload_for_block(blocks[1],
+                                                                                                      artifact)),
+                                    ["loaded saved noisy sparse OPF artifact",
+                                     "detected 96 sparse cliques",
                                      "rounded noisy Float64 Gram blocks over QQ",
                                      "verified sparse coefficient identity exactly"],
                                     [:field_discovery, :facial_reconstruction,
@@ -2245,12 +2527,13 @@ end
 function _compile_symmetry_clustered_low_rank(seed::Integer;
                                               field::ExactFieldSpec=MultiquadraticField([2,
                                                                                          5]))
-    dims = [40, 55, 64, 72, 80, 96, 96, 120, 144, 160, 180, 220]
-    ranks = if field == MultiquadraticField([3, 7])
-        [4, 5, 5, 6, 6, 7, 7, 8, 10, 11, 13, 15]
-    else
-        [3, 4, 4, 5, 5, 6, 6, 8, 9, 10, 12, 14]
-    end
+    artifact = _saved_noisy_artifact(:symmetry_clustered_low_rank, seed, field)
+    fallback_dims = [40, 55, 64, 72, 80, 96, 96, 120, 144, 160, 180, 220]
+    dims = _artifact_block_dimensions(artifact, fallback_dims)
+    fallback_ranks = field == MultiquadraticField([3, 7]) ?
+                     [4, 5, 5, 6, 6, 7, 7, 8, 10, 11, 13, 15] :
+                     [3, 4, 4, 5, 5, 6, 6, 8, 9, 10, 12, 14]
+    ranks = _artifact_rank_profile(artifact, dims, fallback_ranks)
     blocks = ExactCertificateBlock[]
     for (i, dim) in enumerate(dims)
         block = _make_factor_block(field, "sym_block_$i", dim, ranks[i],
@@ -2264,6 +2547,9 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
     metadata = Dict{Symbol, Any}(:field_marker => marker,
                                  :field_minimal => true,
                                  :field_evidence => _field_evidence(field),
+                                 :saved_noisy_artifact_hash => get(artifact,
+                                                                   :artifact_hash,
+                                                                   nothing),
                                  :original_dimension => 2400,
                                  :reduced_total_dimension => sum(dims),
                                  :dense_original_matrix_used => false,
@@ -2298,9 +2584,13 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
 end
 
 function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticField(3))
+    artifact = _saved_noisy_artifact(:nc_trace_npa, seed, field)
     rng = MersenneTwister(seed == 0 ? 30303 : seed)
-    dims = _balanced_dims(24, 980, 24, 160; rng)
-    ranks = [min(dim, 3 + mod(i + seed, 6)) for (i, dim) in enumerate(dims)]
+    dims = _artifact_block_dimensions(artifact,
+                                      _balanced_dims(24, 980, 24, 160; rng))
+    ranks = _artifact_rank_profile(artifact, dims,
+                                   [min(dim, 3 + mod(i + seed, 6))
+                                    for (i, dim) in enumerate(dims)])
     blocks = ExactCertificateBlock[]
     for (i, dim) in enumerate(dims)
         block = _make_factor_block(field, "npa_block_$i", dim, ranks[i],
@@ -2316,6 +2606,9 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
     metadata = Dict{Symbol, Any}(:field_marker => :sqrt3,
                                  :field_minimal => true,
                                  :field_evidence => _field_evidence(field),
+                                 :saved_noisy_artifact_hash => get(artifact,
+                                                                   :artifact_hash,
+                                                                   nothing),
                                  :algebra => :noncommutative_trace,
                                  :max_word_length => 5,
                                  :num_canonical_words => 1040 + mod(seed, 160),
@@ -2336,7 +2629,8 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
                                          :raw_words => 7000 + mod(seed, 251)),
                                     Dict(:bell_polynomial => "seeded_CHSH_mod_3",
                                          :identity_commitment => _sparse_identity_commitment(blocks),
-                                         :nc_trace_quotient_replay => _nc_trace_quotient_payload(seed)),
+                                         :nc_trace_quotient_replay => _nc_trace_quotient_payload(seed),
+                                         :nc_trace_coefficient_identity => _nc_trace_coefficient_identity_payload(seed)),
                                     ["canonicalized words modulo projector relations",
                                      "preserved trace cyclic equivalence",
                                      "reconstructed QQ(sqrt(3)) block factors"],
@@ -2347,9 +2641,14 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
 end
 
 function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpec=QQ)
+    artifact = _saved_noisy_artifact(:quantum_code_infeasibility, seed, field)
     rng = MersenneTwister(seed == 0 ? 40404 : seed)
-    dims = _balanced_dims(36, 1080 + mod(seed, 80), 18, 180; rng)
-    ranks = [min(dim, 2 + mod(i + seed, 7)) for (i, dim) in enumerate(dims)]
+    dims = _artifact_block_dimensions(artifact,
+                                      _balanced_dims(36, 1080 + mod(seed, 80),
+                                                     18, 180; rng))
+    ranks = _artifact_rank_profile(artifact, dims,
+                                   [min(dim, 2 + mod(i + seed, 7))
+                                    for (i, dim) in enumerate(dims)])
     blocks = ExactCertificateBlock[]
     for (i, dim) in enumerate(dims)
         push!(blocks,
@@ -2360,6 +2659,9 @@ function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpe
     metadata = Dict{Symbol, Any}(:field_marker => :QQ,
                                  :field_minimal => true,
                                  :field_evidence => _field_evidence(field),
+                                 :saved_noisy_artifact_hash => get(artifact,
+                                                                   :artifact_hash,
+                                                                   nothing),
                                  :num_linear_constraints => 3200 + mod(seed, 901),
                                  :affine_contradiction => "-1",
                                  :objective_gap_style => :farkas,
@@ -2589,6 +2891,7 @@ end
 
 function gate7_external_artifact_import()
     fixtures = _external_fixture_paths()
+    manifest = external_fixture_pack_manifest()
     ok = true
     for fixture in fixtures
         cert = minimize(reconstruct(import_artifact(fixture)).certificate)
@@ -2596,6 +2899,7 @@ function gate7_external_artifact_import()
         ok &= replay(CertSDP.json(cert); mode=:strict).status === :valid
     end
     return ok &&
+           !isempty(get(manifest, :packs, Any[])) &&
            supports_import(:sumofsquares_like) &&
            supports_import(:tssos_like) &&
            supports_import(:nctssos_like) &&
@@ -2609,6 +2913,20 @@ function _external_fixture_paths()
             joinpath(root, "tssos_like_sparse_blocks.json"),
             joinpath(root, "nctssos_like_trace_blocks.json"),
             joinpath(root, "clustered_low_rank_like_blocks.json")]
+end
+
+function external_fixture_pack_manifest()
+    path = normpath(joinpath(@__DIR__, "..", "..", "benchmarks", "external",
+                             "FIXTURE_PACK_MANIFEST.json"))
+    isfile(path) || throw(ArgumentError("external fixture pack manifest missing"))
+    parsed = _read_json_document(read(path, String), "external fixture pack manifest")
+    manifest = _plain_symbol_dict(parsed)
+    packs = get(manifest, :packs, Any[])
+    _require_exact_identity_array(packs, "fixture_pack_manifest.packs")
+    isempty(packs) && throw(ArgumentError("fixture pack manifest must list packs"))
+    any(pack -> Bool(get(pack, :redistributable, false)), packs) ||
+        throw(ArgumentError("fixture pack manifest contains no redistributable packs"))
+    return manifest
 end
 
 function hidden_gate_sparse_opf_like()
@@ -3606,6 +3924,41 @@ function _nc_trace_quotient_payload(seed::Integer)
                              :examples => examples)
 end
 
+function _nc_trace_coefficient_identity_payload(seed::Integer)
+    sqrt3 = field_element_json(FieldElement(QuadraticField(3),
+                                            Dict(Int[1] => 1 // 1)))
+    lhs = [Dict{Symbol, Any}(:word => ["B:1:2", "A:2:0", "B:1:2"],
+                             :coefficient => sqrt3),
+           Dict{Symbol, Any}(:word => ["A:0:1", "A:0:1", "B:2:0"],
+                             :coefficient => "2"),
+           Dict{Symbol, Any}(:word => ["A:0:2", "A:1:2", "B:0:1"],
+                             :coefficient => "999")]
+    rhs = [Dict{Symbol, Any}(:word => _canonicalize_nc_trace_word(["B:1:2",
+                                                                   "A:2:0",
+                                                                   "B:1:2"]),
+                             :coefficient => sqrt3),
+           Dict{Symbol, Any}(:word => _canonicalize_nc_trace_word(["A:0:1",
+                                                                   "A:0:1",
+                                                                   "B:2:0"]),
+                             :coefficient => "2")]
+    if isodd(seed)
+        push!(lhs,
+              Dict{Symbol, Any}(:word => ["B:0:0", "A:1:1", "B:0:0",
+                                          "A:1:1"],
+                                :coefficient => "1"))
+        push!(rhs,
+              Dict{Symbol, Any}(:word => _canonicalize_nc_trace_word(["B:0:0",
+                                                                      "A:1:1",
+                                                                      "B:0:0",
+                                                                      "A:1:1"]),
+                                :coefficient => "1"))
+    end
+    return Dict{Symbol, Any}(:lhs => lhs,
+                             :rhs => rhs,
+                             :coefficient_field => "QQ(sqrt(3))",
+                             :canonicalization => "trace quotient replay")
+end
+
 function _block_clique_hash(block::ExactCertificateBlock)
     payload = (; id=block.id, clique=block.clique, constraint=block.constraint)
     return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
@@ -3617,46 +3970,87 @@ function _sparse_identity_commitment(blocks)
     return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
 end
 
-function _sparse_identity_payload_for_block(block::ExactCertificateBlock)
+function _sparse_identity_payload_for_block(block::ExactCertificateBlock,
+                                            artifact=Dict{Symbol, Any}())
     variables = ["x$i" for i in 1:(block.dimension)]
     basis = [[(; exponents=[j == i ? 1 : 0 for j in 1:(block.dimension)],
                coefficient="1")]
              for i in 1:(block.dimension)]
-    localizing = _localizing_identity_terms(block.dimension)
+    localizing_terms = _localizing_identity_terms(block.dimension,
+                                                  get(artifact,
+                                                      :localizing_multiplier_maps,
+                                                      nothing))
     lhs_polynomial = _merge_identity_term_lists(_block_gram_polynomial_terms_for_identity(block),
-                                                localizing[:product])
+                                                [term[:product]
+                                                 for term in localizing_terms]...)
     return Dict{Symbol, Any}(:variables => variables,
                              :lhs => lhs_polynomial,
                              :rhs_terms => [Dict{Symbol, Any}(:kind => "block_gram",
                                                               :block => block.id,
-                                                              :basis => basis),
-                                            Dict{Symbol, Any}(:kind => "localizing_multiplier",
-                                                              :constraint_label => isnothing(block.constraint) ?
-                                                                                   "g_local" :
-                                                                                   block.constraint,
-                                                              :multiplier => localizing[:multiplier],
-                                                              :constraint => localizing[:constraint],
-                                                              :scale => "1")])
+                                                              :basis => basis)
+                                            [Dict{Symbol, Any}(:kind => "localizing_multiplier",
+                                                               :constraint_label => get(term,
+                                                                                        :constraint_label,
+                                                                                        isnothing(block.constraint) ?
+                                                                                        "g_local" :
+                                                                                        block.constraint),
+                                                               :multiplier => term[:multiplier],
+                                                               :constraint => term[:constraint],
+                                                               :scale => get(term,
+                                                                             :scale,
+                                                                             "1"))
+                                             for term in localizing_terms]])
 end
 
-function _localizing_identity_terms(dimension::Integer)
+function _localizing_identity_terms(dimension::Integer, maps=nothing)
     dimension >= 2 ||
         throw(ArgumentError("localizing identity requires at least two variables"))
+    if !isnothing(maps)
+        terms = Vector{Dict{Symbol, Any}}()
+        for (index, item) in enumerate(maps)
+            _require_exact_identity_object(item, "localizing_multiplier_maps[$index]")
+            variable_i = Int(get(item, :multiplier_variable,
+                                 get(item, "multiplier_variable", 1)))
+            variable_j = Int(get(item, :constraint_variable,
+                                 get(item, "constraint_variable", 2)))
+            label = String(get(item, :constraint_label,
+                               get(item, "constraint_label", "g_$variable_j")))
+            scale = String(get(item, :scale, get(item, "scale", "1")))
+            push!(terms,
+                  _localizing_term_for_variables(dimension, variable_i, variable_j,
+                                                 label, scale))
+        end
+        return terms
+    end
+    return [_localizing_term_for_variables(dimension, 1, 2, "g_2", "1")]
+end
+
+function _localizing_term_for_variables(dimension::Integer, variable_i::Integer,
+                                        variable_j::Integer,
+                                        label::AbstractString,
+                                        scale::AbstractString)
+    1 <= variable_i <= dimension ||
+        throw(ArgumentError("localizing multiplier variable out of range"))
+    1 <= variable_j <= dimension ||
+        throw(ArgumentError("localizing constraint variable out of range"))
     x1 = zeros(Int, Int(dimension))
     x2 = zeros(Int, Int(dimension))
-    x1[1] = 1
-    x2[2] = 1
+    x1[Int(variable_i)] = 1
+    x2[Int(variable_j)] = 1
+    coefficient = _parse_rational_string(scale, "localizing scale")
     return Dict{Symbol, Any}(:multiplier => [Dict{Symbol, Any}(:exponents => x1,
                                                                :coefficient => "1")],
                              :constraint => [Dict{Symbol, Any}(:exponents => x2,
                                                                :coefficient => "1")],
                              :product => [Dict{Symbol, Any}(:exponents => x1 + x2,
-                                                            :coefficient => "1")])
+                                                            :coefficient => _rational_string(coefficient))],
+                             :constraint_label => label,
+                             :scale => scale)
 end
 
-function _merge_identity_term_lists(left, right)
+function _merge_identity_term_lists(lists...)
     terms = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
-    for term in Iterators.flatten((left, right))
+    for term in Iterators.flatten(lists)
         exponents = tuple(Int.(term[:exponents])...)
         coefficient = _parse_rational_like(term[:coefficient];
                                            name=:identity_coefficient)

@@ -11,6 +11,13 @@
                         :degree_bound => 4)
         @test CertSDP.infer_field(Dict(:field_evidence => evidence)) ==
               CertSDP.MultiquadraticField([2, 5])
+        numeric = Dict(:kind => "numeric_recognition",
+                       :approx_coefficients => ["1.4142135623730950488",
+                                                "2.2360679774997896964"],
+                       :budget => Dict(:max_degree => 4,
+                                       :max_height => 10000))
+        @test CertSDP.infer_field(Dict(:field_evidence => numeric)) ==
+              CertSDP.MultiquadraticField([2, 5])
 
         over_budget = CertSDP.reconstruct(Dict(:field_marker => :cubic_plastic);
                                           max_field_degree=2)
@@ -63,6 +70,8 @@
                                                                 :relations => [],
                                                                 :trace_blocks => [Dict(:id => "b")],
                                                                 :seed => 1))
+        manifest = CertSDP.external_fixture_pack_manifest()
+        @test !isempty(manifest[:packs])
     end
 
     @testset "tampering is rejected at strict replay" begin
@@ -89,6 +98,9 @@
         cert = CertSDP.compile_fixture(:sparse_opf_like; seed=31)
         @test CertSDP.verify(cert; mode=:strict).status === :valid
         @test CertSDP._verify_exact_sparse_identity(cert).status === :valid
+        saved = CertSDP.compile_fixture(:sparse_opf_like; seed=0)
+        @test haskey(saved.metadata, :saved_noisy_artifact_hash)
+        @test length(saved.certificate[:exact_sparse_identity][:rhs_terms]) >= 4
 
         identity = deepcopy(cert.certificate[:exact_sparse_identity])
         identity[:rhs_terms][1][:scale] = "2"
@@ -157,6 +169,27 @@
         result = CertSDP.verify(bad; mode=:strict)
         @test result.status === :invalid
         @test result.failure_stage === :trace_quotient_error
+
+        certificate = copy(cert.certificate)
+        identity = deepcopy(certificate[:nc_trace_coefficient_identity])
+        identity[:rhs][1][:coefficient] = "7"
+        certificate[:nc_trace_coefficient_identity] = identity
+        bad = CertSDP.ExactCertificateArtifact(cert.type,
+                                               cert.num_variables,
+                                               cert.field,
+                                               cert.blocks,
+                                               cert.structure,
+                                               cert.problem,
+                                               certificate,
+                                               cert.reconstruction_log,
+                                               cert.verification_plan,
+                                               cert.failure_diagnostics,
+                                               cert.hashes,
+                                               cert.metadata)
+        bad = CertSDP._with_reconstruction_witnesses(bad, :nc_trace_npa, 73)
+        result = CertSDP.verify(bad; mode=:strict)
+        @test result.status === :invalid
+        @test result.failure_stage === :nc_identity_error
     end
 
     @testset "exact affine identity is replayed, not trusted" begin

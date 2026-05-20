@@ -43,19 +43,31 @@ and the intended production-grade exact certificate compiler.
   rather than symbol-only synthetic adapters.
 - Gate 6 compares actual raw/minimized JSON file sizes; the raw side is a real
   unminimized bundle rather than reported padding.
+- Canonical hard-gate compilers now bind to saved noisy solver artifact
+  manifests under `benchmarks/external/noisy_solver_artifacts/`, while hidden
+  seeded variants retain deterministic generation.
+- Field discovery accepts bounded numeric-recognition evidence with explicit
+  degree and height budgets for rational, quadratic/multiquadratic, and the
+  cubic plastic field smoke path.
+- Sparse OPF replay now supports full saved localizing multiplier maps rather
+  than a single localizing smoke term.
+- Noncommutative trace replay now checks coefficient maps after quotient
+  canonicalization, not only canonicalization examples.
+- External fixture packs carry a redistributability and upstream-publishing
+  manifest so real exported fixtures can be added only after license review.
 - `compiler_validation_runtime()` measures the actual hard-gate run instead of
   returning a constant.
 - `certsdp explain artifact.json` explains CertSDP 2.0 proof artifacts.
 
 ## Next Implementation Order
 
-1. Replace the deterministic compiler fixtures with larger saved noisy solver
-   artifacts while keeping the same exact replay obligations.
-2. Add PSLQ/LLL numeric recognition for field evidence produced directly from
-   approximate coefficients, with explicit degree and height budgets.
-3. Expand sparse identity replay from the current localizing smoke payload to
-   full saved OPF-like multiplier maps.
-4. Add coefficient-level NC trace identity replay beyond quotient
-   canonicalization examples.
-5. Publish external adapter fixture packs sourced from real upstream tool
-   exports once license review is complete.
+1. Replace locally generated noisy manifests with larger redistributable
+   upstream exports after license review.
+2. Upgrade numeric field recognition from bounded quadratic/cubic smoke support
+   to a general PSLQ/LLL lattice backend with coefficient-height certificates.
+3. Bind Gate 1 to full saved OPF-like polynomial coefficient maps, including
+   equality multipliers and localizing products across multiple constraints.
+4. Extend NC trace identity replay to star-involution SOS terms and quotient
+   relation expansion, beyond coefficient maps over canonical words.
+5. Add independent third-party replay exports for the new saved artifact
+   manifest format.

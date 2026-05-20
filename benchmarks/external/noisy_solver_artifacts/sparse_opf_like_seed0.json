@@ -1,0 +1,70 @@
+{
+  "artifact_kind": "saved_noisy_solver_artifact",
+  "name": "sparse_opf_like_seed0",
+  "format": "tssos_like_sparse_opf",
+  "seed": 0,
+  "precision_bits": 53,
+  "noise_model": "float64_additive_1e-9",
+  "field_evidence": {
+    "kind": "rational",
+    "degree_bound": 1,
+    "basis_support": [
+      []
+    ],
+    "engine": "bounded_exact_reconstruction"
+  },
+  "block_dimensions": [
+    120, 118, 117, 116, 115, 114, 113, 112,
+    80, 78, 76, 74, 72, 70, 68, 66,
+    14, 14, 14, 14, 14, 14, 14, 14,
+    12, 12, 12, 12, 12, 12, 12, 12,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10
+  ],
+  "rank_profile": [
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6,
+    3, 4, 5, 6, 3, 4, 5, 6
+  ],
+  "cliques": [
+    [1, 2, 3, 4, 5, 6, 7, 8],
+    [5, 6, 7, 8, 9, 10, 11, 12],
+    [13, 14, 15, 16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25, 26, 27, 28]
+  ],
+  "localizing_multiplier_maps": [
+    {
+      "constraint_label": "voltage_lower_bus_1",
+      "multiplier_variable": 1,
+      "constraint_variable": 2,
+      "scale": "1"
+    },
+    {
+      "constraint_label": "active_flow_edge_1_2",
+      "multiplier_variable": 3,
+      "constraint_variable": 4,
+      "scale": "2"
+    },
+    {
+      "constraint_label": "reactive_flow_edge_2_3",
+      "multiplier_variable": 5,
+      "constraint_variable": 6,
+      "scale": "-1"
+    }
+  ]
+}
