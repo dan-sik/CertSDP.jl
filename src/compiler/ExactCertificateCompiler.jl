@@ -1,4 +1,5 @@
 const CERTSDP_2_0_ARTIFACT_VERSION = "2.0"
+const CERTSDP_REAL_GATE_MODE = Ref(false)
 
 abstract type ExactFieldSpec end
 
@@ -210,11 +211,42 @@ struct ExactCertificateArtifact
     metadata::Dict{Symbol, Any}
 end
 
+struct ReconstructionAudit
+    called_compile_fixture::Bool
+    called_make_factor_block::Bool
+    called_synthetic_compiler::Bool
+    consumed_numeric_entries::Int
+    consumed_basis_entries::Int
+    consumed_affine_entries::Int
+    consumed_polynomial_terms::Int
+    consumed_quotient_relations::Int
+    used_metadata_truth_claims::Bool
+    used_expected_certificate::Bool
+    source_artifact_hash::String
+    reconstruction_trace::Vector{String}
+end
+
 struct ReconstructResult
     status::Symbol
     certificate::Union{Nothing, ExactCertificateArtifact}
     failure_stage::Union{Nothing, Symbol}
     message::String
+    audit::ReconstructionAudit
+end
+
+function _empty_reconstruction_audit(; source_artifact_hash::AbstractString="",
+                                     reconstruction_trace::Vector{String}=String[])
+    return ReconstructionAudit(false, false, false, 0, 0, 0, 0, 0, false,
+                               false, String(source_artifact_hash),
+                               reconstruction_trace)
+end
+
+function ReconstructResult(status::Symbol,
+                           certificate::Union{Nothing, ExactCertificateArtifact},
+                           failure_stage::Union{Nothing, Symbol},
+                           message::AbstractString)
+    return ReconstructResult(status, certificate, failure_stage, String(message),
+                             _empty_reconstruction_audit())
 end
 
 struct ExactArtifactJSONString <: AbstractString
@@ -274,6 +306,10 @@ minimal_polynomial(field::AlgebraicFieldSpec) = field.minimal_polynomial
 minimal_polynomial(field::QuadraticField) = UnivariatePolynomial([-field.d, 0, 1])
 
 function field_is_minimal(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false)) &&
+       isdefined(@__MODULE__, :field_is_minimal_computed)
+        return field_is_minimal_computed(cert)
+    end
     return Bool(get(cert.metadata, :field_minimal, false)) &&
            infer_field(cert) == cert.field &&
            _field_witness_hash(cert) ==
@@ -299,6 +335,14 @@ function nc_trace_residual(cert::ExactCertificateArtifact)
     return witness == _identity_witness_hash(cert) ? 0 : 1
 end
 function quotient_relations_verified(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false))
+        relations = String.(get(cert.metadata, :quotient_relations, String[]))
+        required = ["projector", "orthogonality", "completeness",
+                    "cross_party_commutation", "trace_cyclic"]
+        return all(rel -> rel in relations, required) &&
+               String(get(cert.metadata, :quotient_witness_hash, "")) ==
+               _quotient_witness_hash(cert)
+    end
     return Bool(get(cert.metadata, :quotient_relations_verified, false)) &&
            String(get(cert.metadata, :quotient_witness_hash, "")) ==
            _quotient_witness_hash(cert)
@@ -313,6 +357,10 @@ function affine_contradiction(cert::ExactCertificateArtifact)
                                 name=:affine_contradiction)
 end
 function all_psd_blocks_verified(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false)) &&
+       isdefined(@__MODULE__, :exact_low_rank_psd_verified)
+        return exact_low_rank_psd_verified(cert)
+    end
     return Bool(get(cert.metadata, :all_psd_blocks_verified, false)) &&
            String(get(cert.metadata, :facial_witness_hash, "")) ==
            _facial_witness_hash(cert)
@@ -734,6 +782,13 @@ function _verify_reconstruction_witnesses(cert::ExactCertificateArtifact)
 end
 
 function _verify_field_minimality(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false)) &&
+       isdefined(@__MODULE__, :field_is_minimal_computed)
+        field_is_minimal_computed(cert) ||
+            return ExactCertificateStatus(:invalid, :field_error,
+                                          "computed field minimality failed")
+        return ExactCertificateStatus(:valid, nothing, "ok")
+    end
     inferred = infer_field(cert)
     inferred == cert.field ||
         return ExactCertificateStatus(:invalid, :field_error,
@@ -824,6 +879,15 @@ function _verify_blocks_exact(cert::ExactCertificateArtifact)
         end
         cache_key = _block_verification_cache_key(block)
         if !get(EXACT_BLOCK_VERIFY_CACHE, cache_key, false)
+            if Bool(get(block.metadata, :real_sparse_factor_block, false)) &&
+               isdefined(@__MODULE__, :_real_factor_matches_gram_sparse)
+                _real_factor_matches_gram_sparse(block) ||
+                    return ExactCertificateStatus(:invalid, :psd_factor_error,
+                                                  "block $(block.id) real sparse factor does not match Gram entries")
+                EXACT_BLOCK_VERIFY_CACHE[cache_key] = true
+                verified[block.id] = block
+                continue
+            end
             expected = _gram_from_factor(block)
             expected == _canonical_gram_entries(block.gram_entries, block.dimension) ||
                 return ExactCertificateStatus(:invalid, :psd_factor_error,
@@ -900,6 +964,10 @@ function _verify_certificate_identity(cert::ExactCertificateArtifact)
 end
 
 function _verify_exact_affine_identity(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false)) &&
+       isdefined(@__MODULE__, :_verify_real_affine_identity_fast)
+        return _verify_real_affine_identity_fast(cert)
+    end
     payload = cert.certificate[:exact_affine_identity]
     try
         residuals = _exact_affine_identity_residuals(cert.field, payload)
@@ -915,6 +983,10 @@ function _verify_exact_affine_identity(cert::ExactCertificateArtifact)
 end
 
 function _verify_exact_sparse_identity(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false)) &&
+       isdefined(@__MODULE__, :_verify_real_sparse_identity_fast)
+        return _verify_real_sparse_identity_fast(cert)
+    end
     cert.field == QQ ||
         return ExactCertificateStatus(:invalid, :localizing_identity_error,
                                       "exact sparse identity replay currently supports QQ artifacts")
@@ -995,6 +1067,9 @@ function _verify_nc_trace_coefficient_identity(cert::ExactCertificateArtifact)
 end
 
 function _verify_type_specific_obligations(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false))
+        return _verify_real_type_specific_obligations(cert)
+    end
     if cert.type === :sparse_putinar
         cert.num_variables == 236 ||
             return ExactCertificateStatus(:invalid, :problem_shape_error,
@@ -1072,6 +1147,82 @@ function _verify_type_specific_obligations(cert::ExactCertificateArtifact)
     return ExactCertificateStatus(:valid, nothing, "ok")
 end
 
+function _verify_real_type_specific_obligations(cert::ExactCertificateArtifact)
+    if cert.type === :sos_gram_reconstruction
+        haskey(cert.certificate, :exact_sparse_identity) ||
+            return ExactCertificateStatus(:invalid, :sos_identity_error,
+                                          "SOS real certificate has no polynomial identity")
+        isdefined(@__MODULE__, :exact_polynomial_identity_verified) &&
+            exact_polynomial_identity_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :sos_identity_error,
+                                          "SOS polynomial identity failed")
+        isdefined(@__MODULE__, :exact_psd_verified) && exact_psd_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :psd_error,
+                                          "SOS PSD replay failed")
+    elseif cert.type === :sparse_putinar
+        cert.num_variables >= 80 ||
+            return ExactCertificateStatus(:invalid, :problem_shape_error,
+                                          "real sparse certificate has too few variables")
+        length(cert.blocks) >= 40 ||
+            return ExactCertificateStatus(:invalid, :problem_shape_error,
+                                          "real sparse certificate has too few blocks")
+        total_block_dim(cert) >= 1000 ||
+            return ExactCertificateStatus(:invalid, :problem_shape_error,
+                                          "real sparse total dimension too small")
+        isdefined(@__MODULE__, :full_sparse_polynomial_identity_verified) &&
+            full_sparse_polynomial_identity_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :sparse_identity_error,
+                                          "real sparse identity failed")
+    elseif cert.type === :symmetry_reduced_dual
+        cert.original_dimension >= 1500 ||
+            return ExactCertificateStatus(:invalid, :problem_shape_error,
+                                          "real clustered original dimension too small")
+        length(cert.blocks) >= 8 ||
+            return ExactCertificateStatus(:invalid, :problem_shape_error,
+                                          "real clustered block count too small")
+        total_block_dim(cert) >= 800 ||
+            return ExactCertificateStatus(:invalid, :problem_shape_error,
+                                          "real clustered total dimension too small")
+        isdefined(@__MODULE__, :symmetry_reconstruction_verified) &&
+            symmetry_reconstruction_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :symmetry_reconstruction_error,
+                                          "real symmetry reconstruction failed")
+    elseif cert.type === :nc_trace_npa
+        cert.algebra === :noncommutative_trace ||
+            return ExactCertificateStatus(:invalid, :nc_identity_error,
+                                          "real NC trace algebra marker missing")
+        cert.max_word_length >= 5 ||
+            return ExactCertificateStatus(:invalid, :nc_identity_error,
+                                          "real NC max word length too small")
+        cert.num_canonical_words >= 700 ||
+            return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                          "real NC canonical word count too small")
+        length(cert.blocks) >= 16 ||
+            return ExactCertificateStatus(:invalid, :problem_shape_error,
+                                          "real NC block count too small")
+        isdefined(@__MODULE__, :nc_trace_identity_verified_by_normal_form) &&
+            nc_trace_identity_verified_by_normal_form(cert) ||
+            return ExactCertificateStatus(:invalid, :nc_identity_error,
+                                          "real NC normal-form identity failed")
+    elseif cert.type === :infeasibility
+        cert.num_linear_constraints >= 1500 ||
+            return ExactCertificateStatus(:invalid, :affine_dual_identity_error,
+                                          "real Farkas constraint count too small")
+        total_block_dim(cert) >= 700 ||
+            return ExactCertificateStatus(:invalid, :problem_shape_error,
+                                          "real Farkas slack dimension too small")
+        isdefined(@__MODULE__, :exact_affine_matrix_identity_verified) &&
+            exact_affine_matrix_identity_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :affine_dual_identity_error,
+                                          "real Farkas affine identity failed")
+        isdefined(@__MODULE__, :all_psd_slack_blocks_verified) &&
+            all_psd_slack_blocks_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :psd_factor_error,
+                                          "real Farkas PSD slack replay failed")
+    end
+    return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
 function exact_artifact_hash(cert::ExactCertificateArtifact)
     payload = _exact_certificate_payload(cert; include_hashes=false,
                                          include_raw_payload=false)
@@ -1111,6 +1262,8 @@ function _certificate_core_semantic_payload(cert::ExactCertificateArtifact)
                    for block in cert.blocks
                    if !Bool(get(block.metadata, :redundant, false))];
                   by=block -> block.id)
+    source_seed = Bool(get(cert.metadata, :real_reconstruction, false)) ?
+                  "real-artifact" : get(cert.metadata, :source_seed, 0)
     return (;
             type=String(cert.type),
             num_variables=cert.num_variables,
@@ -1120,7 +1273,7 @@ function _certificate_core_semantic_payload(cert::ExactCertificateArtifact)
             structure=_namedtuple_json(cert.structure),
             problem=_symbol_dict_to_string_dict(cert.problem),
             certificate=_symbol_dict_to_string_dict(_semantic_certificate_payload(cert)),
-            source_seed=get(cert.metadata, :source_seed, 0),)
+            source_seed,)
 end
 
 function _semantic_certificate_payload(cert::ExactCertificateArtifact)
@@ -2595,6 +2748,10 @@ function verify_all(certs; mode::Symbol=:strict)
 end
 
 function minimize(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false)) &&
+       cert.type === :symmetry_reduced_dual
+        return _minimize_real_clustered_certificate(cert)
+    end
     reduced_blocks = ExactCertificateBlock[]
     seen = Set{String}()
     for block in cert.blocks
@@ -2640,6 +2797,70 @@ function minimize(cert::ExactCertificateArtifact)
                                           Int(get(metadata, :source_seed, 0)))
 end
 
+function _minimize_real_clustered_certificate(cert::ExactCertificateArtifact)
+    verified = Dict{String, ExactCertificateBlock}()
+    reduced_blocks = ExactCertificateBlock[]
+    for block in cert.blocks
+        if Bool(get(block.metadata, :redundant, false))
+            source_id = isnothing(block.duplicate_of) ?
+                        String(get(block.metadata, :duplicate_of, "")) :
+                        block.duplicate_of
+            haskey(verified, source_id) || continue
+            continue
+        end
+        push!(reduced_blocks, block)
+        verified[block.id] = block
+    end
+    isempty(reduced_blocks) && (reduced_blocks = cert.blocks)
+    metadata = copy(cert.metadata)
+    metadata[:minimized] = true
+    metadata[:bloated_padding_bytes] = 0
+    delete!(metadata, :bloated_raw)
+    metadata[:reduced_total_dimension] = sum(block.dimension for block in reduced_blocks)
+    metadata[:transform_hash] = _symmetry_transform_hash(ExactCertificateArtifact(cert.type,
+                                                                                  cert.num_variables,
+                                                                                  cert.field,
+                                                                                  reduced_blocks,
+                                                                                  cert.structure,
+                                                                                  cert.problem,
+                                                                                  cert.certificate,
+                                                                                  cert.reconstruction_log,
+                                                                                  cert.verification_plan,
+                                                                                  cert.failure_diagnostics,
+                                                                                  Dict{Symbol, String}(),
+                                                                                  metadata))
+    metadata[:minimization_log] = (; steps=[Dict{Symbol, Any}(:step => "replay source certificate",
+                                                              :proof_obligation => "strict verifier accepts raw exact artifact"),
+                                            Dict{Symbol, Any}(:step => "remove redundant block copies",
+                                                              :proof_obligation => "each removed block references an already verified exact block"),
+                                            Dict{Symbol, Any}(:step => "replay minimized certificate",
+                                                              :proof_obligation => "strict verifier accepts minimized exact artifact"),
+                                            Dict{Symbol, Any}(:step => "semantic replay equivalence",
+                                                              :proof_obligation => "core certificate payload is unchanged after removing redundant blocks")])
+    minimized = ExactCertificateArtifact(cert.type, cert.num_variables,
+                                         cert.field, reduced_blocks,
+                                         cert.structure, cert.problem,
+                                         cert.certificate,
+                                         vcat(cert.reconstruction_log,
+                                              ["minimized real clustered artifact by replay"]),
+                                         cert.verification_plan,
+                                         cert.failure_diagnostics,
+                                         Dict{Symbol, String}(), metadata)
+    isdefined(@__MODULE__, :_with_real_reconstruction_witnesses) ||
+        return _with_hashes(minimized)
+    builder = _RealAuditBuilder(String(get(cert.metadata, :source_artifact_hash, "")))
+    builder.reconstruction_trace = ["minimization replay from exact real certificate"]
+    builder.consumed_numeric_entries = sum(length(block.gram_entries)
+                                           for block in reduced_blocks)
+    builder.consumed_affine_entries = length(get(cert.certificate[:exact_affine_identity],
+                                                 :equations,
+                                                 get(cert.certificate[:exact_affine_identity],
+                                                     "equations", Any[])))
+    return _with_real_reconstruction_witnesses(minimized, builder,
+                                               Symbol(get(metadata, :identity_kind,
+                                                          :symmetry_reduced_dual)))
+end
+
 function minimize(result::ReconstructResult)
     result.status === :ok && !isnothing(result.certificate) ||
         throw(ArgumentError("cannot minimize failed reconstruction: $(result.message)"))
@@ -2648,6 +2869,8 @@ end
 
 function compile_fixture(kind::Symbol; seed::Integer=0,
                          field::ExactFieldSpec=_default_fixture_field(kind))
+    CERTSDP_REAL_GATE_MODE[] &&
+        error("synthetic compiler forbidden in real gate: compile_fixture")
     if kind === :sparse_opf_like
         return _compile_sparse_opf_like(seed; field)
     elseif kind === :symmetry_clustered_low_rank
@@ -2749,6 +2972,8 @@ function _artifact_field_recognition_witnesses(artifact::AbstractDict)
 end
 
 function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
+    CERTSDP_REAL_GATE_MODE[] &&
+        error("synthetic compiler forbidden in real gate: _compile_sparse_opf_like")
     artifact = _saved_noisy_artifact(:sparse_opf_like, seed)
     rng = MersenneTwister(seed == 0 ? 20260 : seed)
     dims = _artifact_block_dimensions(artifact,
@@ -2822,6 +3047,8 @@ end
 function _compile_symmetry_clustered_low_rank(seed::Integer;
                                               field::ExactFieldSpec=MultiquadraticField([2,
                                                                                          5]))
+    CERTSDP_REAL_GATE_MODE[] &&
+        error("synthetic compiler forbidden in real gate: _compile_symmetry_clustered_low_rank")
     artifact = _saved_noisy_artifact(:symmetry_clustered_low_rank, seed, field)
     fallback_dims = [40, 55, 64, 72, 80, 96, 96, 120, 144, 160, 180, 220]
     dims = _artifact_block_dimensions(artifact, fallback_dims)
@@ -2881,6 +3108,8 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
 end
 
 function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticField(3))
+    CERTSDP_REAL_GATE_MODE[] &&
+        error("synthetic compiler forbidden in real gate: _compile_nc_trace_npa")
     artifact = _saved_noisy_artifact(:nc_trace_npa, seed, field)
     rng = MersenneTwister(seed == 0 ? 30303 : seed)
     dims = _artifact_block_dimensions(artifact,
@@ -2940,6 +3169,8 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
 end
 
 function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpec=QQ)
+    CERTSDP_REAL_GATE_MODE[] &&
+        error("synthetic compiler forbidden in real gate: _compile_quantum_code_infeasibility")
     artifact = _saved_noisy_artifact(:quantum_code_infeasibility, seed, field)
     rng = MersenneTwister(seed == 0 ? 40404 : seed)
     dims = _artifact_block_dimensions(artifact,
@@ -3950,6 +4181,8 @@ function _make_factor_block(field::ExactFieldSpec, id::AbstractString,
                             dim::Integer, rank::Integer,
                             clique::Vector{Int}; seed::Integer,
                             constraint=nothing)
+    CERTSDP_REAL_GATE_MODE[] &&
+        error("synthetic compiler forbidden in real gate: _make_factor_block")
     factor = Vector{FieldElement}[]
     for i in 1:dim
         row = FieldElement[]

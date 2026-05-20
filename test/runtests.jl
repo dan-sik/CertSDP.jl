@@ -6,7 +6,7 @@ const CERTSDP_DEFAULT_TAGS = Set(["essential", "regression", "cli"])
 const CERTSDP_ACTIVE_ALL_TAGS = Set(["essential", "regression", "cli",
                                      "command", "validation", "release_smoke",
                                      "docs", "failure", "tooling", "compiler",
-                                     "production"])
+                                     "production", "hardgate_real"])
 const CERTSDP_SELECTED_TAGS = if isempty(CERTSDP_TEST_ARGS)
     CERTSDP_DEFAULT_TAGS
 elseif !isdisjoint(CERTSDP_TEST_ARGS, Set(["all", "full"]))
@@ -57,5 +57,7 @@ certsdp_include("release_hardening.jl", "release_smoke")
 certsdp_include("readme_snippets.jl", "essential", "docs", "release_smoke")
 certsdp_include("docs/public_docs.jl", "docs", "release_smoke")
 certsdp_include("hardgate_4_0.jl", "hardgate", "contract")
+certsdp_include("hardgate_4_0_real_artifacts.jl", "hardgate_real", "release",
+                "contract")
 certsdp_include("production_gates_2_1.jl", "production", "validation",
                 "compiler")

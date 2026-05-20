@@ -1,0 +1,29 @@
+{
+    "format": "field_discovery_real_export",
+    "numeric_blocks": [
+        [
+            "1",
+            "0"
+        ],
+        [
+            "0",
+            "1"
+        ]
+    ],
+    "identity_data": [
+        {
+            "label": "plastic",
+            "rhs": "1",
+            "lhs": [
+                {
+                    "value": "1",
+                    "coefficient": "1"
+                }
+            ]
+        }
+    ],
+    "approx_coefficients": [
+        "1.324717957244746025960908854"
+    ],
+    "field_hint": null
+}

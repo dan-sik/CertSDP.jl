@@ -1,0 +1,3588 @@
+{
+    "format": "sumofsquares_real_export",
+    "variables": [
+        "x",
+        "y"
+    ],
+    "noise_model": "float64_solver_output",
+    "coefficient_map": [
+        {
+            "gram_entry": [
+                1,
+                1
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                1,
+                2
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                3
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                4
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                5
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                6
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                7
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                8
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                1,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                2
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                2,
+                3
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                4
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                5
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                6
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                7
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                8
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                2,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                3
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 2
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                3,
+                4
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                5
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                6
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                7
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                8
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                3,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                4
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                4,
+                5
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                6
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                7
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                8
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 6
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                4,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                5
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 2
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                5,
+                6
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                7
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                8
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                5,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                6
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 4
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                6,
+                7
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                8
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                6,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 6
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                7,
+                7
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 6
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                7,
+                8
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                7,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                7,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                7,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 7
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                7,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 6,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                7,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                7,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                7,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                8,
+                8
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 2
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                8,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                8,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                8,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 6,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                8,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                8,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                8,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                8,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                9,
+                9
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 4
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                9,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                9,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                9,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                9,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                9,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                9,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 6
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                10,
+                10
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 6
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                10,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                10,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                10,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                10,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 6
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                10,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 7
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                11,
+                11
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 8
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                11,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 7,
+                "y": 1
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                11,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 6,
+                "y": 2
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                11,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                11,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                12,
+                12
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 6,
+                "y": 2
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                12,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 5,
+                "y": 3
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                12,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 4
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                12,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                13,
+                13
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 4,
+                "y": 4
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                13,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 3,
+                "y": 5
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                13,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 6
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                14,
+                14
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 2,
+                "y": 6
+            },
+            "scale": "1"
+        },
+        {
+            "gram_entry": [
+                14,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "x": 1,
+                "y": 7
+            },
+            "scale": "2"
+        },
+        {
+            "gram_entry": [
+                15,
+                15
+            ],
+            "block": "sos_gram_block",
+            "monomial": {
+                "y": 8
+            },
+            "scale": "1"
+        }
+    ],
+    "basis": [
+        "1",
+        "x",
+        "y",
+        "x^2",
+        "x*y",
+        "y^2",
+        "x^3",
+        "x^2*y",
+        "x*y^2",
+        "y^3",
+        "x^4",
+        "x^3*y",
+        "x^2*y^2",
+        "x*y^3",
+        "y^4"
+    ],
+    "source_tool": "SumOfSquares.jl",
+    "target_polynomial_terms": [
+        {
+            "monomial": {
+            },
+            "coefficient": "1"
+        },
+        {
+            "monomial": {
+                "y": 1
+            },
+            "coefficient": "2"
+        },
+        {
+            "monomial": {
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "y": 2
+            },
+            "coefficient": "3"
+        },
+        {
+            "monomial": {
+                "y": 3
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "y": 4
+            },
+            "coefficient": "5"
+        },
+        {
+            "monomial": {
+                "y": 5
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "y": 6
+            },
+            "coefficient": "3"
+        },
+        {
+            "monomial": {
+                "y": 7
+            },
+            "coefficient": "2"
+        },
+        {
+            "monomial": {
+                "y": 8
+            },
+            "coefficient": "1"
+        },
+        {
+            "monomial": {
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 1
+            },
+            "coefficient": "2"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 1
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 2
+            },
+            "coefficient": "6"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 3
+            },
+            "coefficient": "8"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 4
+            },
+            "coefficient": "8"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 5
+            },
+            "coefficient": "6"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 6
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 7
+            },
+            "coefficient": "2"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 1,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 1
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 2
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 10,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 1
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 2
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 11,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 1
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 2
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 12,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 1
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 2
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 13,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 1
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 2
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 14,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 2
+            },
+            "coefficient": "3"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 1
+            },
+            "coefficient": "6"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 2
+            },
+            "coefficient": "9"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 3
+            },
+            "coefficient": "10"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 4
+            },
+            "coefficient": "9"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 5
+            },
+            "coefficient": "6"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 6
+            },
+            "coefficient": "3"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 2,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 1
+            },
+            "coefficient": "8"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 2
+            },
+            "coefficient": "10"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 3
+            },
+            "coefficient": "10"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 4
+            },
+            "coefficient": "8"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 5
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 3,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4
+            },
+            "coefficient": "5"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 1
+            },
+            "coefficient": "8"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 2
+            },
+            "coefficient": "9"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 3
+            },
+            "coefficient": "8"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 4
+            },
+            "coefficient": "5"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 4,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 1
+            },
+            "coefficient": "6"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 2
+            },
+            "coefficient": "6"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 3
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 5,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6
+            },
+            "coefficient": "3"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 1
+            },
+            "coefficient": "4"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 2
+            },
+            "coefficient": "3"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 6,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7
+            },
+            "coefficient": "2"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 1
+            },
+            "coefficient": "2"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 2
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 7,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8
+            },
+            "coefficient": "1"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 1
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 2
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 8,
+                "y": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 1
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 10
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 11
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 12
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 13
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 14
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 2
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 3
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 4
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 5
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 6
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 7
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 8
+            },
+            "coefficient": "0"
+        },
+        {
+            "monomial": {
+                "x": 9,
+                "y": 9
+            },
+            "coefficient": "0"
+        }
+    ],
+    "gram_matrix_noisy": [
+        {
+            "j": 1,
+            "value": "1",
+            "i": 1
+        },
+        {
+            "j": 2,
+            "value": "1.0000000000000002",
+            "i": 1
+        },
+        {
+            "j": 3,
+            "value": "1",
+            "i": 1
+        },
+        {
+            "j": 4,
+            "value": "1.0000000000000002",
+            "i": 1
+        },
+        {
+            "j": 5,
+            "value": "1",
+            "i": 1
+        },
+        {
+            "j": 6,
+            "value": "1.0000000000000002",
+            "i": 1
+        },
+        {
+            "j": 7,
+            "value": "1",
+            "i": 1
+        },
+        {
+            "j": 8,
+            "value": "1.0000000000000002",
+            "i": 1
+        },
+        {
+            "j": 9,
+            "value": "1",
+            "i": 1
+        },
+        {
+            "j": 10,
+            "value": "1.0000000000000002",
+            "i": 1
+        },
+        {
+            "j": 11,
+            "value": "1",
+            "i": 1
+        },
+        {
+            "j": 12,
+            "value": "1.0000000000000002",
+            "i": 1
+        },
+        {
+            "j": 13,
+            "value": "1",
+            "i": 1
+        },
+        {
+            "j": 14,
+            "value": "1.0000000000000002",
+            "i": 1
+        },
+        {
+            "j": 15,
+            "value": "1",
+            "i": 1
+        },
+        {
+            "j": 2,
+            "value": "1",
+            "i": 2
+        },
+        {
+            "j": 3,
+            "value": "1.0000000000000002",
+            "i": 2
+        },
+        {
+            "j": 4,
+            "value": "1",
+            "i": 2
+        },
+        {
+            "j": 5,
+            "value": "1.0000000000000002",
+            "i": 2
+        },
+        {
+            "j": 6,
+            "value": "1",
+            "i": 2
+        },
+        {
+            "j": 7,
+            "value": "1.0000000000000002",
+            "i": 2
+        },
+        {
+            "j": 8,
+            "value": "1",
+            "i": 2
+        },
+        {
+            "j": 9,
+            "value": "1.0000000000000002",
+            "i": 2
+        },
+        {
+            "j": 10,
+            "value": "1",
+            "i": 2
+        },
+        {
+            "j": 11,
+            "value": "1.0000000000000002",
+            "i": 2
+        },
+        {
+            "j": 12,
+            "value": "1",
+            "i": 2
+        },
+        {
+            "j": 13,
+            "value": "1.0000000000000002",
+            "i": 2
+        },
+        {
+            "j": 14,
+            "value": "1",
+            "i": 2
+        },
+        {
+            "j": 15,
+            "value": "1.0000000000000002",
+            "i": 2
+        },
+        {
+            "j": 3,
+            "value": "1",
+            "i": 3
+        },
+        {
+            "j": 4,
+            "value": "1.0000000000000002",
+            "i": 3
+        },
+        {
+            "j": 5,
+            "value": "1",
+            "i": 3
+        },
+        {
+            "j": 6,
+            "value": "1.0000000000000002",
+            "i": 3
+        },
+        {
+            "j": 7,
+            "value": "1",
+            "i": 3
+        },
+        {
+            "j": 8,
+            "value": "1.0000000000000002",
+            "i": 3
+        },
+        {
+            "j": 9,
+            "value": "1",
+            "i": 3
+        },
+        {
+            "j": 10,
+            "value": "1.0000000000000002",
+            "i": 3
+        },
+        {
+            "j": 11,
+            "value": "1",
+            "i": 3
+        },
+        {
+            "j": 12,
+            "value": "1.0000000000000002",
+            "i": 3
+        },
+        {
+            "j": 13,
+            "value": "1",
+            "i": 3
+        },
+        {
+            "j": 14,
+            "value": "1.0000000000000002",
+            "i": 3
+        },
+        {
+            "j": 15,
+            "value": "1",
+            "i": 3
+        },
+        {
+            "j": 4,
+            "value": "1",
+            "i": 4
+        },
+        {
+            "j": 5,
+            "value": "1.0000000000000002",
+            "i": 4
+        },
+        {
+            "j": 6,
+            "value": "1",
+            "i": 4
+        },
+        {
+            "j": 7,
+            "value": "1.0000000000000002",
+            "i": 4
+        },
+        {
+            "j": 8,
+            "value": "1",
+            "i": 4
+        },
+        {
+            "j": 9,
+            "value": "1.0000000000000002",
+            "i": 4
+        },
+        {
+            "j": 10,
+            "value": "1",
+            "i": 4
+        },
+        {
+            "j": 11,
+            "value": "1.0000000000000002",
+            "i": 4
+        },
+        {
+            "j": 12,
+            "value": "1",
+            "i": 4
+        },
+        {
+            "j": 13,
+            "value": "1.0000000000000002",
+            "i": 4
+        },
+        {
+            "j": 14,
+            "value": "1",
+            "i": 4
+        },
+        {
+            "j": 15,
+            "value": "1.0000000000000002",
+            "i": 4
+        },
+        {
+            "j": 5,
+            "value": "1",
+            "i": 5
+        },
+        {
+            "j": 6,
+            "value": "1.0000000000000002",
+            "i": 5
+        },
+        {
+            "j": 7,
+            "value": "1",
+            "i": 5
+        },
+        {
+            "j": 8,
+            "value": "1.0000000000000002",
+            "i": 5
+        },
+        {
+            "j": 9,
+            "value": "1",
+            "i": 5
+        },
+        {
+            "j": 10,
+            "value": "1.0000000000000002",
+            "i": 5
+        },
+        {
+            "j": 11,
+            "value": "1",
+            "i": 5
+        },
+        {
+            "j": 12,
+            "value": "1.0000000000000002",
+            "i": 5
+        },
+        {
+            "j": 13,
+            "value": "1",
+            "i": 5
+        },
+        {
+            "j": 14,
+            "value": "1.0000000000000002",
+            "i": 5
+        },
+        {
+            "j": 15,
+            "value": "1",
+            "i": 5
+        },
+        {
+            "j": 6,
+            "value": "1",
+            "i": 6
+        },
+        {
+            "j": 7,
+            "value": "1.0000000000000002",
+            "i": 6
+        },
+        {
+            "j": 8,
+            "value": "1",
+            "i": 6
+        },
+        {
+            "j": 9,
+            "value": "1.0000000000000002",
+            "i": 6
+        },
+        {
+            "j": 10,
+            "value": "1",
+            "i": 6
+        },
+        {
+            "j": 11,
+            "value": "1.0000000000000002",
+            "i": 6
+        },
+        {
+            "j": 12,
+            "value": "1",
+            "i": 6
+        },
+        {
+            "j": 13,
+            "value": "1.0000000000000002",
+            "i": 6
+        },
+        {
+            "j": 14,
+            "value": "1",
+            "i": 6
+        },
+        {
+            "j": 15,
+            "value": "1.0000000000000002",
+            "i": 6
+        },
+        {
+            "j": 7,
+            "value": "1",
+            "i": 7
+        },
+        {
+            "j": 8,
+            "value": "1.0000000000000002",
+            "i": 7
+        },
+        {
+            "j": 9,
+            "value": "1",
+            "i": 7
+        },
+        {
+            "j": 10,
+            "value": "1.0000000000000002",
+            "i": 7
+        },
+        {
+            "j": 11,
+            "value": "1",
+            "i": 7
+        },
+        {
+            "j": 12,
+            "value": "1.0000000000000002",
+            "i": 7
+        },
+        {
+            "j": 13,
+            "value": "1",
+            "i": 7
+        },
+        {
+            "j": 14,
+            "value": "1.0000000000000002",
+            "i": 7
+        },
+        {
+            "j": 15,
+            "value": "1",
+            "i": 7
+        },
+        {
+            "j": 8,
+            "value": "1",
+            "i": 8
+        },
+        {
+            "j": 9,
+            "value": "1.0000000000000002",
+            "i": 8
+        },
+        {
+            "j": 10,
+            "value": "1",
+            "i": 8
+        },
+        {
+            "j": 11,
+            "value": "1.0000000000000002",
+            "i": 8
+        },
+        {
+            "j": 12,
+            "value": "1",
+            "i": 8
+        },
+        {
+            "j": 13,
+            "value": "1.0000000000000002",
+            "i": 8
+        },
+        {
+            "j": 14,
+            "value": "1",
+            "i": 8
+        },
+        {
+            "j": 15,
+            "value": "1.0000000000000002",
+            "i": 8
+        },
+        {
+            "j": 9,
+            "value": "1",
+            "i": 9
+        },
+        {
+            "j": 10,
+            "value": "1.0000000000000002",
+            "i": 9
+        },
+        {
+            "j": 11,
+            "value": "1",
+            "i": 9
+        },
+        {
+            "j": 12,
+            "value": "1.0000000000000002",
+            "i": 9
+        },
+        {
+            "j": 13,
+            "value": "1",
+            "i": 9
+        },
+        {
+            "j": 14,
+            "value": "1.0000000000000002",
+            "i": 9
+        },
+        {
+            "j": 15,
+            "value": "1",
+            "i": 9
+        },
+        {
+            "j": 10,
+            "value": "1",
+            "i": 10
+        },
+        {
+            "j": 11,
+            "value": "1.0000000000000002",
+            "i": 10
+        },
+        {
+            "j": 12,
+            "value": "1",
+            "i": 10
+        },
+        {
+            "j": 13,
+            "value": "1.0000000000000002",
+            "i": 10
+        },
+        {
+            "j": 14,
+            "value": "1",
+            "i": 10
+        },
+        {
+            "j": 15,
+            "value": "1.0000000000000002",
+            "i": 10
+        },
+        {
+            "j": 11,
+            "value": "1",
+            "i": 11
+        },
+        {
+            "j": 12,
+            "value": "1.0000000000000002",
+            "i": 11
+        },
+        {
+            "j": 13,
+            "value": "1",
+            "i": 11
+        },
+        {
+            "j": 14,
+            "value": "1.0000000000000002",
+            "i": 11
+        },
+        {
+            "j": 15,
+            "value": "1",
+            "i": 11
+        },
+        {
+            "j": 12,
+            "value": "1",
+            "i": 12
+        },
+        {
+            "j": 13,
+            "value": "1.0000000000000002",
+            "i": 12
+        },
+        {
+            "j": 14,
+            "value": "1",
+            "i": 12
+        },
+        {
+            "j": 15,
+            "value": "1.0000000000000002",
+            "i": 12
+        },
+        {
+            "j": 13,
+            "value": "1",
+            "i": 13
+        },
+        {
+            "j": 14,
+            "value": "1.0000000000000002",
+            "i": 13
+        },
+        {
+            "j": 15,
+            "value": "1",
+            "i": 13
+        },
+        {
+            "j": 14,
+            "value": "1",
+            "i": 14
+        },
+        {
+            "j": 15,
+            "value": "1.0000000000000002",
+            "i": 14
+        },
+        {
+            "j": 15,
+            "value": "1",
+            "i": 15
+        }
+    ],
+    "field_hint": null
+}

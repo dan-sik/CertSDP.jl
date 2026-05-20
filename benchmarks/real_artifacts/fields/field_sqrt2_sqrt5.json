@@ -1,0 +1,30 @@
+{
+    "format": "field_discovery_real_export",
+    "numeric_blocks": [
+        [
+            "1",
+            "0"
+        ],
+        [
+            "0",
+            "1"
+        ]
+    ],
+    "identity_data": [
+        {
+            "label": "sqrt10",
+            "rhs": "3.1622776601683793319",
+            "lhs": [
+                {
+                    "value": "2.2360679774997896964",
+                    "coefficient": "1.4142135623730950488"
+                }
+            ]
+        }
+    ],
+    "approx_coefficients": [
+        "1.4142135623730950488",
+        "2.2360679774997896964"
+    ],
+    "field_hint": null
+}
