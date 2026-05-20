@@ -33,8 +33,9 @@ function _audit(builder::_RealAuditBuilder)
                                copy(builder.reconstruction_trace))
 end
 
-_trace!(builder::_RealAuditBuilder, message::AbstractString) =
-    (push!(builder.reconstruction_trace, String(message)); builder)
+function _trace!(builder::_RealAuditBuilder, message::AbstractString)
+    return (push!(builder.reconstruction_trace, String(message)); builder)
+end
 
 function reconstruct_real_artifact(path::AbstractString; max_field_degree::Integer=16)
     source_hash = isfile(path) ? "sha256:" * bytes2hex(sha256(read(path))) : ""
@@ -88,7 +89,7 @@ function reconstructed_real_gate_certs()
 end
 
 function _reject_embedded_expected_certificate!(artifact::AbstractDict,
-                                               builder::_RealAuditBuilder)
+                                                builder::_RealAuditBuilder)
     forbidden = (:expected_certificate, :exact_certificate, :oracle_certificate,
                  :certificate_oracle)
     for key in forbidden
@@ -231,7 +232,8 @@ function _real_field_element(field::ExactFieldSpec, value, path::AbstractString)
             _near(x, -root) && return FieldElement(field, Dict(Int[1] => -1 // 1))
         elseif field isa MultiquadraticField
             for mask in 1:(2^length(field.radicands) - 1)
-                basis = Int[i for i in eachindex(field.radicands)
+                basis = Int[i
+                            for i in eachindex(field.radicands)
                             if !iszero(mask & (1 << (i - 1)))]
                 product = prod(BigFloat(field.radicands[i]) for i in basis)
                 root = sqrt(product)
@@ -278,8 +280,8 @@ function _reconstruct_real_sos(artifact::AbstractDict, builder::_RealAuditBuilde
     metadata = Dict{Symbol, Any}(:basis_strategy => :sumofsquares_gram_matrix,
                                  :field_evidence => Dict(:approx_coefficients => ["0",
                                                                                   "1"],
-                                                        :budget => Dict(:max_degree => 1,
-                                                                        :max_height => 10)),
+                                                         :budget => Dict(:max_degree => 1,
+                                                                         :max_height => 10)),
                                  :real_artifact_format => :sumofsquares_real_export,
                                  :source_tool => _real_optional(artifact, :source_tool,
                                                                 "unknown"),
@@ -314,8 +316,9 @@ function _reconstruct_real_sparse_tssos(artifact::AbstractDict,
                                         builder)
     coefficient_map = _real_array(artifact, :coefficient_map, "tssos")
     builder.consumed_affine_entries += length(coefficient_map)
-    _validate_coefficient_map_identity!(variables, Dict(block.id => block
-                                                        for block in blocks),
+    _validate_coefficient_map_identity!(variables,
+                                        Dict(block.id => block
+                                             for block in blocks),
                                         block_bases, target, coefficient_map,
                                         builder, :sparse_identity_error)
     localizing = _multiplier_terms_payload(variables,
@@ -349,8 +352,8 @@ function _reconstruct_real_sparse_tssos(artifact::AbstractDict,
                                 :rhs_terms => rhs_terms)
     metadata = Dict{Symbol, Any}(:field_evidence => Dict(:approx_coefficients => ["0",
                                                                                   "1"],
-                                                        :budget => Dict(:max_degree => 1,
-                                                                        :max_height => 10)),
+                                                         :budget => Dict(:max_degree => 1,
+                                                                         :max_height => 10)),
                                  :dense_global_gram_used => false,
                                  :basis_strategy => :clique_term_sparse,
                                  :real_artifact_format => :tssos_real_sparse_export,
@@ -386,15 +389,17 @@ function _reconstruct_real_field_probe(artifact::AbstractDict,
     factor = _real_factor_matrix(field, factors, builder, "field.numeric_blocks")
     dim = length(factor)
     block = _real_block("field_probe", dim, length(first(factor)), Int[1],
-                        factor, _gram_from_factor(ExactCertificateBlock("tmp",
-                                                                        dim,
-                                                                        length(first(factor)),
-                                                                        Int[1],
-                                                                        nothing,
-                                                                        factor,
-                                                                        Dict{Tuple{Int, Int}, FieldElement}(),
-                                                                        nothing,
-                                                                        Dict{Symbol, Any}())))
+                        factor,
+                        _gram_from_factor(ExactCertificateBlock("tmp",
+                                                                dim,
+                                                                length(first(factor)),
+                                                                Int[1],
+                                                                nothing,
+                                                                factor,
+                                                                Dict{Tuple{Int, Int},
+                                                                     FieldElement}(),
+                                                                nothing,
+                                                                Dict{Symbol, Any}())))
     equations = _real_affine_equations(field,
                                        _real_array(artifact, :identity_data,
                                                    "field"),
@@ -424,21 +429,24 @@ function _reconstruct_real_clustered(artifact::AbstractDict,
     for (index, block_data) in enumerate(factor_blocks)
         id = String(_real_get(block_data, :id, "clustered.noisy_low_rank_factors[$index]"))
         clique = haskey(block_data, :clique) ? Int.(block_data[:clique]) : Int[index]
-        factor = _real_factor_matrix(field, _real_get(block_data, :entries,
-                                                      "clustered factor entries"),
+        factor = _real_factor_matrix(field,
+                                     _real_get(block_data, :entries,
+                                               "clustered factor entries"),
                                      builder, "$id.entries")
         dim = length(factor)
         rank = length(first(factor))
-        push!(blocks, _real_block(id, dim, rank, clique, factor,
-                                  _gram_from_factor(ExactCertificateBlock(id,
-                                                                          dim,
-                                                                          rank,
-                                                                          clique,
-                                                                          nothing,
-                                                                          factor,
-                                                                          Dict{Tuple{Int, Int}, FieldElement}(),
-                                                                          nothing,
-                                                                          Dict{Symbol, Any}()))))
+        push!(blocks,
+              _real_block(id, dim, rank, clique, factor,
+                          _gram_from_factor(ExactCertificateBlock(id,
+                                                                  dim,
+                                                                  rank,
+                                                                  clique,
+                                                                  nothing,
+                                                                  factor,
+                                                                  Dict{Tuple{Int, Int},
+                                                                       FieldElement}(),
+                                                                  nothing,
+                                                                  Dict{Symbol, Any}()))))
     end
     if get(artifact, :elide_factor_gram_entries, false) === true
         blocks = [_elide_real_block_gram_entries(block) for block in blocks]
@@ -578,21 +586,24 @@ function _reconstruct_real_farkas(artifact::AbstractDict,
     blocks = ExactCertificateBlock[]
     for (index, block_data) in enumerate(factor_blocks)
         id = String(_real_get(block_data, :id, "farkas.noisy_slack_factors[$index]"))
-        factor = _real_factor_matrix(field, _real_get(block_data, :entries,
-                                                      "farkas slack entries"),
+        factor = _real_factor_matrix(field,
+                                     _real_get(block_data, :entries,
+                                               "farkas slack entries"),
                                      builder, "$id.entries")
         dim = length(factor)
         rank = length(first(factor))
-        push!(blocks, _real_block(id, dim, rank, Int[index], factor,
-                                  _gram_from_factor(ExactCertificateBlock(id,
-                                                                          dim,
-                                                                          rank,
-                                                                          Int[index],
-                                                                          nothing,
-                                                                          factor,
-                                                                          Dict{Tuple{Int, Int}, FieldElement}(),
-                                                                          nothing,
-                                                                          Dict{Symbol, Any}()))))
+        push!(blocks,
+              _real_block(id, dim, rank, Int[index], factor,
+                          _gram_from_factor(ExactCertificateBlock(id,
+                                                                  dim,
+                                                                  rank,
+                                                                  Int[index],
+                                                                  nothing,
+                                                                  factor,
+                                                                  Dict{Tuple{Int, Int},
+                                                                       FieldElement}(),
+                                                                  nothing,
+                                                                  Dict{Symbol, Any}()))))
     end
     if get(artifact, :elide_factor_gram_entries, false) === true
         blocks = [_elide_real_block_gram_entries(block) for block in blocks]
@@ -661,9 +672,10 @@ function _real_factor_matrix(field::ExactFieldSpec, rows,
     factor = Vector{FieldElement}[]
     for (i, row) in enumerate(rows)
         row isa AbstractVector || throw(ArgumentError("$path[$i] must be an array"))
-        push!(factor, FieldElement[_real_field_element(field, value,
-                                                       "$path[$i,$j]")
-                                   for (j, value) in enumerate(row)])
+        push!(factor,
+              FieldElement[_real_field_element(field, value,
+                                               "$path[$i,$j]")
+                           for (j, value) in enumerate(row)])
         builder.consumed_numeric_entries += length(row)
     end
     isempty(factor) && throw(ArgumentError("$path must not be empty"))
@@ -752,7 +764,8 @@ function _basis_polynomial_payload(variables::Vector{Symbol}, basis::AbstractStr
             String(token), 1
         end
         index = findfirst(==(Symbol(name)), variables)
-        isnothing(index) && throw(ArgumentError("basis monomial references unknown `$name`"))
+        isnothing(index) &&
+            throw(ArgumentError("basis monomial references unknown `$name`"))
         exponents[index] += power
     end
     return [Dict{Symbol, Any}(:exponents => exponents, :coefficient => "1")]
@@ -819,14 +832,16 @@ function _real_blocks_from_gram_artifact(field::ExactFieldSpec,
     blocks = ExactCertificateBlock[]
     for (index, block_data) in enumerate(_real_array(artifact, gram_key, path))
         id = String(_real_get(block_data, :id, "$path.$gram_key[$index]"))
-        gram = _real_gram_entries(field, _real_get(block_data, :entries,
-                                                   "$path.$gram_key[$index]"),
+        gram = _real_gram_entries(field,
+                                  _real_get(block_data, :entries,
+                                            "$path.$gram_key[$index]"),
                                   builder, "$path.$gram_key[$index].entries")
         dim = maximum(max(i, j) for (i, j) in keys(gram))
         factor = _factor_from_reconstructed_gram(field, gram, dim)
-        push!(blocks, _real_block(id, dim, length(first(factor)),
-                                  get(cliques_by_block, id, Int[index]),
-                                  factor, gram))
+        push!(blocks,
+              _real_block(id, dim, length(first(factor)),
+                          get(cliques_by_block, id, Int[index]),
+                          factor, gram))
     end
     return blocks, basis_by_block
 end
@@ -853,8 +868,9 @@ function _real_blocks_from_factor_artifact(field::ExactFieldSpec,
     blocks = ExactCertificateBlock[]
     for (index, block_data) in enumerate(_real_array(artifact, factor_key, path))
         id = String(_real_get(block_data, :id, "$path.$factor_key[$index]"))
-        factor = _real_factor_matrix(field, _real_get(block_data, :entries,
-                                                      "$path.$factor_key[$index]"),
+        factor = _real_factor_matrix(field,
+                                     _real_get(block_data, :entries,
+                                               "$path.$factor_key[$index]"),
                                      builder, "$path.$factor_key[$index].entries")
         dim = length(factor)
         rank = length(first(factor))
@@ -985,12 +1001,12 @@ function _real_affine_equations(field::ExactFieldSpec, equations,
             builder.consumed_numeric_entries += 1
         end
         rhs = _real_field_element(field, _real_get(equation, :rhs,
-                                                  "identity_data[$index]"),
+                                                   "identity_data[$index]"),
                                   "identity_data[$index].rhs")
         push!(payload,
               Dict{Symbol, Any}(:label => String(_real_optional(equation,
-                                                                 :label,
-                                                                 "row_$index")),
+                                                                :label,
+                                                                "row_$index")),
                                 :lhs => terms,
                                 :rhs => field_element_json(rhs)))
         builder.consumed_affine_entries += length(terms)
@@ -1255,8 +1271,8 @@ function exact_low_rank_psd_verified(cert::ExactCertificateArtifact)
                        return _real_factor_matches_gram_sparse(block)
                    end
                    _gram_from_factor(block) ==
-                       _canonical_gram_entries(block.gram_entries,
-                                               block.dimension)
+                   _canonical_gram_entries(block.gram_entries,
+                                           block.dimension)
                end, cert.blocks)
 end
 
@@ -1344,8 +1360,9 @@ function _fast_polynomial_map(payload)
     return map
 end
 
-coefficient_residual_computed(cert::ExactCertificateArtifact) =
-    exact_polynomial_identity_verified(cert) ? 0 : 1
+function coefficient_residual_computed(cert::ExactCertificateArtifact)
+    return exact_polynomial_identity_verified(cert) ? 0 : 1
+end
 
 function full_sparse_polynomial_identity_verified(cert::ExactCertificateArtifact)
     return exact_polynomial_identity_verified(cert)
@@ -1436,8 +1453,9 @@ function _verify_real_affine_identity_fast(cert::ExactCertificateArtifact)
     return ExactCertificateStatus(:valid, nothing, "ok")
 end
 
-exact_affine_matrix_identity_verified(cert::ExactCertificateArtifact) =
-    exact_affine_dual_identity_verified(cert)
+function exact_affine_matrix_identity_verified(cert::ExactCertificateArtifact)
+    return exact_affine_dual_identity_verified(cert)
+end
 
 function symmetry_reconstruction_verified(cert::ExactCertificateArtifact)
     if haskey(cert.metadata, :representation_transform_entries) &&
@@ -1471,8 +1489,9 @@ function completeness_relations_computed(cert::ExactCertificateArtifact)
 end
 
 function cross_party_commutation_computed(cert::ExactCertificateArtifact)
-    return "cross_party_commutation" in String.(get(cert.metadata, :quotient_relations,
-                                                    String[])) &&
+    return "cross_party_commutation" in
+           String.(get(cert.metadata, :quotient_relations,
+                       String[])) &&
            quotient_relations_verified(cert)
 end
 
@@ -1486,8 +1505,9 @@ function exact_farkas_normalization(cert::ExactCertificateArtifact)
     return affine_contradiction(cert)
 end
 
-all_psd_slack_blocks_verified(cert::ExactCertificateArtifact) =
-    exact_low_rank_psd_verified(cert)
+function all_psd_slack_blocks_verified(cert::ExactCertificateArtifact)
+    return exact_low_rank_psd_verified(cert)
+end
 
 function semantic_equivalence_by_replay(raw::ExactCertificateArtifact,
                                         min::ExactCertificateArtifact)
@@ -1497,8 +1517,10 @@ function semantic_equivalence_by_replay(raw::ExactCertificateArtifact,
            _certificate_core_semantic_payload(min)
 end
 
-semantic_equivalence_by_hash_only(raw::ExactCertificateArtifact,
-                                  min::ExactCertificateArtifact) = false
+function semantic_equivalence_by_hash_only(raw::ExactCertificateArtifact,
+                                           min::ExactCertificateArtifact)
+    return false
+end
 
 function replay_in_fresh_julia_process(path::AbstractString; mode::Symbol=:strict)
     project = dirname(dirname(@__DIR__))
@@ -1561,7 +1583,7 @@ function _write_tampered_artifact(artifact::AbstractDict)
     path = tempname() * ".json"
     open(path, "w") do io
         JSON3.pretty(io, _json_ready_value(artifact))
-        println(io)
+        return println(io)
     end
     return path
 end
@@ -1719,10 +1741,14 @@ end
 
 function gate5_reject_bad_nc_variants()
     root = joinpath(_real_gate_root(), "nctssos")
-    return reject_bad_nc(joinpath(root, "bad_all_variables_commute.json")).failure_stage === :nc_identity_error &&
-           reject_bad_nc(joinpath(root, "bad_trace_as_word_equality.json")).failure_stage === :trace_quotient_error &&
-           reject_bad_nc(joinpath(root, "bad_missing_completeness_relation.json")).failure_stage === :quotient_relation_error &&
-           reject_bad_nc(joinpath(root, "bad_star_involution.json")).failure_stage === :star_involution_error
+    return reject_bad_nc(joinpath(root, "bad_all_variables_commute.json")).failure_stage ===
+           :nc_identity_error &&
+           reject_bad_nc(joinpath(root, "bad_trace_as_word_equality.json")).failure_stage ===
+           :trace_quotient_error &&
+           reject_bad_nc(joinpath(root, "bad_missing_completeness_relation.json")).failure_stage ===
+           :quotient_relation_error &&
+           reject_bad_nc(joinpath(root, "bad_star_involution.json")).failure_stage ===
+           :star_involution_error
 end
 
 function gate6_real_farkas_infeasibility()

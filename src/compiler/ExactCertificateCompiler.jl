@@ -2827,16 +2827,18 @@ function _minimize_real_clustered_certificate(cert::ExactCertificateArtifact)
                                                                                   cert.reconstruction_log,
                                                                                   cert.verification_plan,
                                                                                   cert.failure_diagnostics,
-                                                                                  Dict{Symbol, String}(),
+                                                                                  Dict{Symbol,
+                                                                                       String}(),
                                                                                   metadata))
-    metadata[:minimization_log] = (; steps=[Dict{Symbol, Any}(:step => "replay source certificate",
-                                                              :proof_obligation => "strict verifier accepts raw exact artifact"),
-                                            Dict{Symbol, Any}(:step => "remove redundant block copies",
-                                                              :proof_obligation => "each removed block references an already verified exact block"),
-                                            Dict{Symbol, Any}(:step => "replay minimized certificate",
-                                                              :proof_obligation => "strict verifier accepts minimized exact artifact"),
-                                            Dict{Symbol, Any}(:step => "semantic replay equivalence",
-                                                              :proof_obligation => "core certificate payload is unchanged after removing redundant blocks")])
+    metadata[:minimization_log] = (;
+                                   steps=[Dict{Symbol, Any}(:step => "replay source certificate",
+                                                            :proof_obligation => "strict verifier accepts raw exact artifact"),
+                                          Dict{Symbol, Any}(:step => "remove redundant block copies",
+                                                            :proof_obligation => "each removed block references an already verified exact block"),
+                                          Dict{Symbol, Any}(:step => "replay minimized certificate",
+                                                            :proof_obligation => "strict verifier accepts minimized exact artifact"),
+                                          Dict{Symbol, Any}(:step => "semantic replay equivalence",
+                                                            :proof_obligation => "core certificate payload is unchanged after removing redundant blocks")])
     minimized = ExactCertificateArtifact(cert.type, cert.num_variables,
                                          cert.field, reduced_blocks,
                                          cert.structure, cert.problem,
