@@ -1,4 +1,5 @@
 {
+    "export_script": "../upstream_artifacts/nctssos/export_script.jl",
     "noisy_factor_blocks": [
         {
             "id": "npa_block_1",
@@ -35633,6 +35634,7 @@
             ]
         }
     ],
+    "generated_by_certsdp": false,
     "format": "nc_trace_real_export",
     "raw_words": [
         [
@@ -55639,6 +55641,8 @@
     "approx_coefficients": [
         "1.7320508075688772935"
     ],
+    "source_raw_path": "../upstream_artifacts/nctssos/raw_output.json",
+    "source_export_command": "julia benchmarks/upstream_artifacts/nctssos/export_script.jl --bad trace-word",
     "coefficient_identity": {
         "rhs": [
             {
@@ -55733,6 +55737,54 @@
                     "A:0:2",
                     "A:1:2",
                     "B:0:1"
+                ]
+            },
+            {
+                "zero": false,
+                "canonical": [
+                    "A:2:0",
+                    "B:1:2"
+                ],
+                "rule": "cross_party_commutation_trace_cyclic",
+                "word": [
+                    "B:1:2",
+                    "A:2:0",
+                    "B:1:2"
+                ]
+            },
+            {
+                "zero": false,
+                "canonical": [
+                    "B:2:0",
+                    "A:0:1"
+                ],
+                "rule": "trace_cyclic",
+                "word": [
+                    "B:2:0",
+                    "A:0:1",
+                    "A:0:1"
+                ]
+            },
+            {
+                "zero": false,
+                "canonical": [
+                    "A:1:1"
+                ],
+                "rule": "completeness",
+                "word": [
+                    "A:1:1"
+                ]
+            },
+            {
+                "zero": false,
+                "canonical": [
+                    "A:1:1",
+                    "B:0:0"
+                ],
+                "rule": "star_involution",
+                "word": [
+                    "B:0:0",
+                    "A:1:1"
                 ]
             }
         ],
@@ -59529,7 +59581,10 @@
         "cw_719",
         "cw_720"
     ],
+    "source_tool": "NCTSSOS.jl",
+    "source_raw_sha256": "sha256:33f22d6f67b57546a30778a6ea1983dafd9f19e76abd40cd37d38a1e63fda225",
     "max_word_length": 5,
+    "source_tool_version": "pinned-mini-pack",
     "relations": [
         "projector",
         "orthogonality",

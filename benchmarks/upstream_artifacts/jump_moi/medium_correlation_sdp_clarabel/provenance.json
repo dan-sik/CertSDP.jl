@@ -1,0 +1,27 @@
+{
+    "export_script": "benchmarks/upstream_artifacts/jump_moi/medium_correlation_sdp_clarabel/export_script.jl",
+    "full_log_sha256": "sha256:6df459cda5b830e9849c21ca4667bd3ead07d541968fac6dc1acc02c250db685",
+    "compressed_full_log": "session_full.log.gz",
+    "generated_by_certsdp": false,
+    "solver": "Clarabel.jl",
+    "problem_scale": {
+        "moi_constraints": 142,
+        "psd_dimension": 48,
+        "moi_variables": 1176,
+        "matrix_entries": 1176
+    },
+    "source_export_command": "julia --project=benchmarks/upstream_artifacts/real_solver_env scripts/run_real_solver_sessions.jl --only jump_moi_clarabel_medium",
+    "session_log_sha256": "sha256:af98d9a3b3a8a372a3af8c8df6ff4b7cadac9b9d5eeb9d8b5095e0bd813857b2",
+    "termination_status": "OPTIMAL",
+    "source_tool": "JuMP/MOI",
+    "certsdp_input_sha256": "sha256:5ecb1bd45dc60f3ce4a6cc3960ee5e2f1dab71574e9d20a2c3fa075b300a156a",
+    "source_raw_sha256": "sha256:94021107c76721062f593f6be0cc52724380eaf5ee4d016fa119528aedb795f9",
+    "source_tool_version": {
+        "is_direct_dep": true,
+        "source": "JuMP/EHXNP",
+        "git_revision": null,
+        "version": "1.30.1"
+    },
+    "session_name": "jump_moi_clarabel_medium",
+    "compressed_full_log_sha256": "sha256:fee4949d8eb79d066a77e15263cc1f4871c7155b49372c8ac5183de943919753"
+}

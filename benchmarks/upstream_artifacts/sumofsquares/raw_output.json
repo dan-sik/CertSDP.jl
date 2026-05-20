@@ -1,0 +1,6 @@
+{
+    "export_kind": "GramMatrixAttribute",
+    "model": "p(x,y)=z(x,y)'Qz(x,y)",
+    "source_tool": "SumOfSquares.jl",
+    "solver_output": "float64 GramMatrix entries"
+}

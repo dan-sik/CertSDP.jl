@@ -1,0 +1,5 @@
+{
+    "coefficient_map_source": "MOI bridge coefficient map",
+    "format": "sumofsquares_real_export",
+    "basis_source": "GramMatrixAttribute.basis"
+}

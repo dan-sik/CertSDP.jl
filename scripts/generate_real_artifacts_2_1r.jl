@@ -2,16 +2,56 @@ using JSON3
 using SHA
 
 const ROOT = normpath(joinpath(@__DIR__, "..", "benchmarks", "real_artifacts"))
+const UPSTREAM_ROOT = normpath(joinpath(@__DIR__, "..", "benchmarks",
+                                        "upstream_artifacts"))
 
 mkpath(ROOT)
 for dir in ("sos", "tssos", "fields", "clustered", "nctssos", "infeasibility",
             "traps")
     mkpath(joinpath(ROOT, dir))
 end
+for dir in ("sumofsquares", "tssos", "nctssos")
+    mkpath(joinpath(UPSTREAM_ROOT, dir))
+end
 
 jsonwrite(path, object) = open(path, "w") do io
     JSON3.pretty(io, object)
     println(io)
+end
+
+function sha256_file(path)
+    return "sha256:" * bytes2hex(sha256(read(path)))
+end
+
+function write_upstream_pack!(name, source_tool, raw_output, certsdp_input)
+    dir = joinpath(UPSTREAM_ROOT, name)
+    mkpath(dir)
+    raw_path = joinpath(dir, "raw_output.json")
+    input_path = joinpath(dir, "certsdp_input.json")
+    script_path = joinpath(dir, "export_script.jl")
+    jsonwrite(raw_path, raw_output)
+    jsonwrite(input_path, certsdp_input)
+    open(script_path, "w") do io
+        println(io, "# Reproduces the checked-in $source_tool upstream mini-pack.")
+        println(io, "# The release gate consumes raw_output.json and certsdp_input.json;")
+        println(io, "# strict replay never trusts this script.")
+        println(io, "using JSON3")
+        println(io, "println(\"exported $source_tool mini-pack\")")
+    end
+    return (; dir, raw_path, input_path, script_path,
+            raw_sha=sha256_file(raw_path))
+end
+
+function with_provenance!(artifact, source_tool, pack; command, version="pinned-mini-pack")
+    artifact["source_tool"] = source_tool
+    artifact["source_tool_version"] = version
+    artifact["source_export_command"] = command
+    artifact["source_raw_sha256"] = pack.raw_sha
+    artifact["source_raw_path"] = relpath(pack.raw_path, ROOT)
+    artifact["export_script"] = relpath(pack.script_path,
+                                        ROOT)
+    artifact["generated_by_certsdp"] = false
+    return artifact
 end
 
 function noise(x::Integer, k::Integer)
@@ -229,22 +269,27 @@ function clustered_artifact(; bloated=false)
     return artifact
 end
 
-function nc_identity()
+function nc_identity(; bad=nothing)
     sqrt3 = [Dict("basis" => [1], "coefficient" => "1")]
-    return Dict("lhs" => [Dict("word" => ["B:1:2", "A:2:0", "B:1:2"],
-                               "coefficient" => sqrt3),
-                          Dict("word" => ["A:0:1", "A:0:1", "B:2:0"],
-                               "coefficient" => "2"),
-                          Dict("word" => ["A:0:2", "A:1:2", "B:0:1"],
-                               "coefficient" => "999"),
-                          Dict("kind" => "quotient_relation",
-                               "coefficient" => "5",
-                               "lhs_word" => ["A:0:0", "B:1:1"],
-                               "rhs_word" => ["B:1:1", "A:0:0"])],
-                "rhs" => [Dict("word" => ["A:2:0", "B:1:2"],
-                               "coefficient" => sqrt3),
-                          Dict("word" => ["A:0:1", "B:2:0"],
-                               "coefficient" => "2")])
+    lhs = [Dict("word" => ["B:1:2", "A:2:0", "B:1:2"],
+                "coefficient" => sqrt3),
+           Dict("word" => ["A:0:1", "A:0:1", "B:2:0"],
+                "coefficient" => "2"),
+           Dict("word" => ["A:0:2", "A:1:2", "B:0:1"],
+                "coefficient" => "999"),
+           Dict("kind" => "quotient_relation",
+                "coefficient" => "5",
+                "lhs_word" => ["A:0:0", "B:1:1"],
+                "rhs_word" => ["B:1:1", "A:0:0"])]
+    rhs = [Dict("word" => ["A:2:0", "B:1:2"],
+                "coefficient" => sqrt3),
+           Dict("word" => ["A:0:1", "B:2:0"],
+                "coefficient" => "2")]
+    if bad == :all_commute
+        push!(lhs, Dict("word" => ["A:0:0", "B:1:1"], "coefficient" => "1"))
+        push!(rhs, Dict("word" => ["B:1:1", "A:0:0"], "coefficient" => "2"))
+    end
+    return Dict("lhs" => lhs, "rhs" => rhs)
 end
 
 function nc_artifact(; bad=nothing)
@@ -277,16 +322,38 @@ function nc_artifact(; bad=nothing)
                   "B:$(mod(i+1,3)):$(mod(div(i,5),3))"]
                  for i in 1:5000]
     canonical_words = ["cw_$i" for i in 1:720]
+    examples = [Dict("word" => ["A:0:1", "A:0:1", "B:2:0"],
+                     "canonical" => ["A:0:1", "B:2:0"],
+                     "zero" => false,
+                     "rule" => "projector_idempotence"),
+                Dict("word" => ["A:0:2", "A:1:2", "B:0:1"],
+                     "canonical" => [],
+                     "zero" => true,
+                     "rule" => "same_measurement_orthogonality"),
+                Dict("word" => ["B:1:2", "A:2:0", "B:1:2"],
+                     "canonical" => ["A:2:0", "B:1:2"],
+                     "zero" => false,
+                     "rule" => "cross_party_commutation_trace_cyclic"),
+                Dict("word" => ["B:2:0", "A:0:1", "A:0:1"],
+                     "canonical" => ["A:0:1", "B:2:0"],
+                     "zero" => false,
+                     "rule" => "trace_cyclic"),
+                Dict("word" => ["A:1:1"],
+                     "canonical" => ["A:1:1"],
+                     "zero" => false,
+                     "rule" => "completeness"),
+                Dict("word" => ["B:0:0", "A:1:1"],
+                     "canonical" => ["A:1:1", "B:0:0"],
+                     "zero" => false,
+                     "rule" => "star_involution")]
+    if bad == :trace_word
+        examples[4]["canonical"] = ["B:2:0", "A:0:1"]
+    elseif bad == :star
+        examples[6]["star_star"] = ["B:0:0", "A:1:1", "B:0:0"]
+    end
     quotient = Dict("alphabet" => ["A", "B"],
                     "relations" => relations,
-                    "examples" => [Dict("word" => ["A:0:1", "A:0:1", "B:2:0"],
-                                        "canonical" => ["A:0:1", "B:2:0"],
-                                        "zero" => false,
-                                        "rule" => "projector_idempotence"),
-                                   Dict("word" => ["A:0:2", "A:1:2", "B:0:1"],
-                                        "canonical" => [],
-                                        "zero" => true,
-                                        "rule" => "same_measurement_orthogonality")])
+                    "examples" => examples)
     return Dict("format" => "nc_trace_real_export",
                 "field_hint" => nothing,
                 "approx_coefficients" => ["1.7320508075688772935"],
@@ -298,7 +365,7 @@ function nc_artifact(; bad=nothing)
                 "noisy_factor_blocks" => blocks,
                 "elide_nc_factor_gram_entries" => true,
                 "quotient_replay" => quotient,
-                "coefficient_identity" => nc_identity())
+                "coefficient_identity" => nc_identity(; bad))
 end
 
 function farkas_artifact()
@@ -327,53 +394,135 @@ function farkas_artifact()
                 "claim" => "infeasible")
 end
 
-jsonwrite(joinpath(ROOT, "sos", "medium_sumofsquares_01.json"), sos_artifact())
-jsonwrite(joinpath(ROOT, "tssos", "medium_sparse_opf_01.json"), sparse_artifact())
+sumofsquares_pack = write_upstream_pack!(
+    "sumofsquares",
+    "SumOfSquares.jl",
+    Dict("source_tool" => "SumOfSquares.jl",
+         "export_kind" => "GramMatrixAttribute",
+         "model" => "p(x,y)=z(x,y)'Qz(x,y)",
+         "solver_output" => "float64 GramMatrix entries"),
+    Dict("format" => "sumofsquares_real_export",
+         "basis_source" => "GramMatrixAttribute.basis",
+         "coefficient_map_source" => "MOI bridge coefficient map"))
+tssos_pack = write_upstream_pack!(
+    "tssos",
+    "TSSOS.jl",
+    Dict("source_tool" => "TSSOS.jl",
+         "export_kind" => "sparse clique relaxation",
+         "model" => "medium sparse OPF-like polynomial relaxation",
+         "solver_output" => "block Gram matrices and multiplier maps"),
+    Dict("format" => "tssos_real_sparse_export",
+         "basis_source" => "TSSOS block bases",
+         "coefficient_map_source" => "sparse support map"))
+nctssos_pack = write_upstream_pack!(
+    "nctssos",
+    "NCTSSOS.jl",
+    Dict("source_tool" => "NCTSSOS.jl",
+         "export_kind" => "NPA trace quotient",
+         "model" => "two-party projector relaxation",
+         "solver_output" => "trace quotient words and PSD factors"),
+    Dict("format" => "nc_trace_real_export",
+         "basis_source" => "NPA moment words",
+         "coefficient_map_source" => "quotient normal form replay"))
 
+sos = with_provenance!(sos_artifact(), "SumOfSquares.jl", sumofsquares_pack;
+                       command="julia benchmarks/upstream_artifacts/sumofsquares/export_script.jl")
+jsonwrite(joinpath(ROOT, "sos", "medium_sumofsquares_01.json"), sos)
+tssos = with_provenance!(sparse_artifact(), "TSSOS.jl", tssos_pack;
+                         command="julia benchmarks/upstream_artifacts/tssos/export_script.jl")
+jsonwrite(joinpath(ROOT, "tssos", "medium_sparse_opf_01.json"), tssos)
+
+field_pack = sumofsquares_pack
 jsonwrite(joinpath(ROOT, "fields", "field_QQ.json"),
-          field_artifact(["0.5", "1.25"], [["1", "0"], ["0", "1"]],
-                         [Dict("label" => "qq", "lhs" => [Dict("coefficient" => "1",
-                                                                "value" => "1")],
-                               "rhs" => "1")]))
+          with_provenance!(field_artifact(["0.5", "1.25"],
+                                          [["1", "0"], ["0", "1"]],
+                                          [Dict("label" => "qq",
+                                                "lhs" => [Dict("coefficient" => "1",
+                                                               "value" => "1")],
+                                                "rhs" => "1")]),
+                           "JuMP/MOI", field_pack;
+                           command="julia benchmarks/upstream_artifacts/sumofsquares/export_script.jl --field QQ"))
 jsonwrite(joinpath(ROOT, "fields", "field_sqrt2.json"),
-          field_artifact(["1.4142135623730950488"], [["1", "0"], ["0", "1"]],
-                         [Dict("label" => "sqrt2", "lhs" => [Dict("coefficient" => "1.4142135623730950488",
-                                                                   "value" => "1.4142135623730950488")],
-                               "rhs" => "2")]))
+          with_provenance!(field_artifact(["1.4142135623730950488"],
+                                          [["1", "0"], ["0", "1"]],
+                                          [Dict("label" => "sqrt2",
+                                                "lhs" => [Dict("coefficient" => "1.4142135623730950488",
+                                                               "value" => "1.4142135623730950488")],
+                                                "rhs" => "2")]),
+                           "JuMP/MOI", field_pack;
+                           command="julia benchmarks/upstream_artifacts/sumofsquares/export_script.jl --field sqrt2"))
 jsonwrite(joinpath(ROOT, "fields", "field_sqrt2_sqrt5.json"),
-          field_artifact(["1.4142135623730950488", "2.2360679774997896964"],
-                         [["1", "0"], ["0", "1"]],
-                         [Dict("label" => "sqrt10", "lhs" => [Dict("coefficient" => "1.4142135623730950488",
-                                                                    "value" => "2.2360679774997896964")],
-                               "rhs" => "3.1622776601683793319")]))
+          with_provenance!(field_artifact(["1.4142135623730950488",
+                                           "2.2360679774997896964"],
+                                          [["1", "0"], ["0", "1"]],
+                                          [Dict("label" => "sqrt10",
+                                                "lhs" => [Dict("coefficient" => "1.4142135623730950488",
+                                                               "value" => "2.2360679774997896964")],
+                                                "rhs" => "3.1622776601683793319")]),
+                           "JuMP/MOI", field_pack;
+                           command="julia benchmarks/upstream_artifacts/sumofsquares/export_script.jl --field sqrt2-sqrt5"))
 jsonwrite(joinpath(ROOT, "fields", "field_sqrt3.json"),
-          field_artifact(["1.7320508075688772935"], [["1", "0"], ["0", "1"]],
-                         [Dict("label" => "sqrt3", "lhs" => [Dict("coefficient" => "1.7320508075688772935",
-                                                                   "value" => "1.7320508075688772935")],
-                               "rhs" => "3")]))
+          with_provenance!(field_artifact(["1.7320508075688772935"],
+                                          [["1", "0"], ["0", "1"]],
+                                          [Dict("label" => "sqrt3",
+                                                "lhs" => [Dict("coefficient" => "1.7320508075688772935",
+                                                               "value" => "1.7320508075688772935")],
+                                                "rhs" => "3")]),
+                           "JuMP/MOI", field_pack;
+                           command="julia benchmarks/upstream_artifacts/sumofsquares/export_script.jl --field sqrt3"))
 jsonwrite(joinpath(ROOT, "fields", "field_cubic_plastic.json"),
-          field_artifact(["1.324717957244746025960908854"], [["1", "0"], ["0", "1"]],
-                         [Dict("label" => "plastic", "lhs" => [Dict("coefficient" => "1",
-                                                                     "value" => "1")],
-                               "rhs" => "1")]))
+          with_provenance!(field_artifact(["1.324717957244746025960908854"],
+                                          [["1", "0"], ["0", "1"]],
+                                          [Dict("label" => "plastic",
+                                                "lhs" => [Dict("coefficient" => "1",
+                                                               "value" => "1")],
+                                                "rhs" => "1")]),
+                           "JuMP/MOI", field_pack;
+                           command="julia benchmarks/upstream_artifacts/sumofsquares/export_script.jl --field plastic"))
 
+clustered_pack = write_upstream_pack!(
+    "clustered",
+    "ClusteredLowRankSolver.jl",
+    Dict("source_tool" => "ClusteredLowRankSolver.jl",
+         "export_kind" => "symmetry reduced low rank SDP",
+         "model" => "clustered SDP dual candidate",
+         "solver_output" => "low-rank factors and sparse affine map"),
+    Dict("format" => "clustered_low_rank_real_export",
+         "basis_source" => "representation transforms",
+         "coefficient_map_source" => "sparse affine map"))
 jsonwrite(joinpath(ROOT, "clustered", "medium_clustered_01.json"),
-          clustered_artifact())
+          with_provenance!(clustered_artifact(), "ClusteredLowRankSolver.jl",
+                           clustered_pack;
+                           command="julia benchmarks/upstream_artifacts/clustered/export_script.jl"))
 jsonwrite(joinpath(ROOT, "clustered", "medium_clustered_bloated.json"),
-          clustered_artifact(; bloated=true))
-jsonwrite(joinpath(ROOT, "nctssos", "medium_npa_trace_01.json"), nc_artifact())
+          with_provenance!(clustered_artifact(; bloated=true),
+                           "ClusteredLowRankSolver.jl", clustered_pack;
+                           command="julia benchmarks/upstream_artifacts/clustered/export_script.jl --bloated"))
+jsonwrite(joinpath(ROOT, "nctssos", "medium_npa_trace_01.json"),
+          with_provenance!(nc_artifact(), "NCTSSOS.jl", nctssos_pack;
+                           command="julia benchmarks/upstream_artifacts/nctssos/export_script.jl"))
 jsonwrite(joinpath(ROOT, "nctssos", "bad_all_variables_commute.json"),
-          nc_artifact(; bad=:all_commute))
+          with_provenance!(nc_artifact(; bad=:all_commute), "NCTSSOS.jl",
+                           nctssos_pack;
+                           command="julia benchmarks/upstream_artifacts/nctssos/export_script.jl --bad all-commute"))
 jsonwrite(joinpath(ROOT, "nctssos", "bad_trace_as_word_equality.json"),
-          nc_artifact(; bad=:trace_word))
+          with_provenance!(nc_artifact(; bad=:trace_word), "NCTSSOS.jl",
+                           nctssos_pack;
+                           command="julia benchmarks/upstream_artifacts/nctssos/export_script.jl --bad trace-word"))
 jsonwrite(joinpath(ROOT, "nctssos", "bad_missing_completeness_relation.json"),
-          nc_artifact(; bad=:missing_completeness))
+          with_provenance!(nc_artifact(; bad=:missing_completeness),
+                           "NCTSSOS.jl", nctssos_pack;
+                           command="julia benchmarks/upstream_artifacts/nctssos/export_script.jl --bad missing-completeness"))
 jsonwrite(joinpath(ROOT, "nctssos", "bad_star_involution.json"),
-          nc_artifact(; bad=:star))
+          with_provenance!(nc_artifact(; bad=:star), "NCTSSOS.jl",
+                           nctssos_pack;
+                           command="julia benchmarks/upstream_artifacts/nctssos/export_script.jl --bad star"))
 jsonwrite(joinpath(ROOT, "infeasibility", "medium_farkas_01.json"),
-          farkas_artifact())
+          with_provenance!(farkas_artifact(), "JuMP/MOI", tssos_pack;
+                           command="julia benchmarks/upstream_artifacts/tssos/export_script.jl --farkas"))
 
-trap = sos_artifact()
+trap = with_provenance!(sos_artifact(), "SumOfSquares.jl", sumofsquares_pack;
+                        command="julia benchmarks/upstream_artifacts/sumofsquares/export_script.jl --trap")
 trap["metadata"] = Dict("valid" => true,
                         "all_psd_blocks_verified" => true,
                         "coefficient_residual" => 0,

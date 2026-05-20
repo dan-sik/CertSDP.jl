@@ -1,4 +1,6 @@
 {
+    "export_script": "../upstream_artifacts/sumofsquares/export_script.jl",
+    "generated_by_certsdp": false,
     "format": "field_discovery_real_export",
     "numeric_blocks": [
         [
@@ -26,5 +28,10 @@
         "1.4142135623730950488",
         "2.2360679774997896964"
     ],
+    "source_raw_path": "../upstream_artifacts/sumofsquares/raw_output.json",
+    "source_export_command": "julia benchmarks/upstream_artifacts/sumofsquares/export_script.jl --field sqrt2-sqrt5",
+    "source_tool": "JuMP/MOI",
+    "source_raw_sha256": "sha256:adffed7d4480e30513d4b43ae45af018363feda8207543feb568c6aa67772ce7",
+    "source_tool_version": "pinned-mini-pack",
     "field_hint": null
 }

@@ -18,6 +18,14 @@ const REAL_GATE_ROOT = joinpath(@__DIR__, "..", "benchmarks", "real_artifacts")
             @test gate0_anti_cheat_instrumentation()
         end
 
+        @testset "Gate 0B real upstream provenance" begin
+            @test gate_real_artifact_provenance()
+        end
+
+        @testset "Gate 0C real solver session exports" begin
+            @test gate_real_solver_session_exports()
+        end
+
         @testset "Gate 1 real SumOfSquares reconstruction" begin
             @test gate1_real_sumofsquares_gram()
             @test gate1_reject_tampered_sumofsquares()

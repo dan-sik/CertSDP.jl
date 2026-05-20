@@ -1,0 +1,6 @@
+{
+    "export_kind": "sparse clique relaxation",
+    "model": "medium sparse OPF-like polynomial relaxation",
+    "source_tool": "TSSOS.jl",
+    "solver_output": "block Gram matrices and multiplier maps"
+}

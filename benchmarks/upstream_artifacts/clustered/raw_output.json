@@ -1,0 +1,6 @@
+{
+    "export_kind": "symmetry reduced low rank SDP",
+    "model": "clustered SDP dual candidate",
+    "source_tool": "ClusteredLowRankSolver.jl",
+    "solver_output": "low-rank factors and sparse affine map"
+}

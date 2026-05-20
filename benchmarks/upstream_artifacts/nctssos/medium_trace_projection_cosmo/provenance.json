@@ -1,0 +1,30 @@
+{
+    "export_script": "benchmarks/upstream_artifacts/nctssos/medium_trace_projection_cosmo/export_script.jl",
+    "full_log_sha256": "sha256:7882ff7652351e231f39bf42b6aa996c2338bcf812520a7662224b10d71cebee",
+    "compressed_full_log": "session_full.log.gz",
+    "generated_by_certsdp": false,
+    "solver": "COSMO.jl",
+    "problem_scale": {
+        "variables": 8,
+        "psd_blocks": 16983,
+        "order": 4,
+        "raw_trace_words": 42,
+        "canonical_support_terms": 14619,
+        "max_block_dim": 113,
+        "total_block_dim": 17215
+    },
+    "source_export_command": "julia --project=benchmarks/upstream_artifacts/real_solver_env scripts/run_real_solver_sessions.jl --only nctssos_cosmo_medium",
+    "session_log_sha256": "sha256:546be3f75b452a85b55d42ef1563520afd16b3a693dbb29dd7e6fbb973b16035",
+    "termination_status": "SOLVED_OR_APPROXIMATE",
+    "source_tool": "NCTSSOS.jl",
+    "certsdp_input_sha256": "sha256:418b14642a039bb51a6aa284baafb82142240cb20c13160708495009cc7133ce",
+    "source_raw_sha256": "sha256:ef02a27c7da7b78b5be77d4a3e3e7958457294fbd0c8d12d295f8939fd453714",
+    "source_tool_version": {
+        "is_direct_dep": true,
+        "source": "NCTSSOS/RhifB",
+        "git_revision": "master",
+        "version": "0.4.7"
+    },
+    "session_name": "nctssos_cosmo_medium",
+    "compressed_full_log_sha256": "sha256:223d7093faf3293afc67ccea7be1ea70023bd639e7b6db9565ae0230bd8bece3"
+}

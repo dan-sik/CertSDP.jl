@@ -1,0 +1,5 @@
+{
+    "coefficient_map_source": "sparse support map",
+    "format": "tssos_real_sparse_export",
+    "basis_source": "TSSOS block bases"
+}

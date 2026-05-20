@@ -1,0 +1,29 @@
+{
+    "export_script": "benchmarks/upstream_artifacts/tssos/medium_sparse_pop_clarabel/export_script.jl",
+    "full_log_sha256": "sha256:1feed411f1488d8c79251e7aeaeca408417703bf426a490f07b94fdf2315660c",
+    "compressed_full_log": "session_full.log.gz",
+    "generated_by_certsdp": false,
+    "solver": "Clarabel.jl",
+    "problem_scale": {
+        "variables": 80,
+        "psd_blocks": 237,
+        "cliques": 79,
+        "affine_constraints": 795,
+        "max_block_dim": 6,
+        "total_block_dim": 948
+    },
+    "source_export_command": "julia --project=benchmarks/upstream_artifacts/real_solver_env scripts/run_real_solver_sessions.jl --only tssos_clarabel_medium",
+    "session_log_sha256": "sha256:657744410704087378b46c28fe2ce86cdfa0f4c759d9fcf1ac5dd488dd76259c",
+    "termination_status": "OPTIMAL",
+    "source_tool": "TSSOS.jl",
+    "certsdp_input_sha256": "sha256:7215c6f916286b8e81c78606a03133b78761155f5fd755c784b5fc7379cc716e",
+    "source_raw_sha256": "sha256:8c0bd85f4b0c3410999b5727dd2a06b15b9c1c20ee5f874fb6bfc080f97b2cb4",
+    "source_tool_version": {
+        "is_direct_dep": true,
+        "source": "TSSOS/7pD2J",
+        "git_revision": "master",
+        "version": "1.5.3"
+    },
+    "session_name": "tssos_clarabel_medium",
+    "compressed_full_log_sha256": "sha256:8ee21c44390c8f6e5ebdf0b65f13dea731a1585cd8e5190c8613b952a542d7e6"
+}

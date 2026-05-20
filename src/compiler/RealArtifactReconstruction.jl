@@ -13,6 +13,12 @@ mutable struct _RealAuditBuilder
     reconstruction_trace::Vector{String}
 end
 
+const _REAL_ALLOWED_SOURCE_TOOLS = Set(["SumOfSquares.jl",
+                                        "TSSOS.jl",
+                                        "NCTSSOS.jl",
+                                        "ClusteredLowRankSolver.jl",
+                                        "JuMP/MOI"])
+
 function _RealAuditBuilder(source_artifact_hash::AbstractString)
     return _RealAuditBuilder(false, false, false, 0, 0, 0, 0, 0, false,
                              false, String(source_artifact_hash), String[])
@@ -45,6 +51,7 @@ function reconstruct_real_artifact(path::AbstractString; max_field_degree::Integ
         parsed = _read_json_document(read(path, String), "real reconstruction artifact")
         artifact = _real_symbolize(parsed)
         _reject_embedded_expected_certificate!(artifact, builder)
+        _validate_real_artifact_provenance!(artifact, path)
         format = Symbol(String(_real_get(artifact, :format, "real artifact format")))
         _trace!(builder, "loaded $format from $(basename(path))")
         cert = if format === :sumofsquares_real_export
@@ -99,6 +106,42 @@ function _reject_embedded_expected_certificate!(artifact::AbstractDict,
         end
     end
     return artifact
+end
+
+function _validate_real_artifact_provenance!(artifact::AbstractDict,
+                                             artifact_path::AbstractString)
+    tool = String(_real_get(artifact, :source_tool,
+                            "real artifact provenance"))
+    tool in _REAL_ALLOWED_SOURCE_TOOLS ||
+        throw(ArgumentError("real artifact provenance error: unsupported source_tool `$tool`"))
+    generated = _real_get(artifact, :generated_by_certsdp,
+                          "real artifact provenance")
+    generated === false ||
+        throw(ArgumentError("real artifact provenance error: generated_by_certsdp must be false"))
+    for key in (:source_tool_version, :source_export_command,
+                :source_raw_sha256, :export_script)
+        value = _real_get(artifact, key, "real artifact provenance")
+        value isa AbstractString && !isempty(value) ||
+            throw(ArgumentError("real artifact provenance error: `$key` must be a nonempty string"))
+    end
+    source_hash = String(artifact[:source_raw_sha256])
+    startswith(source_hash, "sha256:") ||
+        throw(ArgumentError("real artifact provenance error: source_raw_sha256 must start with sha256:"))
+    if haskey(artifact, :source_raw_path)
+        raw_path = String(artifact[:source_raw_path])
+        full_path = isabspath(raw_path) ? raw_path :
+                    normpath(joinpath(dirname(artifact_path), raw_path))
+        if !isfile(full_path)
+            root_relative = normpath(joinpath(_real_gate_root(), raw_path))
+            isfile(root_relative) && (full_path = root_relative)
+        end
+        isfile(full_path) ||
+            throw(ArgumentError("real artifact provenance error: source_raw_path `$raw_path` does not exist"))
+        computed = "sha256:" * bytes2hex(sha256(read(full_path)))
+        computed == source_hash ||
+            throw(ArgumentError("real artifact provenance error: source_raw_sha256 mismatch"))
+    end
+    return true
 end
 
 function _real_symbolize(value)
@@ -285,8 +328,7 @@ function _reconstruct_real_sos(artifact::AbstractDict, builder::_RealAuditBuilde
                                  :real_artifact_format => :sumofsquares_real_export,
                                  :source_tool => _real_optional(artifact, :source_tool,
                                                                 "unknown"),
-                                 :psd_method => :exact_low_rank_factor,
-                                 :all_psd_blocks_verified => true)
+                                 :psd_method => :exact_low_rank_factor)
     cert = ExactCertificateArtifact(:sos_gram_reconstruction, length(variables),
                                     QQ, [block],
                                     _structure_namedtuple(; block_diagonalization=true),
@@ -346,7 +388,9 @@ function _reconstruct_real_sparse_tssos(artifact::AbstractDict,
                                                    :coefficient_map_count => length(coefficient_map),
                                                    :localizing_count => length(localizing),
                                                    :equality_count => length(equalities)),
-                                :compact_replay_verified => true) :
+                                :compact_streaming_replay => Dict(:coefficient_map_sha256 => _canonical_sha256(coefficient_map),
+                                                                  :lhs_sha256 => _canonical_sha256(target),
+                                                                  :residual_terms => 0)) :
               Dict{Symbol, Any}(:variables => String.(variables),
                                 :lhs => target,
                                 :rhs_terms => rhs_terms)
@@ -360,8 +404,7 @@ function _reconstruct_real_sparse_tssos(artifact::AbstractDict,
                                  :localizing_multiplier_count => length(localizing),
                                  :equality_multiplier_count => length(equalities),
                                  :monomial_support_count => length(target),
-                                 :psd_method => :exact_low_rank_factor,
-                                 :all_psd_blocks_verified => true)
+                                 :psd_method => :exact_low_rank_factor)
     cert = ExactCertificateArtifact(:sparse_putinar, length(variables), QQ,
                                     blocks,
                                     _structure_namedtuple(; correlative_sparsity=true,
@@ -407,8 +450,7 @@ function _reconstruct_real_field_probe(artifact::AbstractDict,
     metadata = Dict{Symbol, Any}(:field_evidence => evidence,
                                  :field_recognition_witnesses => witnesses,
                                  :real_artifact_format => :field_discovery_real_export,
-                                 :psd_method => :exact_low_rank_factor,
-                                 :all_psd_blocks_verified => true)
+                                 :psd_method => :exact_low_rank_factor)
     cert = ExactCertificateArtifact(:field_probe, 0, field, [block],
                                     _structure_namedtuple(; block_diagonalization=true),
                                     Dict(:field_discovery => "numeric only"),
@@ -503,8 +545,7 @@ function _reconstruct_real_clustered(artifact::AbstractDict,
                                  :bloated_raw => haskey(artifact,
                                                         :bloated_duplicate_copies),
                                  :real_artifact_format => :clustered_low_rank_real_export,
-                                 :psd_method => :exact_low_rank_factor,
-                                 :all_psd_blocks_verified => true)
+                                 :psd_method => :exact_low_rank_factor)
     cert0 = ExactCertificateArtifact(:symmetry_reduced_dual, 0, field, blocks,
                                      _structure_namedtuple(; block_diagonalization=true,
                                                            symmetry_reduction=true),
@@ -532,8 +573,9 @@ end
 
 function _reconstruct_real_nc_trace(artifact::AbstractDict,
                                     builder::_RealAuditBuilder)
-    _validate_nc_relation_artifact!(artifact, builder)
-    field, evidence, witnesses = _real_field_from_artifact(artifact, builder, 4)
+    quotient = _real_get(artifact, :quotient_replay, "nc")
+    quotient_witnesses = _validate_nc_relation_artifact!(artifact, quotient, builder)
+    field, evidence, field_witnesses = _real_field_from_artifact(artifact, builder, 4)
     blocks, _ = _real_blocks_from_factor_artifact(field, artifact,
                                                   :noisy_factor_blocks,
                                                   :block_bases,
@@ -541,10 +583,9 @@ function _reconstruct_real_nc_trace(artifact::AbstractDict,
     raw_words = _real_array(artifact, :raw_words, "nc")
     canonical_words = _real_array(artifact, :canonical_words, "nc")
     builder.consumed_basis_entries += length(raw_words) + length(canonical_words)
-    quotient = _real_get(artifact, :quotient_replay, "nc")
     identity = _real_get(artifact, :coefficient_identity, "nc")
     metadata = Dict{Symbol, Any}(:field_evidence => evidence,
-                                 :field_recognition_witnesses => witnesses,
+                                 :field_recognition_witnesses => field_witnesses,
                                  :algebra => :noncommutative_trace,
                                  :max_word_length => _real_int(_real_get(artifact,
                                                                          :max_word_length,
@@ -552,11 +593,12 @@ function _reconstruct_real_nc_trace(artifact::AbstractDict,
                                                                "nc.max_word_length"),
                                  :num_canonical_words => length(canonical_words),
                                  :quotient_relations => String.(artifact[:relations]),
-                                 :quotient_relations_verified => true,
+                                 :nc_quotient_witnesses => [_nc_witness_json(witness)
+                                                            for witness in
+                                                                quotient_witnesses],
                                  :commutative_shortcut_used => false,
                                  :real_artifact_format => :nc_trace_real_export,
-                                 :psd_method => :exact_low_rank_factor,
-                                 :all_psd_blocks_verified => true)
+                                 :psd_method => :exact_low_rank_factor)
     cert = ExactCertificateArtifact(:nc_trace_npa, 0, field, blocks,
                                     _structure_namedtuple(; block_diagonalization=true,
                                                           trace_cyclic=true,
@@ -634,8 +676,7 @@ function _reconstruct_real_farkas(artifact::AbstractDict,
                                  :objective_gap_style => :farkas,
                                  :real_affine_streaming_rows => length(equations),
                                  :real_artifact_format => :sdp_farkas_real_export,
-                                 :psd_method => :exact_low_rank_factor,
-                                 :all_psd_blocks_verified => true)
+                                 :psd_method => :exact_low_rank_factor)
     cert = ExactCertificateArtifact(:infeasibility, 0, field, blocks,
                                     _structure_namedtuple(; block_diagonalization=true),
                                     Dict(:claim => _real_optional(artifact, :claim,
@@ -1092,21 +1133,219 @@ function _verify_transform_constraints!(entries, constraints,
     return true
 end
 
-function _validate_nc_relation_artifact!(artifact::AbstractDict,
+function _validate_nc_relation_artifact!(artifact::AbstractDict, quotient,
                                          builder::_RealAuditBuilder)
     relations = String.(_real_array(artifact, :relations, "nc"))
     builder.consumed_quotient_relations += length(relations)
-    "bad_all_variables_commute" in relations &&
-        throw(ArgumentError("nc_identity_error: all variables commute relation is invalid"))
-    "bad_trace_as_word_equality" in relations &&
-        throw(ArgumentError("trace_quotient_error: trace cyclicity encoded as word equality"))
-    "bad_star_involution" in relations &&
-        throw(ArgumentError("star_involution_error: star involution is inconsistent"))
     required = ["projector", "orthogonality", "completeness",
                 "cross_party_commutation", "trace_cyclic"]
     all(rel -> rel in relations, required) ||
         throw(ArgumentError("quotient_relation_error: missing required NC quotient relation"))
-    return true
+    witnesses = _compute_nc_quotient_witnesses(quotient)
+    required_rules = Set(["projector_idempotence",
+                          "same_measurement_orthogonality",
+                          "cross_party_commutation",
+                          "trace_cyclic",
+                          "completeness",
+                          "star_involution"])
+    seen = Set{String}()
+    for witness in witnesses
+        for step in witness.relation_steps
+            push!(seen, String(get(step, :rule, "")))
+        end
+    end
+    all(rule -> rule in seen, required_rules) ||
+        throw(ArgumentError("quotient_relation_error: NC quotient witnesses do not cover required relations"))
+    "bad_trace_as_word_equality" in relations &&
+        throw(ArgumentError("trace_quotient_error: trace cyclicity encoded as word equality"))
+    return witnesses
+end
+
+function _compute_nc_quotient_witnesses(quotient)
+    examples = _real_array(quotient, :examples, "nc.quotient_replay")
+    isempty(examples) &&
+        throw(ArgumentError("trace_quotient_error: NC quotient replay has no witnesses"))
+    witnesses = NCQuotientWitness[]
+    for (index, example) in enumerate(examples)
+        path = "nc.quotient_replay.examples[$index]"
+        witness = _compute_nc_quotient_witness(example, path)
+        push!(witnesses, witness)
+    end
+    return witnesses
+end
+
+function _compute_nc_quotient_witness(example, path::AbstractString)
+    word = _nc_trace_word(_real_get(example, :word, path), "$path.word")
+    if haskey(example, :star_star)
+        expected_star_star = _nc_trace_word(example[:star_star], "$path.star_star")
+        expected_star_star == word ||
+            throw(ArgumentError("star_involution_error: $path star involution mismatch"))
+    end
+    expected_zero = haskey(example, :zero) ? Bool(example[:zero]) : false
+    expected = expected_zero ? nothing :
+               _nc_trace_word(_real_get(example, :canonical, path),
+                              "$path.canonical")
+    computed, steps, rotations, star_steps = _nc_normal_form_with_witness(word)
+    if !isempty(star_steps) &&
+       !any(step -> String(get(step, :rule, "")) == "star_involution", steps)
+        push!(steps, Dict{Symbol, Any}(:rule => "star_involution",
+                                       :witness => star_steps))
+    end
+    if expected_zero
+        isnothing(computed) ||
+            throw(ArgumentError("trace_quotient_error: $path expected zero normal form"))
+    else
+        isnothing(computed) &&
+            throw(ArgumentError("trace_quotient_error: $path reduced to zero"))
+        computed == expected ||
+            throw(ArgumentError("trace_quotient_error: $path normal form mismatch"))
+    end
+    return NCQuotientWitness(copy(word), steps,
+                             isnothing(computed) ? String[] : copy(computed),
+                             rotations, star_steps)
+end
+
+function _nc_normal_form_with_witness(word::Vector{String})
+    steps = Dict{Symbol, Any}[]
+    rotations = Dict{Symbol, Any}[]
+    current = copy(word)
+    for _ in 1:(2 * max(1, length(word)) + 2)
+        reduced = String[]
+        zeroed = false
+        for letter in current
+            if !isempty(reduced)
+                last_party, last_output, last_input = _nc_letter_parts(reduced[end])
+                party, output, input = _nc_letter_parts(letter)
+                if party == last_party && input == last_input
+                    if output == last_output
+                        push!(steps,
+                              Dict{Symbol, Any}(:rule => "projector_idempotence",
+                                                :letter => letter))
+                        continue
+                    end
+                    push!(steps,
+                          Dict{Symbol, Any}(:rule => "same_measurement_orthogonality",
+                                            :left => reduced[end],
+                                            :right => letter))
+                    zeroed = true
+                    break
+                end
+            end
+            push!(reduced, letter)
+        end
+        zeroed && return nothing, steps, rotations, _nc_star_witness(word)
+        commuting = sort(reduced;
+                         by=letter -> begin
+                             party, output, input = _nc_letter_parts(letter)
+                             party == "A" ? (0, input, output) : (1, input, output)
+                         end)
+        if commuting != reduced
+            push!(steps,
+                  Dict{Symbol, Any}(:rule => "cross_party_commutation",
+                                    :from => copy(reduced),
+                                    :to => copy(commuting)))
+        end
+        if commuting == current
+            current = commuting
+            break
+        end
+        current = commuting
+    end
+    if isempty(current)
+        push!(steps,
+              Dict{Symbol, Any}(:rule => "completeness",
+                                :from => copy(word),
+                                :to => String[]))
+        return String[], steps, rotations, _nc_star_witness(word)
+    end
+    candidates = [vcat(current[i:end], current[1:(i - 1)])
+                  for i in eachindex(current)]
+    canonical = first(sort(candidates; by=candidate -> join(candidate, "|")))
+    push!(rotations,
+          Dict{Symbol, Any}(:rule => "trace_cyclic",
+                            :from => copy(current),
+                            :to => copy(canonical),
+                            :candidates => candidates))
+    push!(steps,
+          Dict{Symbol, Any}(:rule => "trace_cyclic",
+                            :from => copy(current),
+                            :to => copy(canonical)))
+    if !any(step -> String(get(step, :rule, "")) == "completeness", steps)
+        push!(steps,
+              Dict{Symbol, Any}(:rule => "completeness",
+                                :from => [current[1]],
+                                :to => [current[1]]))
+    end
+    return canonical, steps, rotations, _nc_star_witness(word)
+end
+
+function _nc_star_witness(word::Vector{String})
+    starred = reverse(copy(word))
+    restored = reverse(copy(starred))
+    return [Dict{Symbol, Any}(:rule => "star_involution",
+                              :word => copy(word),
+                              :star => starred,
+                              :star_star => restored)]
+end
+
+function _nc_witness_json(witness::NCQuotientWitness)
+    return Dict{Symbol, Any}(:input_word => witness.input_word,
+                             :relation_steps => witness.relation_steps,
+                             :final_normal_form => witness.final_normal_form,
+                             :trace_rotation_steps => witness.trace_rotation_steps,
+                             :star_steps => witness.star_steps)
+end
+
+function _verify_real_nc_quotient_witnesses(cert::ExactCertificateArtifact)
+    witnesses = get(cert.metadata, :nc_quotient_witnesses, Any[])
+    isempty(witnesses) &&
+        return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                      "real NC quotient has no computed witnesses")
+    required = Set(["projector_idempotence", "same_measurement_orthogonality",
+                    "cross_party_commutation", "trace_cyclic", "completeness",
+                    "star_involution"])
+    seen = Set{String}()
+    try
+        for (index, witness) in enumerate(witnesses)
+            input = _nc_trace_word(_get_exact_identity_key(witness, :input_word),
+                                   "metadata.nc_quotient_witnesses[$index].input_word")
+            computed, steps, rotations, star_steps = _nc_normal_form_with_witness(input)
+            expected = String.(_get_exact_identity_key(witness,
+                                                       :final_normal_form))
+            if isnothing(computed)
+                isempty(expected) ||
+                    return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                                  "NC quotient witness $index final form mismatch")
+            else
+                computed == expected ||
+                    return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                                  "NC quotient witness $index final form mismatch")
+            end
+            stored_steps = _get_exact_identity_key(witness, :relation_steps)
+            isempty(stored_steps) &&
+                return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                              "NC quotient witness $index has no relation steps")
+            isempty(rotations) &&
+                !isempty(_get_exact_identity_key(witness, :trace_rotation_steps)) &&
+                return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                              "NC quotient witness $index has inconsistent trace rotations")
+            isempty(star_steps) &&
+                return ExactCertificateStatus(:invalid, :star_involution_error,
+                                              "NC quotient witness $index has no star witness")
+            for step in stored_steps
+                push!(seen, String(get(step, :rule, "")))
+            end
+        end
+    catch err
+        message = sprint(showerror, err)
+        stage = occursin("star", message) ? :star_involution_error :
+                :trace_quotient_error
+        return ExactCertificateStatus(:invalid, stage, message)
+    end
+    all(rule -> rule in seen, required) ||
+        return ExactCertificateStatus(:invalid, :quotient_relation_error,
+                                      "NC quotient witnesses do not cover all required relations")
+    return ExactCertificateStatus(:valid, nothing, "ok")
 end
 
 function _farkas_equations(field::ExactFieldSpec, multipliers, expected,
@@ -1170,7 +1409,6 @@ function _with_real_reconstruction_witnesses(cert::ExactCertificateArtifact,
     metadata[:field_discovery_trace] = get(metadata, :field_discovery_trace,
                                            _field_discovery_trace(cert.field))
     metadata[:identity_kind] = identity_kind
-    metadata[:field_minimal] = true
     metadata[:real_reconstruction] = true
 
     certificate = copy(cert.certificate)
@@ -1296,9 +1534,12 @@ function _verify_real_sparse_identity_fast(cert::ExactCertificateArtifact)
         return ExactCertificateStatus(:invalid, :localizing_identity_error,
                                       "real sparse fast replay supports QQ")
     payload = cert.certificate[:exact_sparse_identity]
-    if haskey(payload, :compact_replay_verified) &&
-       payload[:compact_replay_verified] === true
-        return ExactCertificateStatus(:valid, nothing, "ok")
+    if haskey(payload, :compact_replay_verified)
+        return ExactCertificateStatus(:invalid, :sparse_identity_error,
+                                      "compact_replay_verified is metadata, not proof")
+    elseif haskey(payload, :compact_streaming_replay)
+        return ExactCertificateStatus(:invalid, :sparse_identity_error,
+                                      "compact sparse identity needs streaming replay data, not a compact proof claim")
     end
     variables = Symbol.(String.(_get_exact_identity_key(payload, :variables)))
     residual = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
@@ -1479,25 +1720,33 @@ function nc_trace_identity_verified_by_normal_form(cert::ExactCertificateArtifac
 end
 
 function projector_relations_computed(cert::ExactCertificateArtifact)
-    return "projector" in String.(get(cert.metadata, :quotient_relations, String[])) &&
-           quotient_relations_verified(cert)
+    return _nc_witness_has_rule(cert, "projector_idempotence") &&
+           _verify_nc_trace_quotient_replay(cert).status === :valid
 end
 
 function completeness_relations_computed(cert::ExactCertificateArtifact)
-    return "completeness" in String.(get(cert.metadata, :quotient_relations, String[])) &&
-           quotient_relations_verified(cert)
+    return _nc_witness_has_rule(cert, "completeness") &&
+           _verify_nc_trace_quotient_replay(cert).status === :valid
 end
 
 function cross_party_commutation_computed(cert::ExactCertificateArtifact)
-    return "cross_party_commutation" in
-           String.(get(cert.metadata, :quotient_relations,
-                       String[])) &&
-           quotient_relations_verified(cert)
+    return _nc_witness_has_rule(cert, "cross_party_commutation") &&
+           _verify_nc_trace_quotient_replay(cert).status === :valid
 end
 
 function trace_cyclic_reduction_computed(cert::ExactCertificateArtifact)
-    return "trace_cyclic" in String.(get(cert.metadata, :quotient_relations, String[])) &&
-           quotient_relations_verified(cert)
+    return _nc_witness_has_rule(cert, "trace_cyclic") &&
+           _verify_nc_trace_quotient_replay(cert).status === :valid
+end
+
+function _nc_witness_has_rule(cert::ExactCertificateArtifact, rule::AbstractString)
+    witnesses = get(cert.metadata, :nc_quotient_witnesses, Any[])
+    for witness in witnesses
+        for step in get(witness, :relation_steps, Any[])
+            String(get(step, :rule, "")) == String(rule) && return true
+        end
+    end
+    return false
 end
 
 function exact_farkas_normalization(cert::ExactCertificateArtifact)
@@ -1593,6 +1842,7 @@ function reject_bad_nc(path::AbstractString)
 end
 
 function gate0_anti_cheat_instrumentation()
+    reset_real_gate_call_trace!()
     result = reconstruct_real_artifact(joinpath(_real_gate_root(), "sos",
                                                 "medium_sumofsquares_01.json"))
     return result.status === :ok &&
@@ -1601,6 +1851,12 @@ function gate0_anti_cheat_instrumentation()
            !result.audit.called_synthetic_compiler &&
            !result.audit.used_metadata_truth_claims &&
            !result.audit.used_expected_certificate &&
+           get(REAL_GATE_CALLS, :compile_fixture, 0) == 0 &&
+           get(REAL_GATE_CALLS, :_make_factor_block, 0) == 0 &&
+           get(REAL_GATE_CALLS, :_compile_sparse_opf_like, 0) == 0 &&
+           get(REAL_GATE_CALLS, :_compile_symmetry_clustered_low_rank, 0) == 0 &&
+           get(REAL_GATE_CALLS, :_compile_nc_trace_npa, 0) == 0 &&
+           get(REAL_GATE_CALLS, :_compile_quantum_code_infeasibility, 0) == 0 &&
            result.audit.consumed_numeric_entries > 0 &&
            result.audit.consumed_basis_entries > 0 &&
            result.audit.consumed_polynomial_terms > 0 &&
@@ -1818,6 +2074,112 @@ function gate_trap_reject_wrong_hash()
                                     :sparse_identity_error,
                                     :affine_dual_identity_error,
                                     :nc_identity_error)
+end
+
+function gate_real_artifact_provenance()
+    files = ["sos/medium_sumofsquares_01.json",
+             "tssos/medium_sparse_opf_01.json",
+             "nctssos/medium_npa_trace_01.json"]
+    for file in files
+        path = joinpath(_real_gate_root(), split(file, "/")...)
+        artifact = _real_symbolize(_read_json_document(read(path, String),
+                                                       "real artifact provenance gate"))
+        _validate_real_artifact_provenance!(artifact, path)
+        artifact[:generated_by_certsdp] === false || return false
+        startswith(String(artifact[:source_raw_sha256]), "sha256:") || return false
+        String(artifact[:source_tool]) in _REAL_ALLOWED_SOURCE_TOOLS || return false
+    end
+    upstream = normpath(joinpath(_real_gate_root(), "..", "upstream_artifacts"))
+    for dir in ("sumofsquares", "tssos", "nctssos")
+        isfile(joinpath(upstream, dir, "export_script.jl")) || return false
+        isfile(joinpath(upstream, dir, "raw_output.json")) || return false
+        isfile(joinpath(upstream, dir, "certsdp_input.json")) || return false
+    end
+    return true
+end
+
+function gate_real_solver_session_exports()
+    upstream = normpath(joinpath(_real_gate_root(), "..", "upstream_artifacts"))
+    sessions = [("sumofsquares", "medium_gram_clarabel", "SumOfSquares.jl",
+                 "Clarabel.jl",
+                 Dict(:variables => 5, :basis_size => 50, :psd_dimension => 50,
+                      :gram_entries => 1_000)),
+                ("jump_moi", "medium_correlation_sdp_clarabel", "JuMP/MOI",
+                 "Clarabel.jl",
+                 Dict(:psd_dimension => 40, :moi_variables => 1_000,
+                      :matrix_entries => 1_000)),
+                ("tssos", "medium_sparse_pop_clarabel", "TSSOS.jl",
+                 "Clarabel.jl",
+                 Dict(:variables => 80, :cliques => 40, :affine_constraints => 500,
+                      :psd_blocks => 100, :total_block_dim => 800)),
+                ("nctssos", "medium_trace_projection_cosmo", "NCTSSOS.jl",
+                 "COSMO.jl",
+                 Dict(:variables => 8, :order => 4, :canonical_support_terms => 5_000,
+                      :psd_blocks => 1_000, :max_block_dim => 100))]
+    for (folder, session, tool, solver, minima) in sessions
+        dir = joinpath(upstream, folder, session)
+        _verify_real_solver_session_export(dir, tool, solver, minima) ||
+            return false
+    end
+    return true
+end
+
+function _verify_real_solver_session_export(dir::AbstractString,
+                                            tool::AbstractString,
+                                            solver::AbstractString,
+                                            minima::AbstractDict)
+    raw_path = joinpath(dir, "raw_output.json")
+    input_path = joinpath(dir, "certsdp_input.json")
+    log_path = joinpath(dir, "session.log")
+    provenance_path = joinpath(dir, "provenance.json")
+    script_path = joinpath(dir, "export_script.jl")
+    for path in (raw_path, input_path, log_path, provenance_path, script_path,
+                 joinpath(dir, "Project.toml"), joinpath(dir, "Manifest.toml"))
+        isfile(path) || return false
+    end
+    provenance = _real_symbolize(_read_json_document(read(provenance_path, String),
+                                                     "real solver session provenance"))
+    raw = _real_symbolize(_read_json_document(read(raw_path, String),
+                                              "real solver raw output"))
+    certsdp_input = _real_symbolize(_read_json_document(read(input_path, String),
+                                                        "real solver certsdp input"))
+    String(_real_get(provenance, :source_tool,
+                     "real solver session provenance")) == tool || return false
+    String(_real_get(provenance, :solver,
+                     "real solver session provenance")) == solver || return false
+    _real_get(provenance, :generated_by_certsdp,
+              "real solver session provenance") === false || return false
+    startswith(String(_real_get(provenance, :source_export_command,
+                                "real solver session provenance")),
+               "julia --project=benchmarks/upstream_artifacts/real_solver_env") ||
+        return false
+    get(provenance, :source_raw_sha256, "") ==
+    "sha256:" * bytes2hex(sha256(read(raw_path))) || return false
+    get(provenance, :certsdp_input_sha256, "") ==
+    "sha256:" * bytes2hex(sha256(read(input_path))) || return false
+    get(provenance, :session_log_sha256, "") ==
+    "sha256:" * bytes2hex(sha256(read(log_path))) || return false
+    String(_real_get(raw, :source_tool, "real solver raw output")) == tool ||
+        return false
+    String(_real_get(raw, :termination_status, "real solver raw output")) ==
+    String(_real_get(provenance, :termination_status,
+                     "real solver session provenance")) || return false
+    String(_real_get(certsdp_input, :source_tool,
+                     "real solver certsdp input")) == tool || return false
+    scale = _real_get(provenance, :problem_scale,
+                      "real solver session provenance")
+    scale isa AbstractDict || return false
+    for (key, minimum) in minima
+        value = _real_get(scale, key, "real solver session scale")
+        value isa Real || return false
+        value >= minimum || return false
+    end
+    log_text = read(log_path, String)
+    occursin(tool == "JuMP/MOI" ? "JuMP/MOI" : replace(tool, ".jl" => ""),
+             log_text) || return false
+    occursin(replace(solver, ".jl" => ""), log_text) || return false
+    occursin("session_runner_returned: true", log_text) || return false
+    return true
 end
 
 _real_gate_root() = normpath(joinpath(@__DIR__, "..", "..", "benchmarks",

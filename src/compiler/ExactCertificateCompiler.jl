@@ -1,5 +1,23 @@
 const CERTSDP_2_0_ARTIFACT_VERSION = "2.0"
 const CERTSDP_REAL_GATE_MODE = Ref(false)
+const REAL_GATE_CALLS = Dict{Symbol, Int}()
+const REAL_GATE_FORBIDDEN_METADATA_CLAIMS = (:all_psd_blocks_verified,
+                                             :quotient_relations_verified,
+                                             :field_minimal,
+                                             :coefficient_residual,
+                                             :objective_residual)
+
+function _record_call!(name::Symbol)
+    if CERTSDP_REAL_GATE_MODE[]
+        REAL_GATE_CALLS[name] = get(REAL_GATE_CALLS, name, 0) + 1
+    end
+    return nothing
+end
+
+function reset_real_gate_call_trace!()
+    empty!(REAL_GATE_CALLS)
+    return REAL_GATE_CALLS
+end
 
 abstract type ExactFieldSpec end
 
@@ -226,6 +244,14 @@ struct ReconstructionAudit
     reconstruction_trace::Vector{String}
 end
 
+struct NCQuotientWitness
+    input_word::Any
+    relation_steps::Any
+    final_normal_form::Any
+    trace_rotation_steps::Any
+    star_steps::Any
+end
+
 struct ReconstructResult
     status::Symbol
     certificate::Union{Nothing, ExactCertificateArtifact}
@@ -317,9 +343,17 @@ function field_is_minimal(cert::ExactCertificateArtifact)
 end
 
 function dense_global_gram_used(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false))
+        return haskey(cert.certificate, :dense_global_gram) ||
+               haskey(cert.problem, :dense_global_gram)
+    end
     return Bool(get(cert.metadata, :dense_global_gram_used, false))
 end
 function dense_original_matrix_used(cert::ExactCertificateArtifact)
+    if Bool(get(cert.metadata, :real_reconstruction, false))
+        return haskey(cert.certificate, :dense_original_matrix) ||
+               haskey(cert.problem, :dense_original_matrix)
+    end
     return Bool(get(cert.metadata, :dense_original_matrix_used, false))
 end
 function coefficient_residual(cert::ExactCertificateArtifact)
@@ -336,12 +370,11 @@ function nc_trace_residual(cert::ExactCertificateArtifact)
 end
 function quotient_relations_verified(cert::ExactCertificateArtifact)
     if Bool(get(cert.metadata, :real_reconstruction, false))
-        relations = String.(get(cert.metadata, :quotient_relations, String[]))
-        required = ["projector", "orthogonality", "completeness",
-                    "cross_party_commutation", "trace_cyclic"]
-        return all(rel -> rel in relations, required) &&
-               String(get(cert.metadata, :quotient_witness_hash, "")) ==
-               _quotient_witness_hash(cert)
+        if cert.type === :nc_trace_npa &&
+           isdefined(@__MODULE__, :_verify_real_nc_quotient_witnesses)
+            return _verify_real_nc_quotient_witnesses(cert).status === :valid
+        end
+        return false
     end
     return Bool(get(cert.metadata, :quotient_relations_verified, false)) &&
            String(get(cert.metadata, :quotient_witness_hash, "")) ==
@@ -619,7 +652,8 @@ function verify_exact_certificate(cert::ExactCertificateArtifact; mode::Symbol=:
     mode === :strict ||
         return ExactCertificateStatus(:invalid, :strict_mode_required,
                                       "2.0 artifacts currently verify only in strict mode")
-    checks = (:_verify_artifact_hashes,
+    checks = (:_verify_no_forbidden_real_metadata_truth_claims,
+              :_verify_artifact_hashes,
               :_verify_reconstruction_witnesses,
               :_verify_field_minimality,
               :_verify_structure_metadata,
@@ -631,6 +665,18 @@ function verify_exact_certificate(cert::ExactCertificateArtifact; mode::Symbol=:
         result.status === :valid || return result
     end
     return ExactCertificateStatus(:valid, nothing, "valid")
+end
+
+function _verify_no_forbidden_real_metadata_truth_claims(cert::ExactCertificateArtifact)
+    Bool(get(cert.metadata, :real_reconstruction, false)) ||
+        return ExactCertificateStatus(:valid, nothing, "ok")
+    for key in REAL_GATE_FORBIDDEN_METADATA_CLAIMS
+        if haskey(cert.metadata, key)
+            return ExactCertificateStatus(:invalid, :metadata_truth_claim_error,
+                                          "real reconstruction metadata `$key` is a claim, not proof")
+        end
+    end
+    return ExactCertificateStatus(:valid, nothing, "ok")
 end
 
 function _parse_exact_certificate_object(parsed)
@@ -1007,6 +1053,11 @@ function _verify_nc_trace_quotient_replay(cert::ExactCertificateArtifact)
     cert.algebra === :noncommutative_trace ||
         return ExactCertificateStatus(:invalid, :nc_identity_error,
                                       "NC quotient replay requires noncommutative trace algebra")
+    if Bool(get(cert.metadata, :real_reconstruction, false)) &&
+       isdefined(@__MODULE__, :_verify_real_nc_quotient_witnesses)
+        result = _verify_real_nc_quotient_witnesses(cert)
+        result.status === :valid || return result
+    end
     payload = cert.certificate[:nc_trace_quotient_replay]
     try
         _require_exact_identity_object(payload,
@@ -2871,6 +2922,7 @@ end
 
 function compile_fixture(kind::Symbol; seed::Integer=0,
                          field::ExactFieldSpec=_default_fixture_field(kind))
+    _record_call!(:compile_fixture)
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: compile_fixture")
     if kind === :sparse_opf_like
@@ -2974,6 +3026,7 @@ function _artifact_field_recognition_witnesses(artifact::AbstractDict)
 end
 
 function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
+    _record_call!(:_compile_sparse_opf_like)
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _compile_sparse_opf_like")
     artifact = _saved_noisy_artifact(:sparse_opf_like, seed)
@@ -3049,6 +3102,7 @@ end
 function _compile_symmetry_clustered_low_rank(seed::Integer;
                                               field::ExactFieldSpec=MultiquadraticField([2,
                                                                                          5]))
+    _record_call!(:_compile_symmetry_clustered_low_rank)
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _compile_symmetry_clustered_low_rank")
     artifact = _saved_noisy_artifact(:symmetry_clustered_low_rank, seed, field)
@@ -3110,6 +3164,7 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
 end
 
 function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticField(3))
+    _record_call!(:_compile_nc_trace_npa)
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _compile_nc_trace_npa")
     artifact = _saved_noisy_artifact(:nc_trace_npa, seed, field)
@@ -3171,6 +3226,7 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
 end
 
 function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpec=QQ)
+    _record_call!(:_compile_quantum_code_infeasibility)
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _compile_quantum_code_infeasibility")
     artifact = _saved_noisy_artifact(:quantum_code_infeasibility, seed, field)
@@ -4183,6 +4239,7 @@ function _make_factor_block(field::ExactFieldSpec, id::AbstractString,
                             dim::Integer, rank::Integer,
                             clique::Vector{Int}; seed::Integer,
                             constraint=nothing)
+    _record_call!(:_make_factor_block)
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _make_factor_block")
     factor = Vector{FieldElement}[]

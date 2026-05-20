@@ -1,0 +1,6 @@
+{
+    "export_kind": "NPA trace quotient",
+    "model": "two-party projector relaxation",
+    "source_tool": "NCTSSOS.jl",
+    "solver_output": "trace quotient words and PSD factors"
+}

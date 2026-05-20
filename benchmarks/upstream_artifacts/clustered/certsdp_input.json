@@ -1,0 +1,5 @@
+{
+    "coefficient_map_source": "sparse affine map",
+    "format": "clustered_low_rank_real_export",
+    "basis_source": "representation transforms"
+}

@@ -1,0 +1,28 @@
+{
+    "export_script": "benchmarks/upstream_artifacts/sumofsquares/medium_gram_clarabel/export_script.jl",
+    "full_log_sha256": "sha256:c54a849d3498736673072f93598da5fa9333fb4023dc51365be87a1f398926aa",
+    "compressed_full_log": "session_full.log.gz",
+    "generated_by_certsdp": false,
+    "solver": "Clarabel.jl",
+    "problem_scale": {
+        "polynomial_terms": 111,
+        "variables": 5,
+        "gram_entries": 1596,
+        "psd_dimension": 56,
+        "basis_size": 56
+    },
+    "source_export_command": "julia --project=benchmarks/upstream_artifacts/real_solver_env scripts/run_real_solver_sessions.jl --only sumofsquares_jump_clarabel_medium",
+    "session_log_sha256": "sha256:ff1f47734555d5238ad81d716b5570c7434c2b1d8f0ea3ed9dcfb67f49af5276",
+    "termination_status": "OPTIMAL",
+    "source_tool": "SumOfSquares.jl",
+    "certsdp_input_sha256": "sha256:1bf3c06292b03e60b393c6fe20eef477beee4144c66486c0f60b60fad1d95cd7",
+    "source_raw_sha256": "sha256:63a09429929aa4d16a1ff1bd4824ea5a063c11348042c7155a2d80ee35ec4494",
+    "source_tool_version": {
+        "is_direct_dep": true,
+        "source": "SumOfSquares/DhHQX",
+        "git_revision": null,
+        "version": "0.7.6"
+    },
+    "session_name": "sumofsquares_jump_clarabel_medium",
+    "compressed_full_log_sha256": "sha256:c1f1a97c0236bab01dccf897ff3bb19d61672ee52a321618372e7685535c217a"
+}
