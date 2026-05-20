@@ -1,0 +1,96 @@
+{
+  "artifact_kind": "saved_noisy_solver_artifact",
+  "name": "sparse_opf_like_seed118260",
+  "format": "tssos_like_sparse_opf",
+  "seed": 118260,
+  "precision_bits": 53,
+  "noise_model": "float64_additive_1e-9_hidden_seed",
+  "field_evidence": {
+    "kind": "rational",
+    "degree_bound": 1,
+    "basis_support": [
+      []
+    ],
+    "engine": "bounded_exact_reconstruction"
+  },
+  "block_dimensions": [
+    120, 119, 118, 117, 116, 115, 114, 113,
+    88, 86, 84, 82, 80, 78, 76, 74,
+    14, 14, 14, 14, 14, 14, 14, 14,
+    12, 12, 12, 12, 12, 12, 12, 12,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10
+  ],
+  "rank_profile": [
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7,
+    4, 5, 6, 7, 4, 5, 6, 7
+  ],
+  "cliques": [
+    [2, 4, 6, 8, 10, 12, 14, 16],
+    [17, 19, 21, 23, 25, 27, 29, 31],
+    [33, 35, 37, 39, 41, 43, 45, 47],
+    [101, 103, 105, 107, 109, 111, 113, 115]
+  ],
+  "localizing_multiplier_maps": [
+    {
+      "constraint_label": "hidden_voltage_lower_bus_17",
+      "multiplier_variable": 2,
+      "constraint_variable": 5,
+      "scale": "1/2"
+    },
+    {
+      "constraint_label": "hidden_active_flow_edge_17_19",
+      "multiplier_variable": 4,
+      "constraint_variable": 7,
+      "scale": "-3"
+    },
+    {
+      "constraint_label": "hidden_reactive_flow_edge_21_23",
+      "multiplier_variable": 6,
+      "constraint_variable": 9,
+      "scale": "5"
+    }
+  ],
+  "equality_multiplier_maps": [
+    {
+      "equality_label": "hidden_power_balance_bus_17",
+      "multiplier_terms": [
+        {
+          "exponents": {"x10": 1},
+          "coefficient": "2"
+        },
+        {
+          "exponents": {"x11": 1},
+          "coefficient": "1"
+        }
+      ],
+      "constraint_terms": [
+        {
+          "exponents": {"x10": 1},
+          "coefficient": "1"
+        },
+        {
+          "exponents": {"x11": 1},
+          "coefficient": "-1"
+        }
+      ],
+      "scale": "-1"
+    }
+  ]
+}

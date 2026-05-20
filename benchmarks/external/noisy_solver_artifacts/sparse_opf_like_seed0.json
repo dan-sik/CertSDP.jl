@@ -66,5 +66,31 @@
       "constraint_variable": 6,
       "scale": "-1"
     }
+  ],
+  "equality_multiplier_maps": [
+    {
+      "equality_label": "power_balance_real_bus_1",
+      "multiplier_terms": [
+        {
+          "exponents": {"x7": 1},
+          "coefficient": "1"
+        },
+        {
+          "exponents": {"x8": 1},
+          "coefficient": "-1"
+        }
+      ],
+      "constraint_terms": [
+        {
+          "exponents": {"x7": 1},
+          "coefficient": "1"
+        },
+        {
+          "exponents": {"x8": 1},
+          "coefficient": "1"
+        }
+      ],
+      "scale": "3"
+    }
   ]
 }

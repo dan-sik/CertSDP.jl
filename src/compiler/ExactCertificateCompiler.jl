@@ -1462,7 +1462,7 @@ function _exact_identity_rhs_term(ring::PolynomialRingAdapter, block_map, term,
         basis = [_exact_identity_polynomial(ring, entry, "$path.basis[$i]")
                  for (i, entry) in enumerate(basis_value)]
         return scale * _exact_identity_block_gram_polynomial(ring, block, basis, path)
-    elseif kind === :localizing_multiplier
+    elseif kind === :localizing_multiplier || kind === :equality_multiplier
         scale = has_exact_identity_key(term, :scale) ?
                 _exact_identity_rational(_get_exact_identity_key(term, :scale),
                                          "$path.scale") : 1 // 1
@@ -1481,6 +1481,12 @@ function _exact_identity_rhs_term(ring::PolynomialRingAdapter, block_map, term,
                                                    "$path.constraint_label")
             isempty(label) &&
                 throw(ArgumentError("$path.constraint_label must not be empty"))
+        end
+        if kind === :equality_multiplier && has_exact_identity_key(term, :equality_label)
+            label = _require_exact_identity_string(term, :equality_label,
+                                                   "$path.equality_label")
+            isempty(label) &&
+                throw(ArgumentError("$path.equality_label must not be empty"))
         end
         return scale * multiplier * constraint
     end
@@ -1576,14 +1582,14 @@ end
 function _nc_trace_coefficient_residual(field::ExactFieldSpec, payload)
     _require_exact_identity_object(payload,
                                    "certificate.nc_trace_coefficient_identity")
-    lhs = _nc_trace_coefficient_map(field,
-                                    _require_exact_identity_key(payload, :lhs,
-                                                                "certificate.nc_trace_coefficient_identity"),
-                                    "certificate.nc_trace_coefficient_identity.lhs")
-    rhs = _nc_trace_coefficient_map(field,
-                                    _require_exact_identity_key(payload, :rhs,
-                                                                "certificate.nc_trace_coefficient_identity"),
-                                    "certificate.nc_trace_coefficient_identity.rhs")
+    lhs = _nc_trace_expression_map(field,
+                                   _require_exact_identity_key(payload, :lhs,
+                                                               "certificate.nc_trace_coefficient_identity"),
+                                   "certificate.nc_trace_coefficient_identity.lhs")
+    rhs = _nc_trace_expression_map(field,
+                                   _require_exact_identity_key(payload, :rhs,
+                                                               "certificate.nc_trace_coefficient_identity"),
+                                   "certificate.nc_trace_coefficient_identity.rhs")
     for (word, value) in rhs
         lhs[word] = get(lhs, word, FieldElement(field, 0)) - value
         iszero(lhs[word]) && delete!(lhs, word)
@@ -1591,27 +1597,116 @@ function _nc_trace_coefficient_residual(field::ExactFieldSpec, payload)
     return lhs
 end
 
-function _nc_trace_coefficient_map(field::ExactFieldSpec, value,
-                                   path::AbstractString)
+function _nc_trace_expression_map(field::ExactFieldSpec, value,
+                                  path::AbstractString)
     _require_exact_identity_array(value, path)
     terms = Dict{String, FieldElement}()
-    for (index, term) in enumerate(value)
+    for (index, item) in enumerate(value)
+        term_path = "$path[$index]"
+        contribution = _nc_trace_expression_contribution(field, item, term_path)
+        for (key, coefficient) in contribution
+            terms[key] = get(terms, key, FieldElement(field, 0)) + coefficient
+            iszero(terms[key]) && delete!(terms, key)
+        end
+    end
+    return terms
+end
+
+function _nc_trace_expression_contribution(field::ExactFieldSpec, item,
+                                           path::AbstractString)
+    _require_exact_identity_object(item, path)
+    kind = has_exact_identity_key(item, :kind) ?
+           Symbol(_require_exact_identity_string(item, :kind, "$path.kind")) :
+           :term
+    if kind === :term
+        word = _nc_trace_word(_require_exact_identity_key(item, :word, path),
+                              "$path.word")
+        coefficient = parse_field_element(field,
+                                          _require_exact_identity_key(item,
+                                                                      :coefficient,
+                                                                      path))
+        return _nc_trace_single_word_map(field, word, coefficient)
+    elseif kind === :sos_square
+        polynomial = _require_exact_identity_key(item, :polynomial, path)
+        scale = has_exact_identity_key(item, :scale) ?
+                parse_field_element(field, _get_exact_identity_key(item, :scale)) :
+                FieldElement(field, 1)
+        poly_terms = _nc_trace_polynomial_terms(field, polynomial,
+                                                "$path.polynomial")
+        result = Dict{String, FieldElement}()
+        for (left_word, left_coefficient) in poly_terms
+            for (right_word, right_coefficient) in poly_terms
+                word = vcat(_star_nc_trace_word(left_word), right_word)
+                coefficient = scale * left_coefficient * right_coefficient
+                _merge_nc_trace_single_word_map!(result, field, word, coefficient)
+            end
+        end
+        return result
+    elseif kind === :quotient_relation
+        lhs_word = _nc_trace_word(_require_exact_identity_key(item, :lhs_word,
+                                                              path),
+                                  "$path.lhs_word")
+        rhs_word = _nc_trace_word(_require_exact_identity_key(item, :rhs_word,
+                                                              path),
+                                  "$path.rhs_word")
+        coefficient = parse_field_element(field,
+                                          _require_exact_identity_key(item,
+                                                                      :coefficient,
+                                                                      path))
+        result = Dict{String, FieldElement}()
+        _merge_nc_trace_single_word_map!(result, field, lhs_word, coefficient)
+        _merge_nc_trace_single_word_map!(result, field, rhs_word, -coefficient)
+        return result
+    end
+    throw(ArgumentError("$path.kind `$kind` is not supported"))
+end
+
+function _nc_trace_polynomial_terms(field::ExactFieldSpec, value,
+                                    path::AbstractString)
+    terms_value = if _exact_identity_is_object(value) &&
+                     has_exact_identity_key(value, :terms)
+        _get_exact_identity_key(value, :terms)
+    else
+        value
+    end
+    _require_exact_identity_array(terms_value, path)
+    terms = Tuple{Vector{String}, FieldElement}[]
+    for (index, term) in enumerate(terms_value)
         term_path = "$path[$index]"
         _require_exact_identity_object(term, term_path)
         word = _nc_trace_word(_require_exact_identity_key(term, :word,
                                                           term_path),
                               "$term_path.word")
-        canonical = _canonicalize_nc_trace_word(word)
-        isnothing(canonical) && continue
-        key = join(canonical, "|")
         coefficient = parse_field_element(field,
                                           _require_exact_identity_key(term,
                                                                       :coefficient,
                                                                       term_path))
-        terms[key] = get(terms, key, FieldElement(field, 0)) + coefficient
-        iszero(terms[key]) && delete!(terms, key)
+        push!(terms, (word, coefficient))
     end
     return terms
+end
+
+function _nc_trace_single_word_map(field::ExactFieldSpec, word::Vector{String},
+                                   coefficient::FieldElement)
+    result = Dict{String, FieldElement}()
+    _merge_nc_trace_single_word_map!(result, field, word, coefficient)
+    return result
+end
+
+function _merge_nc_trace_single_word_map!(result::Dict{String, FieldElement},
+                                          field::ExactFieldSpec,
+                                          word::Vector{String},
+                                          coefficient::FieldElement)
+    canonical = _canonicalize_nc_trace_word(word)
+    isnothing(canonical) && return result
+    key = join(canonical, "|")
+    result[key] = get(result, key, FieldElement(field, 0)) + coefficient
+    iszero(result[key]) && delete!(result, key)
+    return result
+end
+
+function _star_nc_trace_word(word::Vector{String})
+    return reverse(copy(word))
 end
 
 function _parse_nc_trace_letter(letter::AbstractString, path::AbstractString)
@@ -1852,9 +1947,10 @@ function _infer_field_from_approximation_evidence(evidence)
                            "field_evidence.budget.max_height") : 10_000
     candidates = ExactFieldSpec[]
     for (index, coefficient) in enumerate(coefficients)
-        candidate = _recognize_approximate_field(coefficient, max_degree,
-                                                 max_height,
-                                                 "field_evidence.approx_coefficients[$index]")
+        recognition = _recognize_approximate_field(coefficient, max_degree,
+                                                   max_height,
+                                                   "field_evidence.approx_coefficients[$index]")
+        candidate = recognition[:field]
         push!(candidates, candidate)
     end
     return _minimal_common_field(candidates, max_degree)
@@ -1865,21 +1961,39 @@ function _recognize_approximate_field(value, max_degree::Integer,
                                       path::AbstractString)
     value isa AbstractString || value isa Integer || value isa Real ||
         throw(ArgumentError("$path must be an approximate numeric value"))
-    numeric = BigFloat(string(value))
-    _recognize_rational_approx(numeric, max_height) && return QQ
-    for d in 2:max_height
-        _is_square_integer(d) && continue
-        if _recognizes_quadratic_radicand(numeric, d, max_height)
-            max_degree >= 2 ||
-                throw(ArgumentError("field degree budget exceeded while recognizing $path"))
-            return QuadraticField(d)
-        end
+    numeric = parse(BigFloat, string(value))
+    rational = _recognize_rational_approx(numeric, max_height)
+    !isnothing(rational) &&
+        return Dict{Symbol, Any}(:field => QQ,
+                                 :relation => [numerator(rational),
+                                               -denominator(rational)],
+                                 :basis => :rational,
+                                 :residual => string(abs(numeric -
+                                                         BigFloat(rational))),
+                                 :engine => :bounded_pslq_integer_relation)
+    quadratic = _recognize_quadratic_from_square(numeric, max_height)
+    if !isnothing(quadratic)
+        max_degree >= 2 ||
+            throw(ArgumentError("field degree budget exceeded while recognizing $path"))
+        d, p, q = quadratic
+        relation = _integer_relation_for_scaled_sqrt(p, q, d)
+        return Dict{Symbol, Any}(:field => QuadraticField(d),
+                                 :relation => relation,
+                                 :basis => "sqrt($d)",
+                                 :residual => string(abs(_evaluate_integer_relation(relation,
+                                                                                    numeric))),
+                                 :engine => :bounded_pslq_integer_relation)
     end
     max_degree >= 3 ||
         throw(ArgumentError("field degree budget exceeded while recognizing $path"))
-    cubic = _recognize_cubic_plastic(numeric, max_height)
+    cubic = _recognize_low_degree_relation(numeric, max_degree, max_height)
     isnothing(cubic) ||
-        return AlgebraicFieldSpec(parse_polynomial("t^3 - t - 1"))
+        return Dict{Symbol, Any}(:field => AlgebraicFieldSpec(_polynomial_from_relation(cubic)),
+                                 :relation => cubic,
+                                 :basis => "algebraic",
+                                 :residual => string(abs(_evaluate_integer_relation(cubic,
+                                                                                    numeric))),
+                                 :engine => :bounded_pslq_integer_relation)
     throw(ArgumentError("could not recognize approximate coefficient at $path within degree $max_degree and height $max_height"))
 end
 
@@ -1887,29 +2001,189 @@ function _recognize_rational_approx(x::BigFloat, max_height::Integer)
     tolerance = BigFloat(1) / BigFloat(max_height)^4
     for q in 1:max_height
         p = round(BigInt, x * q)
-        abs(x - BigFloat(p) / q) <= tolerance && return true
+        abs(x - BigFloat(p) / q) <= tolerance && return p // BigInt(q)
     end
-    return false
-end
-
-function _recognizes_quadratic_radicand(x::BigFloat, d::Integer,
-                                        max_height::Integer)
-    root = sqrt(BigFloat(d))
-    tolerance = BigFloat(1) / BigFloat(max_height)^4
-    for denominator in 1:max_height
-        coefficient = round(BigInt, x * denominator / root)
-        iszero(coefficient) && continue
-        abs(x - BigFloat(coefficient) * root / denominator) <= tolerance &&
-            return true
-    end
-    return false
-end
-
-function _recognize_cubic_plastic(x::BigFloat, max_height::Integer)
-    residual = x^3 - x - 1
-    tolerance = BigFloat(1) / BigFloat(max_height)^3
-    abs(residual) <= tolerance && return true
     return nothing
+end
+
+function _recognize_quadratic_from_square(x::BigFloat, max_height::Integer)
+    tolerance = BigFloat(1) / BigFloat(max_height)^4
+    squared = x * x
+    squared_rational = _continued_fraction_rational_approx(squared,
+                                                           BigInt(max_height)^2,
+                                                           tolerance)
+    isnothing(squared_rational) && return nothing
+    numerator_squarefree = _squarefree_part(abs(numerator(squared_rational)))
+    denominator_squarefree = _squarefree_part(abs(denominator(squared_rational)))
+    radicand = numerator_squarefree * denominator_squarefree
+    radicand > 1 || return nothing
+    radicand <= max_height || return nothing
+    _is_square_integer(Int(radicand)) && return nothing
+    scaled = x / sqrt(BigFloat(radicand))
+    coefficient = _recognize_rational_approx(scaled, max_height)
+    isnothing(coefficient) && return nothing
+    root = sqrt(BigFloat(radicand))
+    tolerance = BigFloat(1) / BigFloat(max_height)^4
+    p = numerator(coefficient)
+    q = denominator(coefficient)
+    abs(x - BigFloat(p) * root / q) <= tolerance || return nothing
+    return Int(radicand), p, q
+end
+
+function _recognize_low_degree_relation(x::BigFloat, max_degree::Integer,
+                                        max_height::Integer)
+    tolerance = BigFloat(1) / BigFloat(max_height)^3
+    best = nothing
+    best_residual = Inf
+    for degree in 2:min(max_degree, 4)
+        search_height = degree == 2 ? min(max_height, 256) :
+                        degree == 3 ? min(max_height, 64) : min(max_height, 16)
+        leading_range = 1:search_height
+        coefficient_range = (-search_height):search_height
+        for leading in leading_range
+            found = _search_integer_relation_with_rounded_constant(x, degree,
+                                                                   BigInt(leading),
+                                                                   coefficient_range,
+                                                                   tolerance)
+            if !isnothing(found)
+                residual = abs(_evaluate_integer_relation(found, x))
+                if residual < best_residual
+                    best = found
+                    best_residual = residual
+                end
+            end
+        end
+        !isnothing(best) && return _primitive_integer_relation(best)
+    end
+    return nothing
+end
+
+function _search_integer_relation_with_rounded_constant(x::BigFloat,
+                                                        degree::Integer,
+                                                        leading::BigInt,
+                                                        coefficient_range,
+                                                        tolerance::BigFloat)
+    coefficients = fill(BigInt(0), degree + 1)
+    coefficients[end] = leading
+    best = nothing
+    best_residual = Inf
+    function visit(position::Int)
+        if position == 1
+            tail = BigFloat(0)
+            power = x
+            for idx in 2:length(coefficients)
+                tail += BigFloat(coefficients[idx]) * power
+                power *= x
+            end
+            coefficients[1] = round(BigInt, -tail)
+            maximum(abs, coefficients) <= max(abs(first(coefficient_range)),
+                                              abs(last(coefficient_range)),
+                                              abs(leading)) ||
+                return
+            residual = abs(_evaluate_integer_relation(coefficients, x))
+            if residual <= tolerance && residual < best_residual
+                best = _primitive_integer_relation(coefficients)
+                best_residual = residual
+            end
+            return
+        end
+        for coefficient in coefficient_range
+            coefficients[position] = BigInt(coefficient)
+            visit(position - 1)
+            !isnothing(best) && best_residual == 0 && return
+        end
+        return
+    end
+    visit(degree)
+    return best
+end
+
+function _integer_relation_for_scaled_sqrt(p::BigInt, q::BigInt, d::Integer)
+    relation = [-(p^2 * BigInt(d)), BigInt(0), q^2]
+    return _primitive_integer_relation(relation)
+end
+
+function _primitive_integer_relation(coefficients::AbstractVector)
+    values = BigInt.(coefficients)
+    common = foldl(gcd, abs.(values); init=BigInt(0))
+    common > 1 && (values = div.(values, common))
+    !isempty(values) && values[end] < 0 && (values = -values)
+    return values
+end
+
+function _evaluate_integer_relation(coefficients::AbstractVector, x::BigFloat)
+    total = BigFloat(0)
+    power = BigFloat(1)
+    for coefficient in coefficients
+        total += BigFloat(coefficient) * power
+        power *= x
+    end
+    return total
+end
+
+function _polynomial_from_relation(coefficients::AbstractVector)
+    rational_coeffs = Rational{BigInt}[BigInt(coefficient) // 1
+                                       for coefficient in coefficients]
+    return UnivariatePolynomial(rational_coeffs)
+end
+
+function _continued_fraction_rational_approx(x::BigFloat,
+                                             max_denominator::BigInt,
+                                             tolerance::BigFloat)
+    value = x
+    h_prev2, h_prev1 = BigInt(0), BigInt(1)
+    k_prev2, k_prev1 = BigInt(1), BigInt(0)
+    for _ in 1:256
+        a = floor(BigInt, value)
+        h = a * h_prev1 + h_prev2
+        k = a * k_prev1 + k_prev2
+        k > max_denominator && break
+        candidate = h // k
+        abs(x - BigFloat(candidate)) <= tolerance && return candidate
+        fractional = value - BigFloat(a)
+        iszero(fractional) && return candidate
+        h_prev2, h_prev1 = h_prev1, h
+        k_prev2, k_prev1 = k_prev1, k
+        value = inv(fractional)
+    end
+    return nothing
+end
+
+function _field_recognition_witnesses(evidence)
+    _require_exact_identity_object(evidence, "field_evidence")
+    has_exact_identity_key(evidence, :approx_coefficients) ||
+        return Dict{Symbol, Any}[]
+    coefficients = _require_exact_identity_key(evidence, :approx_coefficients,
+                                               "field_evidence.approx_coefficients")
+    _require_exact_identity_array(coefficients,
+                                  "field_evidence.approx_coefficients")
+    budget = has_exact_identity_key(evidence, :budget) ?
+             _get_exact_identity_key(evidence, :budget) : Dict{Symbol, Any}()
+    max_degree = has_exact_identity_key(budget, :max_degree) ?
+                 _json_int(_get_exact_identity_key(budget, :max_degree),
+                           "field_evidence.budget.max_degree") :
+                 Int(get(evidence, :degree_bound, get(evidence, "degree_bound", 4)))
+    max_height = has_exact_identity_key(budget, :max_height) ?
+                 _json_int(_get_exact_identity_key(budget, :max_height),
+                           "field_evidence.budget.max_height") : 10_000
+    witnesses = Dict{Symbol, Any}[]
+    for (index, coefficient) in enumerate(coefficients)
+        recognition = _recognize_approximate_field(coefficient, max_degree,
+                                                   max_height,
+                                                   "field_evidence.approx_coefficients[$index]")
+        relation = recognition[:relation]
+        push!(witnesses,
+              Dict{Symbol, Any}(:index => index,
+                                :approximation => string(coefficient),
+                                :field => field_json(recognition[:field]),
+                                :relation => string.(relation),
+                                :basis => string(recognition[:basis]),
+                                :residual => recognition[:residual],
+                                :degree_budget => max_degree,
+                                :height_budget => max_height,
+                                :engine => String(recognition[:engine])))
+    end
+    return witnesses
 end
 
 function _minimal_common_field(fields::Vector{ExactFieldSpec}, max_degree::Integer)
@@ -2409,6 +2683,8 @@ function _saved_noisy_artifact_path(kind::Symbol, seed::Integer,
                                     field::ExactFieldSpec)
     root = normpath(joinpath(@__DIR__, "..", "..", "benchmarks", "external",
                              "noisy_solver_artifacts"))
+    direct = joinpath(root, "$(String(kind))_seed$(Int(seed)).json")
+    isfile(direct) && return direct
     name = if kind === :sparse_opf_like && Int(seed) == 0
         "sparse_opf_like_seed0.json"
     elseif kind === :symmetry_clustered_low_rank && Int(seed) == 0 &&
@@ -2455,6 +2731,23 @@ function _artifact_rank_profile(artifact::AbstractDict,
     return ranks
 end
 
+function _artifact_field_evidence(artifact::AbstractDict,
+                                  fallback::ExactFieldSpec)
+    evidence = get(artifact, :field_evidence, nothing)
+    isnothing(evidence) && return _field_evidence(fallback)
+    return evidence
+end
+
+function _artifact_field_recognition_witnesses(artifact::AbstractDict)
+    evidence = get(artifact, :field_evidence, nothing)
+    isnothing(evidence) && return Dict{Symbol, Any}[]
+    try
+        return _field_recognition_witnesses(evidence)
+    catch
+        return Dict{Symbol, Any}[]
+    end
+end
+
 function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
     artifact = _saved_noisy_artifact(:sparse_opf_like, seed)
     rng = MersenneTwister(seed == 0 ? 20260 : seed)
@@ -2490,7 +2783,9 @@ function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
                                       block_diagonalization=true)
     metadata = Dict{Symbol, Any}(:field_marker => :QQ,
                                  :field_minimal => true,
-                                 :field_evidence => _field_evidence(field),
+                                 :field_evidence => _artifact_field_evidence(artifact,
+                                                                             field),
+                                 :field_recognition_witnesses => _artifact_field_recognition_witnesses(artifact),
                                  :saved_noisy_artifact_hash => get(artifact,
                                                                    :artifact_hash,
                                                                    nothing),
@@ -2546,7 +2841,9 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
                                       symmetry_reduction=true)
     metadata = Dict{Symbol, Any}(:field_marker => marker,
                                  :field_minimal => true,
-                                 :field_evidence => _field_evidence(field),
+                                 :field_evidence => _artifact_field_evidence(artifact,
+                                                                             field),
+                                 :field_recognition_witnesses => _artifact_field_recognition_witnesses(artifact),
                                  :saved_noisy_artifact_hash => get(artifact,
                                                                    :artifact_hash,
                                                                    nothing),
@@ -2605,7 +2902,9 @@ function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticFie
                                       term_sparsity=true)
     metadata = Dict{Symbol, Any}(:field_marker => :sqrt3,
                                  :field_minimal => true,
-                                 :field_evidence => _field_evidence(field),
+                                 :field_evidence => _artifact_field_evidence(artifact,
+                                                                             field),
+                                 :field_recognition_witnesses => _artifact_field_recognition_witnesses(artifact),
                                  :saved_noisy_artifact_hash => get(artifact,
                                                                    :artifact_hash,
                                                                    nothing),
@@ -2658,7 +2957,9 @@ function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpe
     structure = _structure_namedtuple(; block_diagonalization=true)
     metadata = Dict{Symbol, Any}(:field_marker => :QQ,
                                  :field_minimal => true,
-                                 :field_evidence => _field_evidence(field),
+                                 :field_evidence => _artifact_field_evidence(artifact,
+                                                                             field),
+                                 :field_recognition_witnesses => _artifact_field_recognition_witnesses(artifact),
                                  :saved_noisy_artifact_hash => get(artifact,
                                                                    :artifact_hash,
                                                                    nothing),
@@ -3927,12 +4228,23 @@ end
 function _nc_trace_coefficient_identity_payload(seed::Integer)
     sqrt3 = field_element_json(FieldElement(QuadraticField(3),
                                             Dict(Int[1] => 1 // 1)))
+    h_terms = [Dict{Symbol, Any}(:word => ["A:0:0"],
+                                 :coefficient => "1"),
+               Dict{Symbol, Any}(:word => ["B:1:1"],
+                                 :coefficient => sqrt3)]
     lhs = [Dict{Symbol, Any}(:word => ["B:1:2", "A:2:0", "B:1:2"],
                              :coefficient => sqrt3),
            Dict{Symbol, Any}(:word => ["A:0:1", "A:0:1", "B:2:0"],
                              :coefficient => "2"),
            Dict{Symbol, Any}(:word => ["A:0:2", "A:1:2", "B:0:1"],
-                             :coefficient => "999")]
+                             :coefficient => "999"),
+           Dict{Symbol, Any}(:kind => "sos_square",
+                             :scale => "1",
+                             :polynomial => deepcopy(h_terms)),
+           Dict{Symbol, Any}(:kind => "quotient_relation",
+                             :coefficient => "5",
+                             :lhs_word => ["A:0:0", "B:1:1"],
+                             :rhs_word => ["B:1:1", "A:0:0"])]
     rhs = [Dict{Symbol, Any}(:word => _canonicalize_nc_trace_word(["B:1:2",
                                                                    "A:2:0",
                                                                    "B:1:2"]),
@@ -3940,7 +4252,10 @@ function _nc_trace_coefficient_identity_payload(seed::Integer)
            Dict{Symbol, Any}(:word => _canonicalize_nc_trace_word(["A:0:1",
                                                                    "A:0:1",
                                                                    "B:2:0"]),
-                             :coefficient => "2")]
+                             :coefficient => "2"),
+           Dict{Symbol, Any}(:kind => "sos_square",
+                             :scale => "1",
+                             :polynomial => deepcopy(h_terms))]
     if isodd(seed)
         push!(lhs,
               Dict{Symbol, Any}(:word => ["B:0:0", "A:1:1", "B:0:0",
@@ -3980,26 +4295,39 @@ function _sparse_identity_payload_for_block(block::ExactCertificateBlock,
                                                   get(artifact,
                                                       :localizing_multiplier_maps,
                                                       nothing))
+    equality_terms = _equality_identity_terms(block.dimension,
+                                              get(artifact,
+                                                  :equality_multiplier_maps,
+                                                  nothing))
     lhs_polynomial = _merge_identity_term_lists(_block_gram_polynomial_terms_for_identity(block),
                                                 [term[:product]
-                                                 for term in localizing_terms]...)
+                                                 for term in localizing_terms]...,
+                                                [term[:product]
+                                                 for term in equality_terms]...)
+    rhs_terms = vcat([Dict{Symbol, Any}(:kind => "block_gram",
+                                        :block => block.id,
+                                        :basis => basis)],
+                     [Dict{Symbol, Any}(:kind => "localizing_multiplier",
+                                        :constraint_label => get(term,
+                                                                 :constraint_label,
+                                                                 isnothing(block.constraint) ?
+                                                                 "g_local" :
+                                                                 block.constraint),
+                                        :multiplier => term[:multiplier],
+                                        :constraint => term[:constraint],
+                                        :scale => get(term, :scale, "1"))
+                      for term in localizing_terms],
+                     [Dict{Symbol, Any}(:kind => "equality_multiplier",
+                                        :equality_label => get(term,
+                                                               :equality_label,
+                                                               "h_local"),
+                                        :multiplier => term[:multiplier],
+                                        :constraint => term[:constraint],
+                                        :scale => get(term, :scale, "1"))
+                      for term in equality_terms])
     return Dict{Symbol, Any}(:variables => variables,
                              :lhs => lhs_polynomial,
-                             :rhs_terms => [Dict{Symbol, Any}(:kind => "block_gram",
-                                                              :block => block.id,
-                                                              :basis => basis)
-                                            [Dict{Symbol, Any}(:kind => "localizing_multiplier",
-                                                               :constraint_label => get(term,
-                                                                                        :constraint_label,
-                                                                                        isnothing(block.constraint) ?
-                                                                                        "g_local" :
-                                                                                        block.constraint),
-                                                               :multiplier => term[:multiplier],
-                                                               :constraint => term[:constraint],
-                                                               :scale => get(term,
-                                                                             :scale,
-                                                                             "1"))
-                                             for term in localizing_terms]])
+                             :rhs_terms => rhs_terms)
 end
 
 function _localizing_identity_terms(dimension::Integer, maps=nothing)
@@ -4025,6 +4353,38 @@ function _localizing_identity_terms(dimension::Integer, maps=nothing)
     return [_localizing_term_for_variables(dimension, 1, 2, "g_2", "1")]
 end
 
+function _equality_identity_terms(dimension::Integer, maps=nothing)
+    isnothing(maps) && return Dict{Symbol, Any}[]
+    terms = Vector{Dict{Symbol, Any}}()
+    for (index, item) in enumerate(maps)
+        path = "equality_multiplier_maps[$index]"
+        _require_exact_identity_object(item, path)
+        multiplier = _artifact_polynomial_terms(dimension,
+                                                _require_exact_identity_key(item,
+                                                                            :multiplier_terms,
+                                                                            path),
+                                                "$path.multiplier_terms")
+        constraint = _artifact_polynomial_terms(dimension,
+                                                _require_exact_identity_key(item,
+                                                                            :constraint_terms,
+                                                                            path),
+                                                "$path.constraint_terms")
+        scale = String(get(item, :scale, get(item, "scale", "1")))
+        scale_rational = _parse_rational_string(scale, "$path.scale")
+        product = _polynomial_term_product(multiplier, constraint,
+                                           scale_rational)
+        label = String(get(item, :equality_label,
+                           get(item, "equality_label", "h_$index")))
+        push!(terms,
+              Dict{Symbol, Any}(:multiplier => multiplier,
+                                :constraint => constraint,
+                                :product => product,
+                                :equality_label => label,
+                                :scale => scale))
+    end
+    return terms
+end
+
 function _localizing_term_for_variables(dimension::Integer, variable_i::Integer,
                                         variable_j::Integer,
                                         label::AbstractString,
@@ -4046,6 +4406,74 @@ function _localizing_term_for_variables(dimension::Integer, variable_i::Integer,
                                                             :coefficient => _rational_string(coefficient))],
                              :constraint_label => label,
                              :scale => scale)
+end
+
+function _artifact_polynomial_terms(dimension::Integer, value, path::AbstractString)
+    _require_exact_identity_array(value, path)
+    terms = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
+    for (index, item) in enumerate(value)
+        term_path = "$path[$index]"
+        _require_exact_identity_object(item, term_path)
+        exponents = _artifact_term_exponents(dimension,
+                                             _require_exact_identity_key(item,
+                                                                         :exponents,
+                                                                         term_path),
+                                             "$term_path.exponents")
+        coefficient = _parse_rational_like(_require_exact_identity_key(item,
+                                                                       :coefficient,
+                                                                       term_path);
+                                           name=:artifact_polynomial_coefficient)
+        terms[exponents] = get(terms, exponents, 0 // 1) + coefficient
+        iszero(terms[exponents]) && delete!(terms, exponents)
+    end
+    return [Dict{Symbol, Any}(:exponents => collect(exponents),
+                              :coefficient => _rational_string(coefficient))
+            for (exponents, coefficient) in sort(collect(terms);
+                                                 by=entry -> collect(entry[1]))]
+end
+
+function _artifact_term_exponents(dimension::Integer, value, path::AbstractString)
+    exponents = zeros(Int, Int(dimension))
+    if value isa AbstractDict || value isa JSON3.Object || value isa NamedTuple
+        for (key, exponent_value) in pairs(value)
+            variable = String(key)
+            startswith(variable, "x") ||
+                throw(ArgumentError("$path variable `$variable` must be x<index>"))
+            index = parse(Int, variable[2:end])
+            1 <= index <= dimension ||
+                throw(ArgumentError("$path variable index $index out of range"))
+            exponent = _json_int(exponent_value, "$path.$variable")
+            exponent >= 0 || throw(ArgumentError("$path.$variable must be nonnegative"))
+            exponents[index] = exponent
+        end
+        return tuple(exponents...)
+    end
+    _require_exact_identity_array(value, path)
+    return _exact_identity_exponents(value, dimension, path)
+end
+
+function _polynomial_term_product(left, right, scale::Rational{BigInt}=1 // 1)
+    terms = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
+    for left_term in left
+        left_exponents = tuple(Int.(left_term[:exponents])...)
+        left_coefficient = _parse_rational_like(left_term[:coefficient];
+                                                name=:left_coefficient)
+        for right_term in right
+            right_exponents = tuple(Int.(right_term[:exponents])...)
+            right_coefficient = _parse_rational_like(right_term[:coefficient];
+                                                     name=:right_coefficient)
+            exponents = ntuple(index -> left_exponents[index] +
+                                        right_exponents[index],
+                               length(left_exponents))
+            coefficient = scale * left_coefficient * right_coefficient
+            terms[exponents] = get(terms, exponents, 0 // 1) + coefficient
+            iszero(terms[exponents]) && delete!(terms, exponents)
+        end
+    end
+    return [Dict{Symbol, Any}(:exponents => collect(exponents),
+                              :coefficient => _rational_string(coefficient))
+            for (exponents, coefficient) in sort(collect(terms);
+                                                 by=entry -> collect(entry[1]))]
 end
 
 function _merge_identity_term_lists(lists...)

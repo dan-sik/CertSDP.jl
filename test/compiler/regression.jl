@@ -18,6 +18,17 @@
                                        :max_height => 10000))
         @test CertSDP.infer_field(Dict(:field_evidence => numeric)) ==
               CertSDP.MultiquadraticField([2, 5])
+        witnesses = CertSDP._field_recognition_witnesses(numeric)
+        @test length(witnesses) == 2
+        @test all(witness -> witness[:engine] ==
+                             "bounded_pslq_integer_relation",
+                  witnesses)
+        cubic_numeric = Dict(:kind => "numeric_recognition",
+                             :approx_coefficients => ["1.324717957244746025960908854"],
+                             :budget => Dict(:max_degree => 3,
+                                             :max_height => 100))
+        @test CertSDP.infer_field(Dict(:field_evidence => cubic_numeric)) ==
+              CertSDP.AlgebraicFieldSpec(CertSDP.parse_polynomial("t^3 - t - 1"))
 
         over_budget = CertSDP.reconstruct(Dict(:field_marker => :cubic_plastic);
                                           max_field_degree=2)
@@ -100,7 +111,12 @@
         @test CertSDP._verify_exact_sparse_identity(cert).status === :valid
         saved = CertSDP.compile_fixture(:sparse_opf_like; seed=0)
         @test haskey(saved.metadata, :saved_noisy_artifact_hash)
-        @test length(saved.certificate[:exact_sparse_identity][:rhs_terms]) >= 4
+        @test length(saved.certificate[:exact_sparse_identity][:rhs_terms]) >= 5
+        @test any(term -> term[:kind] == "equality_multiplier",
+                  saved.certificate[:exact_sparse_identity][:rhs_terms])
+        hidden_saved = CertSDP.compile_fixture(:sparse_opf_like; seed=118260)
+        @test haskey(hidden_saved.metadata, :saved_noisy_artifact_hash)
+        @test CertSDP.verify(hidden_saved; mode=:strict).status === :valid
 
         identity = deepcopy(cert.certificate[:exact_sparse_identity])
         identity[:rhs_terms][1][:scale] = "2"
@@ -173,6 +189,27 @@
         certificate = copy(cert.certificate)
         identity = deepcopy(certificate[:nc_trace_coefficient_identity])
         identity[:rhs][1][:coefficient] = "7"
+        certificate[:nc_trace_coefficient_identity] = identity
+        bad = CertSDP.ExactCertificateArtifact(cert.type,
+                                               cert.num_variables,
+                                               cert.field,
+                                               cert.blocks,
+                                               cert.structure,
+                                               cert.problem,
+                                               certificate,
+                                               cert.reconstruction_log,
+                                               cert.verification_plan,
+                                               cert.failure_diagnostics,
+                                               cert.hashes,
+                                               cert.metadata)
+        bad = CertSDP._with_reconstruction_witnesses(bad, :nc_trace_npa, 73)
+        result = CertSDP.verify(bad; mode=:strict)
+        @test result.status === :invalid
+        @test result.failure_stage === :nc_identity_error
+
+        certificate = copy(cert.certificate)
+        identity = deepcopy(certificate[:nc_trace_coefficient_identity])
+        identity[:lhs][4][:polynomial][1][:coefficient] = "2"
         certificate[:nc_trace_coefficient_identity] = identity
         bad = CertSDP.ExactCertificateArtifact(cert.type,
                                                cert.num_variables,
