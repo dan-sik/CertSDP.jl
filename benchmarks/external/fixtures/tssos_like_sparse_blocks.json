@@ -1,0 +1,51 @@
+{
+  "format": "tssos_like",
+  "artifact_kind": "external_tool_export",
+  "seed": 72022,
+  "source_tool": "tssos_like_sparse_fixture",
+  "field_evidence": {
+    "kind": "rational",
+    "degree_bound": 1,
+    "basis_support": [
+      []
+    ],
+    "engine": "bounded_exact_reconstruction"
+  },
+  "cliques": [
+    [1, 2, 3, 4, 5, 6, 7, 8],
+    [5, 6, 7, 8, 9, 10, 11, 12]
+  ],
+  "localizing_multipliers": [
+    {
+      "constraint": "g_1",
+      "basis": ["1", "x1"],
+      "noise_model": "float64_additive_1e-9"
+    },
+    {
+      "constraint": "voltage_2",
+      "basis": ["1", "x5"],
+      "noise_model": "float64_additive_1e-9"
+    }
+  ],
+  "sparse_gram_blocks": [
+    {
+      "id": "opf_block_1",
+      "clique": [1, 2, 3, 4, 5, 6, 7, 8],
+      "dimension": 12,
+      "rank_hint": 3
+    },
+    {
+      "id": "opf_block_2",
+      "clique": [5, 6, 7, 8, 9, 10, 11, 12],
+      "dimension": 14,
+      "rank_hint": 4
+    }
+  ],
+  "blocks": [
+    {
+      "id": "opf_block_1",
+      "dimension": 12,
+      "rank_hint": 3
+    }
+  ]
+}

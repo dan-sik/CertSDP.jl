@@ -1,0 +1,48 @@
+{
+  "format": "nctssos_like",
+  "artifact_kind": "external_tool_export",
+  "seed": 73033,
+  "source_tool": "nctssos_like_trace_fixture",
+  "field_evidence": {
+    "kind": "quadratic",
+    "radicand": 3,
+    "degree_bound": 2,
+    "basis_support": [
+      [],
+      [1]
+    ],
+    "engine": "bounded_exact_reconstruction"
+  },
+  "words": [
+    ["A:0:0"],
+    ["B:1:2"],
+    ["A:0:0", "B:1:2"],
+    ["B:1:2", "A:0:0", "B:1:2"]
+  ],
+  "relations": [
+    "projector",
+    "orthogonality",
+    "completeness",
+    "cross_party_commutation",
+    "trace_cyclic"
+  ],
+  "trace_blocks": [
+    {
+      "id": "npa_block_1",
+      "dimension": 24,
+      "rank_hint": 4
+    },
+    {
+      "id": "npa_block_2",
+      "dimension": 32,
+      "rank_hint": 5
+    }
+  ],
+  "blocks": [
+    {
+      "id": "npa_block_1",
+      "dimension": 24,
+      "rank_hint": 4
+    }
+  ]
+}
