@@ -1,8 +1,10 @@
 const CERTSDP_2_0_ARTIFACT_VERSION = "2.0"
 const CERTSDP_REAL_GATE_MODE = Ref(false)
 const CERTSDP_FINAL_GATE_MODE = Ref(false)
+const CERTSDP_ABSOLUTE_GATE_MODE = Ref(false)
 const REAL_GATE_CALLS = Dict{Symbol, Int}()
 const FINAL_GATE_CALLS = Dict{Symbol, Int}()
+const ABSOLUTE_GATE_CALLS = Dict{Symbol, Int}()
 const REAL_GATE_FORBIDDEN_METADATA_CLAIMS = (:all_psd_blocks_verified,
                                              :quotient_relations_verified,
                                              :field_minimal,
@@ -23,6 +25,13 @@ function record_final_gate_call!(name::Symbol)
     return nothing
 end
 
+function record_absolute_gate_call!(name::Symbol)
+    if CERTSDP_ABSOLUTE_GATE_MODE[]
+        ABSOLUTE_GATE_CALLS[name] = get(ABSOLUTE_GATE_CALLS, name, 0) + 1
+    end
+    return nothing
+end
+
 function reset_real_gate_call_trace!()
     empty!(REAL_GATE_CALLS)
     return REAL_GATE_CALLS
@@ -31,6 +40,11 @@ end
 function reset_final_gate_call_trace!()
     empty!(FINAL_GATE_CALLS)
     return FINAL_GATE_CALLS
+end
+
+function reset_absolute_gate_call_trace!()
+    empty!(ABSOLUTE_GATE_CALLS)
+    return ABSOLUTE_GATE_CALLS
 end
 
 abstract type ExactFieldSpec end
@@ -231,6 +245,73 @@ Base.:*(a::FieldElement, b::Integer) = a * FieldElement(a.field, b)
 Base.:*(a::Integer, b::FieldElement) = FieldElement(b.field, a) * b
 Base.:*(a::FieldElement, b::Rational) = a * FieldElement(a.field, b)
 Base.:*(a::Rational, b::FieldElement) = FieldElement(b.field, a) * b
+
+function Base.inv(a::FieldElement)
+    iszero(a) && throw(DivideError())
+    field = a.field
+    if field isa RationalFieldSpec
+        return FieldElement(field, inv(get(a.coeffs, Int[], 0 // 1)))
+    elseif field isa QuadraticField
+        c0 = get(a.coeffs, Int[], 0 // 1)
+        c1 = get(a.coeffs, Int[1], 0 // 1)
+        denom = c0^2 - field.d * c1^2
+        iszero(denom) && throw(DivideError())
+        return FieldElement(field, Dict(Int[] => c0 / denom,
+                                        Int[1] => -c1 / denom))
+    elseif field isa MultiquadraticField
+        basis = _field_coordinate_basis(field)
+        n = length(basis)
+        M = Matrix{Rational{BigInt}}(undef, n, n)
+        for (col, basis_key) in enumerate(basis)
+            product = a * FieldElement(field, Dict(basis_key => 1 // 1))
+            for (row, row_basis) in enumerate(basis)
+                M[row, col] = get(product.coeffs, row_basis, 0 // 1)
+            end
+        end
+        rhs = Rational{BigInt}[i == 1 ? 1 // 1 : 0 // 1 for i in 1:n]
+        coeffs = _solve_rational_linear_system(M, rhs)
+        return FieldElement(field,
+                            Dict(basis[i] => coeffs[i]
+                                 for i in 1:n if !iszero(coeffs[i])))
+    end
+    throw(ArgumentError("unsupported field inverse for $field"))
+end
+
+Base.:\(a::FieldElement, b::FieldElement) = inv(a) * b
+Base.:/(a::FieldElement, b::FieldElement) = a * inv(b)
+Base.:/(a::FieldElement, b::Integer) = a / FieldElement(a.field, b)
+Base.:/(a::FieldElement, b::Rational) = a / FieldElement(a.field, b)
+
+function _solve_rational_linear_system(A::Matrix{Rational{BigInt}},
+                                       b::Vector{Rational{BigInt}})
+    n = length(b)
+    size(A, 1) == n && size(A, 2) == n ||
+        throw(ArgumentError("linear system must be square"))
+    M = [A b]
+    row = 1
+    for col in 1:n
+        pivot = findfirst(i -> !iszero(M[i, col]), row:n)
+        isnothing(pivot) && throw(ArgumentError("singular exact linear system"))
+        pivot_row = row + pivot - 1
+        if pivot_row != row
+            M[row, :], M[pivot_row, :] = copy(M[pivot_row, :]), copy(M[row, :])
+        end
+        pivot_value = M[row, col]
+        for j in col:(n + 1)
+            M[row, j] /= pivot_value
+        end
+        for i in 1:n
+            i == row && continue
+            factor = M[i, col]
+            iszero(factor) && continue
+            for j in col:(n + 1)
+                M[i, j] -= factor * M[row, j]
+            end
+        end
+        row += 1
+    end
+    return Rational{BigInt}[M[i, n + 1] for i in 1:n]
+end
 
 function Base.show(io::IO, x::FieldElement)
     return print(io, field_element_string(x))
@@ -2643,6 +2724,9 @@ end
 
 function _external_fixture_instance(format::Symbol; seed::Integer=0)
     record_final_gate_call!(:_external_fixture_instance)
+    record_absolute_gate_call!(:_external_fixture_instance)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _external_fixture_instance")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _external_fixture_instance")
     supports_import(format) || throw(ArgumentError("unsupported import format `$format`"))
@@ -2669,6 +2753,9 @@ end
 
 function _external_fixture_from_object(fixture)
     record_final_gate_call!(:_external_fixture_from_object)
+    record_absolute_gate_call!(:_external_fixture_from_object)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _external_fixture_from_object")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _external_fixture_from_object")
     format = Symbol(_external_fixture_required_string(fixture, :format, "fixture.format"))
@@ -2789,6 +2876,9 @@ end
 function _bind_field_evidence!(instance::AbstractDict, fixture,
                                fallback::ExactFieldSpec)
     record_final_gate_call!(:_bind_field_evidence!)
+    record_absolute_gate_call!(:_bind_field_evidence!)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _bind_field_evidence!")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _bind_field_evidence!")
     evidence = has_exact_identity_key(fixture, :field_evidence) ?
@@ -2977,6 +3067,9 @@ function compile_fixture(kind::Symbol; seed::Integer=0,
                          field::ExactFieldSpec=_default_fixture_field(kind))
     _record_call!(:compile_fixture)
     record_final_gate_call!(:compile_fixture)
+    record_absolute_gate_call!(:compile_fixture)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: compile_fixture")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: compile_fixture")
     CERTSDP_REAL_GATE_MODE[] &&
@@ -3005,6 +3098,9 @@ end
 function _saved_noisy_artifact(kind::Symbol, seed::Integer,
                                field::ExactFieldSpec=_default_fixture_field(kind))
     record_final_gate_call!(:_saved_noisy_artifact)
+    record_absolute_gate_call!(:_saved_noisy_artifact)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _saved_noisy_artifact")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _saved_noisy_artifact")
     path = _saved_noisy_artifact_path(kind, seed, field)
@@ -3087,6 +3183,9 @@ end
 function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
     _record_call!(:_compile_sparse_opf_like)
     record_final_gate_call!(:_compile_sparse_opf_like)
+    record_absolute_gate_call!(:_compile_sparse_opf_like)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _compile_sparse_opf_like")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _compile_sparse_opf_like")
     CERTSDP_REAL_GATE_MODE[] &&
@@ -3166,6 +3265,9 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
                                                                                          5]))
     _record_call!(:_compile_symmetry_clustered_low_rank)
     record_final_gate_call!(:_compile_symmetry_clustered_low_rank)
+    record_absolute_gate_call!(:_compile_symmetry_clustered_low_rank)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _compile_symmetry_clustered_low_rank")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _compile_symmetry_clustered_low_rank")
     CERTSDP_REAL_GATE_MODE[] &&
@@ -3231,6 +3333,9 @@ end
 function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticField(3))
     _record_call!(:_compile_nc_trace_npa)
     record_final_gate_call!(:_compile_nc_trace_npa)
+    record_absolute_gate_call!(:_compile_nc_trace_npa)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _compile_nc_trace_npa")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _compile_nc_trace_npa")
     CERTSDP_REAL_GATE_MODE[] &&
@@ -3296,6 +3401,9 @@ end
 function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpec=QQ)
     _record_call!(:_compile_quantum_code_infeasibility)
     record_final_gate_call!(:_compile_quantum_code_infeasibility)
+    record_absolute_gate_call!(:_compile_quantum_code_infeasibility)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _compile_quantum_code_infeasibility")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _compile_quantum_code_infeasibility")
     CERTSDP_REAL_GATE_MODE[] &&
@@ -4312,6 +4420,9 @@ function _make_factor_block(field::ExactFieldSpec, id::AbstractString,
                             constraint=nothing)
     _record_call!(:_make_factor_block)
     record_final_gate_call!(:_make_factor_block)
+    record_absolute_gate_call!(:_make_factor_block)
+    CERTSDP_ABSOLUTE_GATE_MODE[] &&
+        error("forbidden in 2.1-ABSOLUTE gate: _make_factor_block")
     CERTSDP_FINAL_GATE_MODE[] &&
         error("forbidden in 2.1-FINAL gate: _make_factor_block")
     CERTSDP_REAL_GATE_MODE[] &&
