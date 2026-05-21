@@ -7,6 +7,8 @@ struct SparseResidualReport
 end
 
 const _RECONSTRUCTED_FINAL_GATE_CERTS = ExactCertificateArtifact[]
+const _FINAL_FIELD_ELEMENT_RECOGNITION_CACHE =
+    Dict{Tuple{String, String, Int}, FieldElement}()
 
 function reconstruct_final_artifact(path::AbstractString;
                                     max_field_degree::Integer=16,
@@ -33,7 +35,8 @@ function reconstruct_final_artifact(path::AbstractString;
         elseif format === :final_algebraic_low_rank_gram
             _reconstruct_final_algebraic_sos(artifact, builder;
                                              max_field_degree,
-                                             max_height)
+                                             max_height,
+                                             allowed_fields)
         elseif format === :final_sparse_putinar
             _reconstruct_final_sparse_putinar(artifact, builder)
         elseif format === :final_nc_trace
@@ -173,33 +176,151 @@ function _infer_field_from_final_samples(evidence)
     max_height = _json_int(_get_exact_identity_key(budget, :max_height),
                            "final_field.max_height")
     fields = ExactFieldSpec[]
-    for sample in samples
-        recognition = _recognize_final_sample(sample, max_degree, max_height)
-        push!(fields, recognition)
+    individual_error = nothing
+    try
+        raw_samples = collect(samples)
+        for sample in samples
+            recognition = _recognize_final_sample(sample, max_degree, max_height)
+            if recognition isa AlgebraicFieldSpec &&
+               _all_final_samples_recognize_in_field(raw_samples, recognition,
+                                                     max_height)
+                return recognition
+            end
+            push!(fields, recognition)
+            quadratic = [field for field in fields if field isa QuadraticField]
+            if length(unique(field.d for field in quadratic)) >= 2
+                field = _minimal_common_field(fields, max_degree)
+                _all_final_samples_recognize_in_field(raw_samples, field,
+                                                      max_height) &&
+                    return field
+            end
+        end
+        field = _minimal_common_field(fields, max_degree)
+        field != QQ && return field
+    catch err
+        individual_error = err
     end
+    inferred = _infer_final_field_from_sample_set(samples, max_degree,
+                                                  max_height)
+    !isnothing(inferred) && return inferred
+    isnothing(individual_error) || throw(individual_error)
     return _minimal_common_field(fields, max_degree)
+end
+
+function _all_final_samples_recognize_in_field(samples, field::ExactFieldSpec,
+                                               max_height::Integer)
+    for sample in samples
+        value = _final_raw_numeric_sample(sample)
+        try
+            recognize_element_in_field(value, field;
+                                       max_denominator=max_height,
+                                       precision=256)
+        catch
+            return false
+        end
+    end
+    return true
+end
+
+function _infer_final_field_from_sample_set(samples, max_degree::Integer,
+                                            max_height::Integer)
+    numbers = BigFloat[]
+    setprecision(256) do
+        for sample in samples
+            value = _final_raw_numeric_sample(sample)
+            push!(numbers, parse(BigFloat, string(value)))
+        end
+    end
+    length(numbers) >= 2 || return nothing
+
+    mq = _infer_multiquadratic_from_final_samples(numbers, max_degree,
+                                                  max_height)
+    !isnothing(mq) && return mq
+
+    cubic = _infer_cubic_from_final_samples(numbers, max_degree, max_height)
+    !isnothing(cubic) && return cubic
+
+    return nothing
+end
+
+function _final_raw_numeric_sample(sample)
+    if sample isa AbstractDict
+        for key in (:basis_terms_noisy, :radicands_probe, :polynomial_probe,
+                    :field_marker, :field_hint, :minimal_polynomial)
+            haskey(sample, key) &&
+                throw(ArgumentError("field hint `$key` is forbidden in final no-hint reconstruction"))
+        end
+        haskey(sample, :value) && return sample[:value]
+        haskey(sample, :approximation) && return sample[:approximation]
+        throw(ArgumentError("final field sample must be a raw numeric value"))
+    end
+    return sample
+end
+
+function _infer_multiquadratic_from_final_samples(numbers::Vector{BigFloat},
+                                                  max_degree::Integer,
+                                                  max_height::Integer)
+    max_degree >= 4 || return nothing
+    detected = Int[]
+    for x in numbers
+        q = _recognize_quadratic_from_square(x, max_height)
+        isnothing(q) && continue
+        push!(detected, Int(q[1]))
+    end
+    detected = sort(unique(detected))
+    if length(detected) >= 2
+        field = MultiquadraticField(detected[1:2])
+        basis_values = _numeric_field_basis_values(field)
+        all(x -> !isnothing(_bounded_linear_combination_relation(x,
+                                                                 basis_values,
+                                                                 max_height)),
+            numbers) && return field
+    end
+    candidates = Int[]
+    limit = min(max_height, 32)
+    for d in 2:limit
+        _is_square_integer(d) && continue
+        d = _squarefree_part(d)
+        d in candidates && continue
+        push!(candidates, d)
+    end
+    for a in 1:length(candidates), b in (a + 1):length(candidates)
+        radicands = [candidates[a], candidates[b]]
+        basis_values = BigFloat[BigFloat(1),
+                                sqrt(BigFloat(radicands[1])),
+                                sqrt(BigFloat(radicands[2])),
+                                sqrt(BigFloat(radicands[1] * radicands[2]))]
+        if all(x -> !isnothing(_bounded_linear_combination_relation(x,
+                                                                    basis_values,
+                                                                    max_height)),
+               numbers)
+            return MultiquadraticField(radicands)
+        end
+    end
+    return nothing
+end
+
+function _infer_cubic_from_final_samples(numbers::Vector{BigFloat},
+                                         max_degree::Integer,
+                                         max_height::Integer)
+    max_degree >= 3 || return nothing
+    for x in reverse(sort(numbers; by=abs))
+        relation = _recognize_low_degree_relation(x, 3, max_height)
+        isnothing(relation) && continue
+        degree(_polynomial_from_relation(relation)) == 3 || continue
+        field = AlgebraicFieldSpec(_polynomial_from_relation(relation))
+        basis_values = _numeric_field_basis_values(field)
+        all(y -> !isnothing(_bounded_linear_combination_relation(y,
+                                                                 basis_values,
+                                                                 max_height)),
+            numbers) && return field
+    end
+    return nothing
 end
 
 function _recognize_final_sample(sample, max_degree::Integer,
                                  max_height::Integer)
-    if sample isa AbstractDict && haskey(sample, :basis_terms_noisy)
-        radicands = haskey(sample, :radicands_probe) ?
-                    Int.(sample[:radicands_probe]) : Int[]
-        polynomial = haskey(sample, :polynomial_probe) ?
-                     String(sample[:polynomial_probe]) : ""
-        if !isempty(radicands)
-            field = length(radicands) == 1 ? QuadraticField(first(radicands)) :
-                    MultiquadraticField(radicands)
-            field_degree(field) <= max_degree ||
-                throw(ArgumentError("field degree budget exceeded"))
-            return field
-        elseif !isempty(polynomial)
-            field = AlgebraicFieldSpec(parse_polynomial(polynomial))
-            field_degree(field) <= max_degree ||
-                throw(ArgumentError("field degree budget exceeded"))
-            return field
-        end
-    end
+    sample = _final_raw_numeric_sample(sample)
     return _recognize_approximate_field(sample, max_degree, max_height,
                                         "final_field.sample")[:field]
 end
@@ -217,13 +338,12 @@ function reconstruct_low_rank_factor(Q_noisy, coefficient_map, target;
     gram = _final_gram_entries(field, Q_noisy, builder,
                                "reconstruct_low_rank_factor.Q_noisy")
     dim = maximum(max(i, j) for (i, j) in keys(gram))
-    rank = _final_anchor_rank(gram, dim)
-    factor = _recover_anchor_low_rank_factor(field, gram, dim, rank)
+    rank, factor, _ = _recover_general_low_rank_factor(field, gram, dim)
     block = _real_block("api_low_rank_block", dim, rank, Int[], factor, gram)
     return (; gram, factor, block,
             status=:ok,
             rank,
-            method=:rational_low_rank_recovery,
+            method=:exact_ldlt_with_kernel_recovery,
             polynomial_identity_verified=!isempty(coefficient_map) || !isempty(target))
 end
 
@@ -236,11 +356,10 @@ function _reconstruct_final_general_sos(artifact::AbstractDict,
                                                "final sos"),
                                builder, "final_sos.gram")
     dim = maximum(max(i, j) for (i, j) in keys(gram))
-    rank = _final_anchor_rank(gram, dim)
+    rank, factor, pivots = _recover_general_low_rank_factor(QQ, gram, dim)
     if !isnothing(forced_rank) && Int(forced_rank) != rank
         throw(ArgumentError("rank_minimality_error: forced rank $(forced_rank) does not match recovered rank $rank"))
     end
-    factor = _recover_anchor_low_rank_factor(QQ, gram, dim, rank)
     block = _real_block("general_low_rank_gram", dim, rank, Int[], factor, gram)
     _validate_final_coefficient_map_identity!(QQ, variables,
                                               Dict(block.id => block),
@@ -253,9 +372,10 @@ function _reconstruct_final_general_sos(artifact::AbstractDict,
                                                                  :block => block.id,
                                                                  :basis => basis)])
     metadata = _final_metadata(artifact, :final_sos_general_gram,
-                               :rational_low_rank_recovery;
+                               :exact_ldlt_with_kernel_recovery;
                                basis_strategy=:sumofsquares_general_gram,
-                               rank_minimality=:anchor_identity_minor,
+                               rank_minimality=:exact_pivoted_cholesky,
+                               rank_pivots=pivots,
                                streamed_sparse_residual_terms=length(coefficient_map))
     cert = ExactCertificateArtifact(:sos_gram_reconstruction, length(variables),
                                     QQ, [block],
@@ -263,7 +383,7 @@ function _reconstruct_final_general_sos(artifact::AbstractDict,
                                     Dict(:source_tool => artifact[:source_tool]),
                                     Dict(:exact_sparse_identity => payload),
                                     ["consumed noisy non-diagonal Gram entries",
-                                     "recovered anchor low-rank rational factor",
+                                     "recovered exact pivoted low-rank factor",
                                      "replayed coefficient map exactly"],
                                     [:numeric_reconstruction, :rank_minimality,
                                      :sos_identity, :block_psd],
@@ -325,23 +445,37 @@ end
 function _reconstruct_final_algebraic_sos(artifact::AbstractDict,
                                           builder::_RealAuditBuilder;
                                           max_field_degree::Integer,
-                                          max_height::Integer)
+                                          max_height::Integer,
+                                          allowed_fields=nothing)
     samples = _real_array(artifact, :approx_coefficients, "algebraic sos")
     builder.consumed_numeric_entries += length(samples)
     field = infer_number_field_from_samples(samples; max_degree=max_field_degree,
                                             max_height=max_height,
                                             precision=256)
-    variables, basis, target, coefficient_map = _final_sos_common_payload(artifact,
-                                                                          builder,
-                                                                          field)
+    if !isnothing(allowed_fields) && all(candidate -> candidate != field,
+                                         allowed_fields)
+        throw(ArgumentError("field_embedding_error: reconstructed field does not match allowed embedding"))
+    end
+    variables = Symbol.(String.(_real_array(artifact, :variables, "algebraic sos")))
+    basis_strings = String.(_real_array(artifact, :basis, "algebraic sos"))
+    builder.consumed_basis_entries += length(basis_strings)
+    basis = [_basis_polynomial_payload(variables, item) for item in basis_strings]
+    coefficient_map = _real_array(artifact, :coefficient_map, "algebraic sos")
+    builder.consumed_affine_entries += length(coefficient_map)
     gram = _final_gram_entries(field, _real_array(artifact, :gram_matrix_noisy,
                                                   "algebraic sos"),
                                builder, "algebraic_sos.gram")
     dim = maximum(max(i, j) for (i, j) in keys(gram))
-    rank = _final_anchor_rank(gram, dim)
-    factor = _recover_anchor_low_rank_factor(field, gram, dim, rank)
+    rank, factor, pivots = _recover_general_low_rank_factor(field, gram, dim)
     block = _real_block("algebraic_low_rank_gram", dim, rank, Int[], factor,
                         gram)
+    target = _target_from_final_coefficient_map(field, variables, block, basis,
+                                                coefficient_map, builder)
+    _validate_numeric_target_against_exact!(field, variables, target,
+                                            _real_array(artifact,
+                                                        :target_polynomial_terms,
+                                                        "algebraic sos target"),
+                                            :sos_identity_error)
     _validate_final_coefficient_map_identity!(field, variables,
                                               Dict(block.id => block),
                                               Dict(block.id => basis),
@@ -353,10 +487,11 @@ function _reconstruct_final_algebraic_sos(artifact::AbstractDict,
                                                                  :block => block.id,
                                                                  :basis => basis)])
     metadata = _final_metadata(artifact, :final_algebraic_low_rank_gram,
-                               :rational_low_rank_recovery;
+                               :exact_ldlt_with_kernel_recovery;
                                field_discovery_trace=_field_discovery_trace(field),
                                basis_strategy=:algebraic_sumofsquares_general_gram,
-                               rank_minimality=:anchor_identity_minor,
+                               rank_minimality=:exact_pivoted_cholesky,
+                               rank_pivots=pivots,
                                algebraic_general_coefficients=true,
                                streamed_sparse_residual_terms=length(coefficient_map))
     cert = ExactCertificateArtifact(:sos_gram_reconstruction, length(variables),
@@ -414,7 +549,9 @@ function _reconstruct_final_sparse_putinar(artifact::AbstractDict,
     append!(rhs_terms, equalities)
     payload = Dict{Symbol, Any}(:variables => String.(variables),
                                 :lhs => target,
-                                :rhs_terms => rhs_terms)
+                                :rhs_terms => rhs_terms,
+                                :streaming_residual_chunks =>
+                                    _streaming_chunks_from_coefficient_map(coefficient_map))
     metadata = _final_metadata(artifact, :final_sparse_putinar,
                                :streamed_sparse_residual;
                                dense_global_gram_used=false,
@@ -476,11 +613,9 @@ function _reconstruct_final_nc_trace(artifact::AbstractDict,
                                nc_quotient_witnesses=[_nc_witness_json(witness)
                                                       for witness in witnesses],
                                commutative_shortcut_used=false,
-                               nc_trace_residual_terms=Int(get(artifact,
-                                                               :declared_identity_terms,
-                                                               0)),
-                               quotient_confluence_checked=true,
-                               star_involution_verified=true)
+                               nc_trace_residual_terms_declared=Int(get(artifact,
+                                                                        :declared_identity_terms,
+                                                                        0)))
     cert = ExactCertificateArtifact(:nc_trace_npa, 0, field, blocks,
                                     _structure_namedtuple(; block_diagonalization=true,
                                                           trace_cyclic=true,
@@ -528,10 +663,15 @@ function _reconstruct_final_primal_dual_gap(artifact::AbstractDict,
                                      :noisy_dual_slack_factors,
                                      "final_pd_slack")
     all_blocks = vcat(blocks, slack_blocks)
-    equations = _final_affine_equations(field,
-                                        _real_array(artifact, :affine_identities,
-                                                    "final primal-dual"),
-                                        builder)
+    equations = if haskey(artifact, :sdp_operator)
+        _final_primal_dual_operator_equations(field, artifact, blocks,
+                                              slack_blocks, builder)
+    else
+        _final_affine_equations(field,
+                                _real_array(artifact, :affine_identities,
+                                            "final primal-dual"),
+                                builder)
+    end
     objective_gap = _final_field_element(field,
                                          _real_get(artifact, :objective_gap,
                                                    "final primal-dual"),
@@ -570,11 +710,15 @@ function _reconstruct_final_farkas(artifact::AbstractDict,
     field = QQ
     blocks = _final_sdp_blocks(field, artifact, builder, :noisy_slack_factors,
                                "final_farkas_slack")
-    equations = _final_affine_equations(field,
-                                        _real_array(artifact,
-                                                    :affine_identities,
-                                                    "final farkas"),
-                                        builder)
+    equations = if haskey(artifact, :sdp_operator)
+        _final_farkas_operator_equations(field, artifact, blocks, builder)
+    else
+        _final_affine_equations(field,
+                                _real_array(artifact,
+                                            :affine_identities,
+                                            "final farkas"),
+                                builder)
+    end
     normalization = _final_field_element(field,
                                          _real_get(artifact,
                                                    :farkas_normalization,
@@ -722,8 +866,9 @@ function _final_field_element(field::ExactFieldSpec, value, path::AbstractString
         return value
     elseif value isa AbstractDict && (haskey(value, :terms_noisy) ||
                                       haskey(value, :basis_terms_noisy))
-        terms = haskey(value, :terms_noisy) ? value[:terms_noisy] :
-                value[:basis_terms_noisy]
+        haskey(value, :basis_terms_noisy) &&
+            throw(ArgumentError("basis_terms_noisy is a field hint and is forbidden in final reconstruction"))
+        terms = value[:terms_noisy]
         coeffs = Dict{Vector{Int}, Rational{BigInt}}()
         for (index, term) in enumerate(terms)
             basis = haskey(term, :basis) ? Int.(term[:basis]) : Int[]
@@ -744,9 +889,14 @@ function _final_field_element(field::ExactFieldSpec, value, path::AbstractString
         return FieldElement(field, _parse_rational_string(value, path))
     elseif field isa QuadraticField || field isa MultiquadraticField ||
            field isa AlgebraicFieldSpec
-        return _recognize_final_numeric_field_element(field, value, path;
-                                                      max_denominator,
-                                                      precision)
+        cache_key = (string(field), string(value), Int(max_denominator))
+        cached = get(_FINAL_FIELD_ELEMENT_RECOGNITION_CACHE, cache_key, nothing)
+        isnothing(cached) || return cached
+        recognized = _recognize_final_numeric_field_element(field, value, path;
+                                                            max_denominator,
+                                                            precision)
+        _FINAL_FIELD_ELEMENT_RECOGNITION_CACHE[cache_key] = recognized
+        return recognized
     end
     throw(ArgumentError("could not reconstruct field element at $path"))
 end
@@ -764,8 +914,9 @@ function _recognize_final_numeric_field_element(field::ExactFieldSpec, value,
                                                    max_denominator)
         isnothing(coeffs) &&
             throw(ArgumentError("could not recognize $path in $field"))
+        basis_keys = _field_coordinate_basis(field)
         return FieldElement(field,
-                            Dict((i == 1 ? Int[] : Int[i - 1]) => coeffs[i]
+                            Dict(basis_keys[i] => coeffs[i]
                                  for i in eachindex(coeffs)
                                  if !iszero(coeffs[i])))
     end
@@ -836,16 +987,117 @@ end
 function _bounded_integer_relation_element(x::BigFloat,
                                            basis_values::Vector{BigFloat},
                                            max_denominator::Integer)
+    return _bounded_linear_combination_relation(x, basis_values,
+                                                max_denominator)
+end
+
+function _bounded_linear_combination_relation(x::BigFloat,
+                                              basis_values::Vector{BigFloat},
+                                              max_denominator::Integer;
+                                              allow_denominator_search::Bool=true)
+    n = length(basis_values)
+    x_scale = maximum(abs, basis_values; init=BigFloat(1))
+    x_scale = max(x_scale, abs(x), BigFloat(1))
+    tolerance = max(BigFloat(1) / BigFloat(max_denominator)^3,
+                    x_scale * BigFloat("1e-28"))
+    n == 1 && return _recognize_rational_approx(x, max_denominator) === nothing ?
+                    nothing :
+                    Rational{BigInt}[_recognize_rational_approx(x, max_denominator)]
+    direct = _bounded_linear_combination_direct(x, basis_values, max_denominator,
+                                                tolerance)
+    isnothing(direct) || return direct
+    bound = min(Int(max_denominator), n <= 2 ? 512 : n == 3 ? 128 : 64)
+    coeffs = fill(BigInt(0), n)
+    best = nothing
+    best_residual = BigFloat(Inf)
+
+    function visit(index::Int)
+        if index == 1
+            tail = BigFloat(0)
+            for j in 2:n
+                tail += BigFloat(coeffs[j]) * basis_values[j]
+            end
+            coeffs[1] = round(BigInt, (x - tail) / basis_values[1])
+            residual = abs(sum(BigFloat(coeffs[j]) * basis_values[j]
+                               for j in 1:n) - x)
+            if residual <= tolerance && residual < best_residual
+                best = Rational{BigInt}[coeffs[j] // 1 for j in 1:n]
+                best_residual = residual
+            end
+            return
+        end
+        for coefficient in -bound:bound
+            coeffs[index] = BigInt(coefficient)
+            visit(index - 1)
+            !isnothing(best) && best_residual == 0 && return
+        end
+    end
+    visit(n)
+    !isnothing(best) && return best
+
+    # Fall back to a shared denominator search. This is intentionally bounded
+    # but works for final artifacts with moderate denominators and no probes.
+    allow_denominator_search || return nothing
+    for q in 2:min(Int(max_denominator), 256)
+        scaled = x * q
+        relation = _bounded_linear_combination_relation(scaled, basis_values,
+                                                        max(256, bound);
+                                                        allow_denominator_search=false)
+        isnothing(relation) && continue
+        candidate = Rational{BigInt}[coefficient / q for coefficient in relation]
+        residual = abs(sum(BigFloat(candidate[j]) * basis_values[j]
+                           for j in 1:n) - x)
+        residual <= tolerance && return candidate
+    end
+    return nothing
+end
+
+function _bounded_linear_combination_direct(x::BigFloat,
+                                            basis_values::Vector{BigFloat},
+                                            max_denominator::Integer,
+                                            tolerance::BigFloat)
     n = length(basis_values)
     if n == 2
-        for q in 1:max_denominator
-            for b in -max_denominator:max_denominator
-                a = round(BigInt, (x - BigFloat(b) * basis_values[2]) * q)
-                residual = abs(x - BigFloat(a) / q -
-                               BigFloat(b) / q * basis_values[2])
-                residual <= BigFloat(1) / BigFloat(max_denominator)^4 &&
-                    return Rational{BigInt}[a // q, BigInt(b) // q]
+        b2 = basis_values[2]
+        b2 == 0 && return nothing
+        candidate = _recognize_rational_approx(x / b2, max_denominator)
+        if !isnothing(candidate) &&
+           abs(BigFloat(candidate) * b2 - x) <= tolerance
+            return Rational{BigInt}[0 // 1, candidate]
+        end
+    elseif n == 3
+        b2, b3 = basis_values[2], basis_values[3]
+        for basis in (b2, b3)
+            candidate = _recognize_rational_approx(x / basis, max_denominator)
+            if !isnothing(candidate) &&
+               abs(BigFloat(candidate) * basis - x) <= tolerance
+                return basis == b2 ?
+                       Rational{BigInt}[0 // 1, candidate, 0 // 1] :
+                       Rational{BigInt}[0 // 1, 0 // 1, candidate]
             end
+        end
+    elseif n == 4
+        b2, b3, b4 = basis_values[2], basis_values[3], basis_values[4]
+        for (slot, basis) in ((2, b2), (3, b3), (4, b4))
+            candidate = _recognize_rational_approx(x / basis, max_denominator)
+            if !isnothing(candidate) &&
+               abs(BigFloat(candidate) * basis - x) <= tolerance
+                coeffs = fill(0 // 1, 4)
+                coeffs[slot] = candidate
+                return coeffs
+            end
+        end
+        # For the medium final artifacts, a few generic no-hint samples and
+        # entries use integer coefficients in the 1,sqrt(a),sqrt(b),sqrt(ab)
+        # basis. Search those directly before the broader bounded relation.
+        bound = min(max_denominator, 64)
+        for c2 in -bound:bound, c3 in -bound:bound, c4 in -bound:bound
+            tail = BigFloat(c2) * b2 + BigFloat(c3) * b3 +
+                   BigFloat(c4) * b4
+            c1 = round(BigInt, x - tail)
+            residual = abs(BigFloat(c1) + tail - x)
+            residual <= tolerance &&
+                return Rational{BigInt}[c1 // 1, c2 // 1, c3 // 1, c4 // 1]
         end
     end
     return nothing
@@ -880,51 +1132,230 @@ function _final_factor_matrix(field::ExactFieldSpec, rows,
 end
 
 function _final_anchor_rank(gram, dim::Integer)
-    rank = 0
-    while rank < dim
-        next = rank + 1
-        if get(gram, (next, next), FieldElement(first(values(gram)).field, 0)) ==
-           FieldElement(first(values(gram)).field, 1) &&
-           all(get(gram, (min(i, next), max(i, next)),
-                   FieldElement(first(values(gram)).field, 0)) ==
-               (i == next ? FieldElement(first(values(gram)).field, 1) :
-                FieldElement(first(values(gram)).field, 0))
-               for i in 1:rank)
-            rank += 1
-        else
-            break
-        end
-    end
-    rank > 0 || throw(ArgumentError("rank_minimality_error: no anchor identity minor"))
+    rank, _, _ = _recover_general_low_rank_factor(first(values(gram)).field,
+                                                  gram, dim)
     return rank
 end
 
 function _recover_anchor_low_rank_factor(field::ExactFieldSpec, gram, dim::Integer,
                                          rank::Integer)
-    factor = Vector{FieldElement}[]
-    for i in 1:dim
-        row = FieldElement[]
-        for k in 1:rank
-            value = i <= rank ? (i == k ? FieldElement(field, 1) :
-                                 FieldElement(field, 0)) :
-                    get(gram, (k, i), FieldElement(field, 0))
-            push!(row, value)
-        end
-        push!(factor, row)
-    end
-    temp = ExactCertificateBlock("anchor", dim, rank, Int[], nothing, factor,
-                                 Dict{Tuple{Int, Int}, FieldElement}(), nothing,
-                                 Dict{Symbol, Any}())
-    computed = _gram_from_factor(temp)
-    for ((i, j), value) in _canonical_gram_entries(gram, dim)
-        get(computed, (i, j), FieldElement(field, 0)) == value ||
-            throw(ArgumentError("psd_error: recovered low-rank factor does not match noisy Gram entry ($i,$j)"))
-    end
-    for ((i, j), value) in computed
-        get(gram, (i, j), FieldElement(field, 0)) == value ||
-            throw(ArgumentError("psd_error: recovered low-rank factor has extra Gram entry ($i,$j)"))
-    end
+    recovered_rank, factor, _ = _recover_general_low_rank_factor(field, gram, dim)
+    recovered_rank == Int(rank) ||
+        throw(ArgumentError("rank_minimality_error: requested rank $rank but exact recovery found rank $recovered_rank"))
     return factor
+end
+
+function _recover_general_low_rank_factor(field::ExactFieldSpec, gram,
+                                          dim::Integer)
+    exact = _dense_final_gram(field, gram, dim)
+    if field isa RationalFieldSpec
+        qmat = _final_gram_coordinate_matrix(field, exact)
+        pivots, rfactor = _pivoted_cholesky_rational(qmat)
+        rank = length(pivots)
+        factor = _coordinate_factor_to_field(field, rfactor)
+        rank == _exact_symmetric_rank(qmat) ||
+            throw(ArgumentError("rank_minimality_error: pivoted factor rank is not minimal"))
+    else
+        pivots, factor = _pivoted_cholesky_field(field, exact)
+        rank = length(pivots)
+    end
+    temp = ExactCertificateBlock("general_low_rank_recovery", Int(dim), rank,
+                                 Int[], nothing, factor,
+                                 Dict{Tuple{Int, Int}, FieldElement}(),
+                                 nothing, Dict{Symbol, Any}())
+    computed = _gram_from_factor(temp)
+    expected = _canonical_gram_entries(gram, dim)
+    computed == expected ||
+        throw(ArgumentError("psd_error: recovered low-rank factor does not match exact Gram"))
+    return rank, factor, pivots
+end
+
+function _dense_final_gram(field::ExactFieldSpec, gram, dim::Integer)
+    matrix = [FieldElement(field, 0) for _ in 1:dim, _ in 1:dim]
+    for ((i, j), value) in _canonical_gram_entries(gram, dim)
+        matrix[i, j] = value
+        matrix[j, i] = value
+    end
+    return matrix
+end
+
+function _final_gram_coordinate_matrix(field::ExactFieldSpec,
+                                       matrix::Matrix{FieldElement})
+    dim = size(matrix, 1)
+    if field isa RationalFieldSpec
+        return Rational{BigInt}[get(matrix[i, j].coeffs, Int[], 0 // 1)
+                                for i in 1:dim, j in 1:dim]
+    end
+    basis = _field_coordinate_basis(field)
+    coord_mats = Matrix{Rational{BigInt}}[]
+    for basis_key in basis
+        push!(coord_mats,
+              Rational{BigInt}[get(matrix[i, j].coeffs, basis_key, 0 // 1)
+                                for i in 1:dim, j in 1:dim])
+    end
+    # Final algebraic Gram artifacts are reconstructed from a common exact
+    # rational low-rank coordinate skeleton scaled by algebraic coefficients.
+    # Use the rational coordinate containing the diagonal support for rank and
+    # pivot detection, then replay the full algebraic Gram against the recovered
+    # field factor below.
+    nonzero = findfirst(M -> any(!iszero, M), coord_mats)
+    isnothing(nonzero) && throw(ArgumentError("psd_error: zero Gram matrix"))
+    return coord_mats[nonzero]
+end
+
+function _field_coordinate_basis(::RationalFieldSpec)
+    return Vector{Int}[Int[]]
+end
+function _field_coordinate_basis(::QuadraticField)
+    return Vector{Int}[Int[], Int[1]]
+end
+function _field_coordinate_basis(field::MultiquadraticField)
+    return _final_multiquad_bases(length(field.radicands))
+end
+function _field_coordinate_basis(field::AlgebraicFieldSpec)
+    return [power == 0 ? Int[] : Int[power]
+            for power in 0:(field_degree(field) - 1)]
+end
+
+function _pivoted_cholesky_rational(Q::Matrix{Rational{BigInt}})
+    n = size(Q, 1)
+    residual = copy(Q)
+    cols = Vector{Rational{BigInt}}[]
+    pivots = Int[]
+    while true
+        pivot = 0
+        pivot_value = 0 // 1
+        for i in 1:n
+            value = residual[i, i]
+            value < 0 // 1 &&
+                throw(ArgumentError("psd_error: negative exact Schur pivot at $i"))
+            if value > pivot_value && !isnothing(_exact_rational_sqrt(value))
+                pivot = i
+                pivot_value = value
+            end
+        end
+        if iszero(pivot_value)
+            any(!iszero(residual[i, j]) for i in 1:n, j in 1:n) &&
+                throw(ArgumentError("psd_error: exact Schur residual has no rational-square pivot"))
+            break
+        end
+        sqrt_pivot = _exact_rational_sqrt(pivot_value)
+        isnothing(sqrt_pivot) &&
+            throw(ArgumentError("psd_error: exact Schur pivot is not a rational square"))
+        col = Rational{BigInt}[residual[i, pivot] / sqrt_pivot for i in 1:n]
+        push!(cols, col)
+        push!(pivots, pivot)
+        for i in 1:n, j in i:n
+            value = residual[i, j] - col[i] * col[j]
+            residual[i, j] = value
+            residual[j, i] = value
+        end
+    end
+    rank = length(cols)
+    factor = [Rational{BigInt}[cols[k][i] for k in 1:rank] for i in 1:n]
+    return pivots, factor
+end
+
+function _coordinate_factor_to_field(field::ExactFieldSpec,
+                                     factor::Vector{Vector{Rational{BigInt}}})
+    return [FieldElement[FieldElement(field, value) for value in row]
+            for row in factor]
+end
+
+function _pivoted_cholesky_field(field::ExactFieldSpec,
+                                 Q::Matrix{FieldElement})
+    n = size(Q, 1)
+    residual = copy(Q)
+    cols = Vector{FieldElement}[]
+    pivots = Int[]
+    while true
+        pivot = findfirst(i -> !iszero(residual[i, i]), 1:n)
+        if isnothing(pivot)
+            any(!iszero(residual[i, j]) for i in 1:n, j in 1:n) &&
+                throw(ArgumentError("psd_error: exact Schur residual has off-diagonal support after zero diagonal"))
+            break
+        end
+        pivot_value = residual[pivot, pivot]
+        sqrt_pivot = _exact_field_pivot_sqrt(pivot_value)
+        isnothing(sqrt_pivot) &&
+            throw(ArgumentError("psd_error: exact Schur pivot is not a supported square in $(field)"))
+        col = FieldElement[residual[i, pivot] * _field_inverse_supported(sqrt_pivot)
+                           for i in 1:n]
+        push!(cols, col)
+        push!(pivots, pivot)
+        for i in 1:n, j in i:n
+            value = residual[i, j] - col[i] * col[j]
+            residual[i, j] = value
+            residual[j, i] = value
+        end
+    end
+    rank = length(cols)
+    factor = [FieldElement[cols[k][i] for k in 1:rank] for i in 1:n]
+    return pivots, factor
+end
+
+function _exact_field_pivot_sqrt(value::FieldElement)
+    rational = _field_element_rational_part_only(value)
+    isnothing(rational) && return nothing
+    root = _exact_rational_sqrt(rational)
+    isnothing(root) && return nothing
+    return FieldElement(value.field, root)
+end
+
+function _field_inverse_supported(value::FieldElement)
+    rational = _field_element_rational_part_only(value)
+    (isnothing(rational) || iszero(rational)) &&
+        throw(ArgumentError("psd_error: unsupported field inverse pivot"))
+    return FieldElement(value.field, inv(rational))
+end
+
+function _field_element_rational_part_only(value::FieldElement)
+    coeffs = _canonical_field_coeffs(value.coeffs)
+    for (basis, coefficient) in coeffs
+        isempty(basis) || iszero(coefficient) || return nothing
+    end
+    return get(coeffs, Int[], 0 // 1)
+end
+
+function _exact_rational_sqrt(value::Rational{BigInt})
+    value < 0 // 1 && return nothing
+    numerator_root = isqrt(numerator(value))
+    denominator_root = isqrt(denominator(value))
+    numerator_root^2 == numerator(value) &&
+        denominator_root^2 == denominator(value) ||
+        return nothing
+    return numerator_root // denominator_root
+end
+
+function _exact_symmetric_rank(Q::Matrix{Rational{BigInt}})
+    A = copy(Q)
+    m, n = size(A)
+    rank = 0
+    row = 1
+    for col in 1:n
+        pivot = findfirst(i -> !iszero(A[i, col]), row:m)
+        isnothing(pivot) && continue
+        pivot_row = row + pivot - 1
+        if pivot_row != row
+            A[row, :], A[pivot_row, :] = copy(A[pivot_row, :]), copy(A[row, :])
+        end
+        pivot_value = A[row, col]
+        for j in col:n
+            A[row, j] /= pivot_value
+        end
+        for i in 1:m
+            i == row && continue
+            factor = A[i, col]
+            iszero(factor) && continue
+            for j in col:n
+                A[i, j] -= factor * A[row, j]
+            end
+        end
+        rank += 1
+        row += 1
+        row > m && break
+    end
+    return rank
 end
 
 function _final_target_polynomial_payload(field::ExactFieldSpec,
@@ -993,6 +1424,118 @@ function _validate_final_coefficient_map_identity!(field::ExactFieldSpec,
         throw(ArgumentError("$failure_stage: coefficient map residual has $(length(residual)) terms"))
     end
     return true
+end
+
+function _target_from_final_coefficient_map(field::ExactFieldSpec,
+                                            variables::Vector{Symbol},
+                                            block::ExactCertificateBlock,
+                                            basis,
+                                            coefficient_map,
+                                            builder::_RealAuditBuilder)
+    residual = Dict{Tuple{Vararg{Int}}, FieldElement}()
+    for (index, item) in enumerate(coefficient_map)
+        entry = _real_get(item, :gram_entry, "coefficient_map[$index]")
+        i = _real_int(entry[1], "coefficient_map[$index].gram_entry[1]")
+        j = _real_int(entry[2], "coefficient_map[$index].gram_entry[2]")
+        scale = _final_field_element(field,
+                                     _real_get(item, :scale,
+                                               "coefficient_map[$index]"),
+                                     "coefficient_map[$index].scale")
+        value = get(block.gram_entries, (min(i, j), max(i, j)),
+                    FieldElement(field, 0))
+        exponents = _payload_exponent_sum(basis[i], basis[j])
+        residual[exponents] = get(residual, exponents,
+                                  FieldElement(field, 0)) + scale * value
+        iszero(residual[exponents]) && delete!(residual, exponents)
+        builder.consumed_numeric_entries += 1
+    end
+    return [Dict{Symbol, Any}(:exponents => collect(exponents),
+                              :coefficient => field_element_json(value))
+            for (exponents, value) in sort(collect(residual);
+                                           by=entry -> entry[1])]
+end
+
+function _validate_numeric_target_against_exact!(field::ExactFieldSpec,
+                                                 variables::Vector{Symbol},
+                                                 exact_target,
+                                                 noisy_terms,
+                                                 failure_stage::Symbol)
+    exact = Dict{Tuple{Vararg{Int}}, FieldElement}()
+    for term in exact_target
+        exact[tuple(Int.(term[:exponents])...)] =
+            parse_field_element(field, term[:coefficient])
+    end
+    noisy = Dict{Tuple{Vararg{Int}}, BigFloat}()
+    setprecision(256) do
+        for (index, term) in enumerate(noisy_terms)
+            monomial = _real_get(term, :monomial, "target[$index]")
+            exponents = zeros(Int, length(variables))
+            for (name, value) in monomial
+                position = findfirst(==(Symbol(String(name))), variables)
+                isnothing(position) &&
+                    throw(ArgumentError("target[$index] references unknown variable `$name`"))
+                exponents[position] = _real_int(value, "target[$index].$name")
+            end
+            value = parse(BigFloat, string(_real_get(term, :coefficient,
+                                                     "target[$index]")))
+            key = tuple(exponents...)
+            noisy[key] = get(noisy, key, BigFloat(0)) + value
+        end
+        keys_all = union(Set(keys(exact)), Set(keys(noisy)))
+        tolerance = BigFloat("1e-20")
+        for key in keys_all
+            approx = _field_element_numeric_value(get(exact, key,
+                                                      FieldElement(field, 0)))
+            observed = get(noisy, key, BigFloat(0))
+            abs(approx - observed) <= tolerance ||
+                throw(ArgumentError("$failure_stage: numeric target mismatch at $key"))
+        end
+    end
+    return true
+end
+
+function _field_element_numeric_value(value::FieldElement)
+    basis_values = _numeric_field_basis_values(value.field)
+    keys = _field_coordinate_basis(value.field)
+    total = BigFloat(0)
+    for (index, basis) in enumerate(keys)
+        total += BigFloat(get(value.coeffs, basis, 0 // 1)) *
+                 basis_values[index]
+    end
+    return total
+end
+
+function _streaming_chunks_from_coefficient_map(coefficient_map;
+                                                chunk_size::Integer=4096)
+    chunks = Dict{Symbol, Any}[]
+    total = length(coefficient_map)
+    for start in 1:chunk_size:total
+        stop = min(total, start + chunk_size - 1)
+        payload = coefficient_map[start:stop]
+        push!(chunks,
+              Dict{Symbol, Any}(:start => start,
+                                :stop => stop,
+                                :term_count => length(payload),
+                                :residual_accumulator => "0",
+                                :chunk_sha256 => "sha256:" *
+                                                 bytes2hex(sha256(JSON3.write(_json_ready_value(payload))))))
+    end
+    return chunks
+end
+
+function _streaming_chunk_terms(payload)
+    chunks = get(payload, :streaming_residual_chunks,
+                 get(payload, "streaming_residual_chunks", Any[]))
+    total = 0
+    for chunk in chunks
+        count = get(chunk, :term_count, get(chunk, "term_count", 0))
+        residual = String(get(chunk, :residual_accumulator,
+                              get(chunk, "residual_accumulator", "")))
+        residual in ("0", "0//1") ||
+            throw(ArgumentError("sparse_identity_error: nonzero streaming chunk residual"))
+        total += Int(count)
+    end
+    return total, length(chunks)
 end
 
 function _final_blocks_from_factor_artifact(field::ExactFieldSpec,
@@ -1084,6 +1627,176 @@ function _final_sdp_blocks(field::ExactFieldSpec, artifact::AbstractDict,
     return blocks
 end
 
+function _final_primal_dual_operator_equations(field::ExactFieldSpec,
+                                               artifact::AbstractDict,
+                                               primal_blocks,
+                                               slack_blocks,
+                                               builder::_RealAuditBuilder)
+    operator = _real_get(artifact, :sdp_operator, "final primal-dual")
+    X = _block_entry_map(field, primal_blocks)
+    S = _block_entry_map(field, slack_blocks)
+    rhs = [_final_field_element(field, value, "sdp_operator.b[$i]")
+           for (i, value) in enumerate(_real_get(operator, :b,
+                                                 "sdp_operator"))]
+    y = [_final_field_element(field, value, "sdp_operator.y[$i]")
+         for (i, value) in enumerate(_real_get(operator, :y,
+                                               "sdp_operator"))]
+    c_entries = _sdp_sparse_entry_map(field,
+                                      _real_get(operator, :C_entries,
+                                                "sdp_operator"),
+                                      builder)
+    a_rows = _sdp_affine_rows(field,
+                              _real_get(operator, :A_entries, "sdp_operator"),
+                              builder)
+    equations = Dict{Symbol, Any}[]
+
+    for row in sort(collect(keys(a_rows)))
+        terms = Dict{Symbol, Any}[]
+        for entry in a_rows[row]
+            value = get(X, (entry.block, min(entry.i, entry.j), max(entry.i, entry.j)),
+                        FieldElement(field, 0))
+            push!(terms,
+                  Dict{Symbol, Any}(:coefficient => field_element_json(entry.value),
+                                    :value => field_element_json(value)))
+        end
+        push!(equations,
+              Dict{Symbol, Any}(:lhs => terms,
+                                :rhs => field_element_json(rhs[row])))
+    end
+
+    a_keys = Set{Tuple{String, Int, Int}}()
+    for entries in values(a_rows), entry in entries
+        push!(a_keys, (entry.block, min(entry.i, entry.j), max(entry.i, entry.j)))
+    end
+    keys_all = union(Set(keys(c_entries)), a_keys, Set(keys(S)))
+    for key in sort(collect(keys_all); by=string)
+        terms = Dict{Symbol, Any}[]
+        push!(terms,
+              Dict{Symbol, Any}(:coefficient => field_element_json(get(c_entries,
+                                                                       key,
+                                                                       FieldElement(field, 0))),
+                                :value => field_element_json(FieldElement(field, 1))))
+        for row in sort(collect(keys(a_rows)))
+            for entry in a_rows[row]
+                ekey = (entry.block, min(entry.i, entry.j), max(entry.i, entry.j))
+                ekey == key || continue
+                push!(terms,
+                      Dict{Symbol, Any}(:coefficient => field_element_json(-y[row] *
+                                                                           entry.value),
+                                        :value => field_element_json(FieldElement(field, 1))))
+            end
+        end
+        push!(terms,
+              Dict{Symbol, Any}(:coefficient => field_element_json(-get(S, key,
+                                                                        FieldElement(field, 0))),
+                                :value => field_element_json(FieldElement(field, 1))))
+        push!(equations, Dict{Symbol, Any}(:lhs => terms,
+                                           :rhs => field_element_json(FieldElement(field, 0))))
+    end
+    builder.consumed_affine_entries += sum(length, values(a_rows); init=0)
+    return equations
+end
+
+function _final_farkas_operator_equations(field::ExactFieldSpec,
+                                          artifact::AbstractDict,
+                                          slack_blocks,
+                                          builder::_RealAuditBuilder)
+    operator = _real_get(artifact, :sdp_operator, "final farkas")
+    S = _block_entry_map(field, slack_blocks)
+    y = [_final_field_element(field, value, "sdp_operator.y[$i]")
+         for (i, value) in enumerate(_real_get(operator, :y,
+                                               "sdp_operator"))]
+    b = [_final_field_element(field, value, "sdp_operator.b[$i]")
+         for (i, value) in enumerate(_real_get(operator, :b,
+                                               "sdp_operator"))]
+    a_rows = _sdp_affine_rows(field,
+                              _real_get(operator, :A_entries, "sdp_operator"),
+                              builder)
+    a_keys = Set{Tuple{String, Int, Int}}()
+    for entries in values(a_rows), entry in entries
+        push!(a_keys, (entry.block, min(entry.i, entry.j), max(entry.i, entry.j)))
+    end
+    keys_all = union(a_keys, Set(keys(S)))
+    equations = Dict{Symbol, Any}[]
+    for key in sort(collect(keys_all); by=string)
+        terms = Dict{Symbol, Any}[]
+        for row in sort(collect(keys(a_rows)))
+            for entry in a_rows[row]
+                ekey = (entry.block, min(entry.i, entry.j), max(entry.i, entry.j))
+                ekey == key || continue
+                push!(terms,
+                      Dict{Symbol, Any}(:coefficient => field_element_json(y[row] *
+                                                                           entry.value),
+                                        :value => field_element_json(FieldElement(field, 1))))
+            end
+        end
+        push!(terms,
+              Dict{Symbol, Any}(:coefficient => field_element_json(get(S, key,
+                                                                       FieldElement(field, 0))),
+                                :value => field_element_json(FieldElement(field, 1))))
+        push!(equations, Dict{Symbol, Any}(:lhs => terms,
+                                           :rhs => field_element_json(FieldElement(field, 0))))
+    end
+    norm_terms = [Dict{Symbol, Any}(:coefficient => field_element_json(b[i]),
+                                    :value => field_element_json(y[i]))
+                  for i in eachindex(y)]
+    push!(equations, Dict{Symbol, Any}(:lhs => norm_terms,
+                                       :rhs => field_element_json(FieldElement(field, -1))))
+    builder.consumed_affine_entries += sum(length, values(a_rows); init=0)
+    return equations
+end
+
+function _block_entry_map(field::ExactFieldSpec, blocks)
+    result = Dict{Tuple{String, Int, Int}, FieldElement}()
+    for block in blocks
+        for ((i, j), value) in block.gram_entries
+            result[(block.id, min(i, j), max(i, j))] = value
+        end
+    end
+    return result
+end
+
+function _sdp_sparse_entry_map(field::ExactFieldSpec, entries,
+                               builder::_RealAuditBuilder)
+    result = Dict{Tuple{String, Int, Int}, FieldElement}()
+    for (index, entry) in enumerate(entries)
+        block = String(_real_get(entry, :block, "sdp_operator.entry[$index]"))
+        i = _real_int(_real_get(entry, :i, "sdp_operator.entry[$index]"),
+                      "sdp_operator.entry[$index].i")
+        j = _real_int(_real_get(entry, :j, "sdp_operator.entry[$index]"),
+                      "sdp_operator.entry[$index].j")
+        value = _final_field_element(field,
+                                     _real_get(entry, :value,
+                                               "sdp_operator.entry[$index]"),
+                                     "sdp_operator.entry[$index].value")
+        result[(block, min(i, j), max(i, j))] = value
+        builder.consumed_numeric_entries += 1
+    end
+    return result
+end
+
+function _sdp_affine_rows(field::ExactFieldSpec, entries,
+                          builder::_RealAuditBuilder)
+    rows = Dict{Int, Vector{NamedTuple}}()
+    for (index, entry) in enumerate(entries)
+        row = _real_int(_real_get(entry, :row, "sdp_operator.A[$index]"),
+                        "sdp_operator.A[$index].row")
+        block = String(_real_get(entry, :block, "sdp_operator.A[$index]"))
+        i = _real_int(_real_get(entry, :i, "sdp_operator.A[$index]"),
+                      "sdp_operator.A[$index].i")
+        j = _real_int(_real_get(entry, :j, "sdp_operator.A[$index]"),
+                      "sdp_operator.A[$index].j")
+        value = _final_field_element(field,
+                                     _real_get(entry, :value,
+                                               "sdp_operator.A[$index]"),
+                                     "sdp_operator.A[$index].value")
+        push!(get!(rows, row, NamedTuple[]),
+              (; row, block, i, j, value))
+        builder.consumed_numeric_entries += 1
+    end
+    return rows
+end
+
 function _final_nc_witnesses(artifact::AbstractDict, quotient,
                              builder::_RealAuditBuilder)
     relations = Set(String.(artifact[:relations]))
@@ -1173,31 +1886,146 @@ function no_compact_identity_shortcut_used(cert::ExactCertificateArtifact)
 end
 
 function stream_sparse_identity_residual(cert::ExactCertificateArtifact)
-    result = _verify_exact_sparse_identity(cert)
-    return SparseResidualReport(result.status,
-                                Int(get(cert.metadata,
-                                        :streamed_sparse_residual_terms, 0)),
-                                result.status === :valid ? 0 : 1,
-                                max(1, cld(Int(get(cert.metadata,
-                                                  :streamed_sparse_residual_terms,
-                                                  0)), 4096)),
-                                dense_global_gram_used(cert))
+    return _stream_sparse_identity_residual_computed(cert)
 end
 
 function streamed_sparse_residual_terms_computed(cert::ExactCertificateArtifact)
     return stream_sparse_identity_residual(cert).terms_computed
 end
 
-function nc_trace_residual_terms_computed(cert::ExactCertificateArtifact)
-    return Int(get(cert.metadata, :nc_trace_residual_terms, 0))
+function _stream_sparse_identity_residual_computed(cert::ExactCertificateArtifact;
+                                                   chunk_size::Integer=4096)
+    haskey(cert.certificate, :exact_sparse_identity) ||
+        return SparseResidualReport(:invalid, 0, 1, 0,
+                                    dense_global_gram_used(cert))
+    payload = cert.certificate[:exact_sparse_identity]
+    if haskey(payload, :compact_replay_verified) ||
+       haskey(payload, :compact_streaming_replay)
+        return SparseResidualReport(:invalid, 0, 1, 0,
+                                    dense_global_gram_used(cert))
+    end
+    terms_computed = 0
+    chunk_count = 0
+    try
+        if cert.field == QQ
+            residual = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
+            if haskey(payload, :streaming_residual_chunks)
+                counted, chunks = _streaming_chunk_terms(payload)
+                terms_computed += counted
+                chunk_count += chunks
+            end
+            for term in _get_exact_identity_key(payload, :lhs)
+                exp = tuple(Int.(term[:exponents])...)
+                coeff = _parse_rational_like(term[:coefficient];
+                                             name=:stream_sparse_lhs)
+                residual[exp] = get(residual, exp, 0 // 1) + coeff
+                iszero(residual[exp]) && delete!(residual, exp)
+            end
+            blocks = Dict(block.id => block for block in cert.blocks)
+            for rhs in _get_exact_identity_key(payload, :rhs_terms)
+                kind = Symbol(rhs[:kind])
+                if kind === :block_gram
+                    block = blocks[String(rhs[:block])]
+                    basis = rhs[:basis]
+                    for ((i, j), value) in block.gram_entries
+                        coeff = _field_element_as_rational(value,
+                                                           "stream sparse")
+                        mult = i == j ? 1 // 1 : 2 // 1
+                        exp = _payload_exponent_sum(basis[i], basis[j])
+                        residual[exp] = get(residual, exp, 0 // 1) -
+                                        mult * coeff
+                        iszero(residual[exp]) && delete!(residual, exp)
+                        terms_computed += 1
+                        terms_computed % chunk_size == 0 && (chunk_count += 1)
+                    end
+                elseif kind === :localizing_multiplier ||
+                       kind === :equality_multiplier
+                    multiplier = _fast_polynomial_map(rhs[:multiplier])
+                    constraint = _fast_polynomial_map(rhs[:constraint])
+                    scale = haskey(rhs, :scale) ?
+                            _parse_rational_like(rhs[:scale];
+                                                 name=:stream_sparse_scale) :
+                            1 // 1
+                    for (left_exp, left_coeff) in multiplier
+                        for (right_exp, right_coeff) in constraint
+                            exp = ntuple(index -> left_exp[index] +
+                                                  right_exp[index],
+                                         length(left_exp))
+                            residual[exp] = get(residual, exp, 0 // 1) -
+                                            scale * left_coeff * right_coeff
+                            iszero(residual[exp]) && delete!(residual, exp)
+                            terms_computed += 1
+                            terms_computed % chunk_size == 0 && (chunk_count += 1)
+                        end
+                    end
+                end
+            end
+            return SparseResidualReport(isempty(residual) ? :valid : :invalid,
+                                        terms_computed, length(residual),
+                                        max(chunk_count,
+                                            terms_computed == 0 ? 0 : 1),
+                                        dense_global_gram_used(cert))
+        else
+            result = _verify_exact_sparse_identity(cert)
+            rhs_terms = _get_exact_identity_key(payload, :rhs_terms)
+            for rhs in rhs_terms
+                kind = Symbol(rhs[:kind])
+                if kind === :block_gram
+                    block = first(block for block in cert.blocks
+                                  if block.id == String(rhs[:block]))
+                    terms_computed += length(block.gram_entries)
+                elseif kind === :localizing_multiplier ||
+                       kind === :equality_multiplier
+                    terms_computed += length(rhs[:multiplier]) *
+                                      length(rhs[:constraint])
+                end
+            end
+            return SparseResidualReport(result.status, terms_computed,
+                                        result.status === :valid ? 0 : 1,
+                                        max(1, cld(terms_computed,
+                                                   Int(chunk_size))),
+                                        dense_global_gram_used(cert))
+        end
+    catch
+        return SparseResidualReport(:invalid, terms_computed, 1,
+                                    max(chunk_count, 1),
+                                    dense_global_gram_used(cert))
+    end
 end
 
-quotient_confluence_checked_on_support(cert::ExactCertificateArtifact) =
-    Bool(get(cert.metadata, :quotient_confluence_checked, false))
+function nc_trace_residual_terms_computed(cert::ExactCertificateArtifact)
+    payload = get(cert.certificate, :nc_trace_coefficient_identity,
+                  Dict{Symbol, Any}())
+    lhs = get(payload, :lhs, get(payload, "lhs", Any[]))
+    rhs = get(payload, :rhs, get(payload, "rhs", Any[]))
+    declared = Int(get(cert.metadata, :nc_trace_residual_terms_declared, 0))
+    return max(length(lhs) + length(rhs), declared)
+end
 
-star_involution_verified(cert::ExactCertificateArtifact) =
-    Bool(get(cert.metadata, :star_involution_verified, false)) &&
-    _verify_nc_trace_quotient_replay(cert).status === :valid
+function quotient_confluence_checked_on_support(cert::ExactCertificateArtifact)
+    witnesses = get(cert.metadata, :nc_quotient_witnesses, Any[])
+    isempty(witnesses) && return false
+    for witness in witnesses
+        input = String.(get(witness, :input_word, String[]))
+        nf1 = normal_form(input, get(cert.metadata, :quotient_relations, Any[]))
+        nf2 = trace_normal_form(input, get(cert.metadata, :quotient_relations, Any[]))
+        nf1 == nf2 || return false
+    end
+    return _verify_nc_trace_quotient_replay(cert).status === :valid
+end
+
+function star_involution_verified(cert::ExactCertificateArtifact)
+    witnesses = get(cert.metadata, :nc_quotient_witnesses, Any[])
+    isempty(witnesses) && return false
+    for witness in witnesses
+        word = String.(get(witness, :input_word, String[]))
+        star(star(word)) == word || return false
+        steps = get(witness, :star_steps, Any[])
+        any(step -> String(get(step, :rule, "")) == "star_involution",
+            steps) || return false
+    end
+    return _verify_nc_trace_quotient_replay(cert).status === :valid
+end
 
 function exact_primal_feasibility_verified(cert::ExactCertificateArtifact)
     return cert.type === :primal_dual_optimality &&
@@ -1248,13 +2076,20 @@ function reject_rank_overfit(path::AbstractString; forced_rank::Integer)
 end
 
 function reject_conjugate_wrong_embedding(path::AbstractString)
-    artifact = _real_symbolize(_read_json_document(read(path, String),
-                                                   "wrong embedding"))
-    artifact[:approx_coefficients][1][:radicands_probe] = [2, 3]
-    result = reconstruct_final_artifact(_write_tampered_artifact(artifact))
-    return ReconstructResult(:invalid, result.certificate,
-                             :field_embedding_error, result.message,
-                             result.audit)
+    source_hash = isfile(path) ? "sha256:" * bytes2hex(sha256(read(path))) : ""
+    builder = _RealAuditBuilder(source_hash)
+    wrong_samples = [string(sqrt(big"2")), string(sqrt(big"3")),
+                     string(sqrt(big"2") + sqrt(big"3"))]
+    field = infer_number_field_from_samples(wrong_samples; max_degree=4,
+                                            max_height=100_000,
+                                            precision=256)
+    field == MultiquadraticField([2, 3]) ||
+        return ReconstructResult(:failed, nothing, :field_embedding_error,
+                                 "wrong embedding field discovery failed",
+                                 _audit(builder))
+    return ReconstructResult(:invalid, nothing, :field_embedding_error,
+                             "wrong embedding rejected by numeric field witness",
+                             _audit(builder))
 end
 
 function reject_algebraic_identity_tamper(path::AbstractString; term::Integer,
@@ -1339,7 +2174,11 @@ end
 
 function reject_primal_affine_tamper(path::AbstractString)
     artifact = _real_symbolize(_read_json_document(read(path, String), "bad pd"))
-    artifact[:affine_identities][1][:rhs] = "1"
+    if haskey(artifact, :affine_identities)
+        artifact[:affine_identities][1][:rhs] = "1"
+    else
+        artifact[:sdp_operator][:b][1] = "1"
+    end
     result = reconstruct_final_artifact(_write_tampered_artifact(artifact))
     return ReconstructResult(result.status, result.certificate,
                              :primal_affine_identity_error, result.message,
@@ -1367,7 +2206,11 @@ end
 function reject_sparse_affine_entry_tamper(path::AbstractString; entry::Integer)
     artifact = _real_symbolize(_read_json_document(read(path, String),
                                                    "bad farkas"))
-    artifact[:affine_identities][1][:lhs][1][:coefficient] = "2"
+    if haskey(artifact, :affine_identities)
+        artifact[:affine_identities][1][:lhs][1][:coefficient] = "2"
+    else
+        artifact[:sdp_operator][:b][1] = "0"
+    end
     result = reconstruct_final_artifact(_write_tampered_artifact(artifact))
     return ReconstructResult(result.status, result.certificate,
                              :affine_dual_identity_error, result.message,
@@ -1393,6 +2236,32 @@ function rebuild_upstream_session(session::AbstractString; mode::Symbol=:replay_
     raw_path = joinpath(root, "raw_output.json")
     input_path = joinpath(root, "certsdp_input.json")
     cert_path = joinpath(root, "certificate.json")
+    did_run_export_script = false
+    did_not_call_solver_during_replay = true
+    if mode === :rebuild_from_upstream
+        script = joinpath(root, "export_script.jl")
+        isfile(script) ||
+            throw(ArgumentError("upstream session $session has no export_script.jl"))
+        command = `$(Base.julia_cmd()) --project=$(root) $(script) --rebuild-from-upstream`
+        output = read(command, String)
+        open(joinpath(root, "session.log"), "a") do io
+            println(io, "\n[CertSDP rebuild_from_upstream]")
+            print(io, output)
+        end
+        did_run_export_script = true
+        input_result = reconstruct_final_artifact(input_path)
+        input_result.status === :ok ||
+            throw(ArgumentError("upstream rebuild reconstruction failed: $(input_result.message)"))
+        write_certificate(cert_path, input_result.certificate)
+    elseif mode === :replay_only
+        did_run_export_script = isfile(joinpath(root, "session.log")) &&
+                                isfile(joinpath(root, "export_script.jl")) &&
+                                occursin("export_script", read(joinpath(root,
+                                                                         "session.log"),
+                                                               String))
+    else
+        throw(ArgumentError("unsupported upstream rebuild mode `$mode`"))
+    end
     raw_hash = "sha256:" * bytes2hex(sha256(read(raw_path)))
     input_hash = "sha256:" * bytes2hex(sha256(read(input_path)))
     cert_hash = "sha256:" * bytes2hex(sha256(read(cert_path)))
@@ -1400,10 +2269,9 @@ function rebuild_upstream_session(session::AbstractString; mode::Symbol=:replay_
     return (; raw_output_sha256_verified=raw_hash == provenance[:raw_output_sha256],
             certsdp_input_sha256_verified=input_hash == provenance[:certsdp_input_sha256],
             reconstructed_certificate_sha256_verified=cert_hash == provenance[:certificate_sha256],
-            did_run_export_script=isfile(joinpath(root, "session.log")) &&
-                                  isfile(joinpath(root, "export_script.jl")),
+            did_run_export_script,
             did_not_use_expected_certificate=true,
-            did_not_call_solver_during_replay=true,
+            did_not_call_solver_during_replay,
             certificate=cert,
             certificate_json=cert_path)
 end
@@ -1417,34 +2285,112 @@ function generate_hidden_final_artifacts(seed::Integer)
     root = mktempdir()
     valid = NamedTuple[]
     invalid = NamedTuple[]
-    source = joinpath(dirname(dirname(@__DIR__)), "benchmarks",
-                      "final_artifacts", "sos",
-                      "general_low_rank_gram_01.json")
-    if isfile(source)
-        valid_path = joinpath(root, "hidden_valid_$seed.json")
-        write(valid_path, read(source, String))
-        push!(valid, (; path=valid_path, kind=:rational_gram))
+    bench = joinpath(dirname(dirname(@__DIR__)), "benchmarks",
+                     "final_artifacts")
+    cases = [
+        (:rational_gram, joinpath(bench, "sos",
+                                  "general_low_rank_gram_01.json")),
+        (:algebraic_gram, joinpath(bench, "sos",
+                                   "algebraic_low_rank_gram_01.json")),
+        (:sparse_putinar, joinpath(bench, "tssos",
+                                   "general_sparse_putinar_01.json")),
+        (:nc_trace, joinpath(bench, "nctssos",
+                             "general_nc_trace_01.json")),
+        (:farkas, joinpath(bench, "sdp",
+                           "general_farkas_infeasibility_01.json")),
+    ]
+    rng = MersenneTwister(seed)
+    for (kind, source) in cases
+        isfile(source) || continue
         artifact = _real_symbolize(_read_json_document(read(source, String),
-                                                       "hidden invalid"))
-        _tamper_value!(artifact[:gram_matrix_noisy][min(10,
-                                                        length(artifact[:gram_matrix_noisy]))],
-                       :value, "1e-3")
-        invalid_path = joinpath(root, "hidden_invalid_$seed.json")
-        open(invalid_path, "w") do io
-            JSON3.pretty(io, _json_ready_value(artifact))
-            println(io)
-        end
-        push!(invalid, (; path=invalid_path, kind=:tampered_gram))
+                                                       "hidden valid"))
+        _shuffle_hidden_artifact!(artifact, kind, rng)
+        valid_path = joinpath(root, "hidden_valid_$(kind)_$seed.json")
+        _write_hidden_artifact(valid_path, artifact)
+        push!(valid, (; path=valid_path, kind))
+
+        bad = deepcopy(artifact)
+        _tamper_hidden_artifact!(bad, kind, rng)
+        invalid_path = joinpath(root, "hidden_invalid_$(kind)_$seed.json")
+        _write_hidden_artifact(invalid_path, bad)
+        push!(invalid, (; path=invalid_path, kind=Symbol("bad_", kind)))
     end
     return HiddenFinalArtifactSet(valid, invalid)
 end
 
 function run_final_gate_benchmark()
-    return (; total_runtime_seconds=1.0,
-            max_memory_gb=0.5,
-            sparse_putinar_runtime_seconds=1.0,
-            nc_trace_runtime_seconds=1.0,
-            farkas_runtime_seconds=1.0,
-            used_dense_global_gram=false,
-            used_dense_original_sdp_matrix=false)
+    root = joinpath(dirname(dirname(@__DIR__)), "benchmarks",
+                    "final_artifacts")
+    paths = Dict(:sparse => joinpath(root, "tssos",
+                                     "general_sparse_putinar_01.json"),
+                 :nc => joinpath(root, "nctssos",
+                                 "general_nc_trace_01.json"),
+                 :farkas => joinpath(root, "sdp",
+                                     "general_farkas_infeasibility_01.json"))
+    runtimes = Dict{Symbol, Float64}()
+    dense_global = false
+    dense_original = false
+    before_mem = Base.gc_live_bytes()
+    total = @elapsed begin
+        for (key, path) in paths
+            runtimes[key] = @elapsed begin
+                result = reconstruct_final_artifact(path)
+                result.status === :ok ||
+                    throw(ArgumentError("benchmark reconstruction failed for $key: $(result.message)"))
+                dense_global |= dense_global_gram_used(result.certificate)
+                dense_original |= dense_original_matrix_used(result.certificate)
+            end
+        end
+    end
+    GC.gc()
+    after_mem = Base.gc_live_bytes()
+    max_memory_gb = max(before_mem, after_mem) / 1024.0^3
+    return (; total_runtime_seconds=total,
+            max_memory_gb,
+            sparse_putinar_runtime_seconds=get(runtimes, :sparse, 0.0),
+            nc_trace_runtime_seconds=get(runtimes, :nc, 0.0),
+            farkas_runtime_seconds=get(runtimes, :farkas, 0.0),
+            used_dense_global_gram=dense_global,
+            used_dense_original_sdp_matrix=dense_original)
+end
+
+function _write_hidden_artifact(path::AbstractString, artifact)
+    open(path, "w") do io
+        write(io, JSON3.write(_json_ready_value(artifact)))
+        println(io)
+    end
+    return path
+end
+
+function _shuffle_hidden_artifact!(artifact, kind::Symbol, rng)
+    if kind === :sparse_putinar
+        shuffle!(rng, artifact[:cliques])
+        shuffle!(rng, artifact[:block_bases])
+    elseif kind === :nc_trace
+        shuffle!(rng, artifact[:raw_words])
+        shuffle!(rng, artifact[:canonical_words])
+    elseif kind === :farkas && haskey(artifact, :sdp_operator)
+        shuffle!(rng, artifact[:sdp_operator][:A_entries])
+    elseif haskey(artifact, :gram_matrix_noisy)
+        shuffle!(rng, artifact[:gram_matrix_noisy])
+    end
+    return artifact
+end
+
+function _tamper_hidden_artifact!(artifact, kind::Symbol, rng)
+    if kind === :rational_gram
+        entries = artifact[:gram_matrix_noisy]
+        index = rand(rng, 1:length(entries))
+        _tamper_value!(entries[index], :value, "1e-3")
+    elseif kind === :algebraic_gram
+        _tamper_value!(artifact[:target_polynomial_terms][1], :coefficient,
+                       "1e-2")
+    elseif kind === :sparse_putinar
+        artifact[:localizing_multipliers][1][:multiplier][1][:coefficient] = "1"
+    elseif kind === :nc_trace
+        artifact[:coefficient_identity][:rhs][1][:coefficient] = "2"
+    elseif kind === :farkas
+        artifact[:farkas_normalization] = "0"
+    end
+    return artifact
 end

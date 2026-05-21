@@ -1,7 +1,7 @@
 module CertSDP
 
 using LinearAlgebra: det, dot
-using Random: MersenneTwister
+using Random: MersenneTwister, shuffle!
 
 # The stable public surface is deliberately small. The exact certificate
 # compiler internals stay module-qualified unless promoted in docs/API_STABILITY.md.

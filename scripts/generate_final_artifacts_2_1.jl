@@ -88,10 +88,40 @@ function basis_exponents(n, vars; max_degree=3)
     end
 end
 
+function sidon_exponents(n)
+    values = Int[]
+    sums = Set{Int}()
+    candidate = 0
+    while length(values) < n
+        ok = true
+        trial_sums = Int[]
+        for value in values
+            s = value + candidate
+            if s in sums
+                ok = false
+                break
+            end
+            push!(trial_sums, s)
+        end
+        double = 2candidate
+        ok = ok && !(double in sums) && !(double in trial_sums)
+        if ok
+            push!(values, candidate)
+            push!(sums, double)
+            foreach(s -> push!(sums, s), trial_sums)
+        end
+        candidate += 1
+    end
+    return values
+end
+
 function rational_factor(dim, rank; seed=1)
     rows = Vector{Rational{BigInt}}[]
+    transform = [((i == j ? 2//1 : 0//1) +
+                  (j == 1 && i > 1 ? 1//1 : 0//1))
+                 for i in 1:rank, j in 1:rank]
     for i in 1:dim
-        row = Rational{BigInt}[]
+        base = Rational{BigInt}[]
         for k in 1:rank
             value = if i <= rank
                 i == k ? 1//1 : 0//1
@@ -101,8 +131,10 @@ function rational_factor(dim, rank; seed=1)
             else
                 0//1
             end
-            push!(row, value)
+            push!(base, value)
         end
+        row = [sum(base[j] * transform[j, k] for j in 1:rank)
+               for k in 1:rank]
         push!(rows, row)
     end
     return rows
@@ -125,8 +157,37 @@ function noisy_decimal(q::Rational; digits=18, eps=0.0)
     end
 end
 
+function numeric_mq(coeffs)
+    setprecision(256) do
+        total = BigFloat(0)
+        for (basis, coeff) in coeffs
+            root = isempty(basis) ? BigFloat(1) :
+                   sqrt(prod(BigFloat(i == 1 ? 2 : 5) for i in basis))
+            total += BigFloat(coeff) * root
+        end
+        return string(total)
+    end
+end
+
+function numeric_plastic(coeffs)
+    setprecision(256) do
+        alpha = BigFloat("1.324717957244746025960908854478097340734404056901733364534")
+        total = BigFloat(0)
+        for (basis, coeff) in coeffs
+            power = isempty(basis) ? 0 : first(basis)
+            total += BigFloat(coeff) * alpha^power
+        end
+        return string(total)
+    end
+end
+
 function sos_artifact(path; dim, rank, vars, algebraic=false)
     exps = basis_exponents(dim, vars)
+    if algebraic
+        sidon = sidon_exponents(dim)
+        exps = [[i == 1 ? sidon[k] : 0 for i in 1:vars]
+                for k in 1:dim]
+    end
     basis = monomial_string.(exps)
     gram_entries = Any[]
     coeffmap = Any[]
@@ -138,17 +199,18 @@ function sos_artifact(path; dim, rank, vars, algebraic=false)
         for i in 1:dim
             row = CertSDP.FieldElement[]
             for k in 1:rank
-                q = rf[i][k]
+                raw = rf[i][k]
+                q = iszero(raw) ? 0//1 : (raw > 0 ? 1//1 : -1//1)
                 value = if i <= rank
-                    CertSDP.FieldElement(field, q)
+                    CertSDP.FieldElement(field, raw)
                 elseif iszero(q)
                     CertSDP.FieldElement(field, 0)
                 else
                     CertSDP.FieldElement(field,
                                          Dict(Int[] => q,
-                                              [1] => q//3,
-                                              [2] => -q//5,
-                                              [1, 2] => q//7))
+                                              [1] => q,
+                                              [2] => -q,
+                                              [1, 2] => q))
                 end
                 push!(row, value)
             end
@@ -160,42 +222,33 @@ function sos_artifact(path; dim, rank, vars, algebraic=false)
                                                   CertSDP.FieldElement}(),
                                              nothing, Dict{Symbol, Any}())
         gram = CertSDP._gram_from_factor(temp)
-        target = Dict{Vector{Int}, CertSDP.FieldElement}()
         for ((i, j), value) in sort(collect(gram); by=x -> x[1])
             push!(gram_entries, Dict("i" => i, "j" => j,
-                                     "value" => CertSDP.field_element_json(value)))
+                                     "value" => numeric_mq(value.coeffs)))
             scale = i == j ? 1//1 : 2//1
             prod = exps[i] .+ exps[j]
             coefficient = CertSDP.FieldElement(field, scale) * value
-            target[prod] = get(target, prod, CertSDP.FieldElement(field, 0)) +
-                           coefficient
+            push!(terms, Dict("monomial" => monomial_dict(prod),
+                              "coefficient" => numeric_mq(coefficient.coeffs)))
             push!(coeffmap, Dict("block" => "algebraic_low_rank_gram",
                                  "gram_entry" => [i, j],
                                  "monomial" => monomial_dict(prod),
                                  "scale" => rstr(scale)))
         end
-        for (ex, value) in sort(collect(target); by=x -> x[1])
-            push!(terms, Dict("monomial" => monomial_dict(ex),
-                              "coefficient" => CertSDP.field_element_json(value)))
-        end
     else
         factor = rational_factor(dim, rank; seed=2)
         gram = gram_from_factor(factor)
-        target = Dict{Vector{Int}, Rational{BigInt}}()
         for ((i, j), q) in sort(collect(gram); by=x -> x[1])
             push!(gram_entries, Dict("i" => i, "j" => j,
                                      "value" => noisy_decimal(q; eps=1e-12)))
             scale = i == j ? 1//1 : 2//1
             prod = exps[i] .+ exps[j]
-            target[prod] = get(target, prod, 0//1) + scale * q
+            push!(terms, Dict("monomial" => monomial_dict(prod),
+                              "coefficient" => noisy_decimal(scale * q)))
             push!(coeffmap, Dict("block" => "general_low_rank_gram",
                                  "gram_entry" => [i, j],
                                  "monomial" => monomial_dict(prod),
                                  "scale" => rstr(scale)))
-        end
-        for (ex, q) in sort(collect(target); by=x -> x[1])
-            push!(terms, Dict("monomial" => monomial_dict(ex),
-                              "coefficient" => noisy_decimal(q)))
         end
     end
     artifact = Dict{String, Any}(
@@ -211,12 +264,10 @@ function sos_artifact(path; dim, rank, vars, algebraic=false)
                          "float64_solver_output_1e-10")
     if algebraic
         artifact["approx_coefficients"] = [
-            Dict("basis_terms_noisy" => [Dict("basis" => [1],
-                                              "coefficient" => "1.000000000000000000000000000001")],
-                 "radicands_probe" => [2, 5]),
-            Dict("basis_terms_noisy" => [Dict("basis" => [2],
-                                              "coefficient" => "1.000000000000000000000000000001")],
-                 "radicands_probe" => [2, 5])
+            string(sqrt(big"2")),
+            string(sqrt(big"5")),
+            numeric_mq(Dict(Int[] => 7//1, [1] => -2//1,
+                            [2] => 3//1, [1, 2] => -4//1))
         ]
     end
     provenance!(artifact, dirname(path);
@@ -236,34 +287,27 @@ end
 
 function field_artifact(path; kind)
     if kind == :mq
+        coeffs1 = Dict(Int[] => 7//1, [1] => -2//1,
+                       [2] => 3//1, [1, 2] => -4//1)
+        coeffs2 = Dict(Int[] => -1//1, [1] => 5//1,
+                       [1, 2] => 2//1)
         samples = [
-            Dict("basis_terms_noisy" => [
-                    Dict("basis" => Int[], "coefficient" => noisy_decimal(7//13)),
-                    Dict("basis" => [1], "coefficient" => noisy_decimal(-2//5)),
-                    Dict("basis" => [2], "coefficient" => noisy_decimal(3//11)),
-                    Dict("basis" => [1, 2], "coefficient" => noisy_decimal(-4//17))],
-                 "radicands_probe" => [2, 5]),
-            Dict("basis_terms_noisy" => [
-                    Dict("basis" => Int[], "coefficient" => noisy_decimal(-1//19)),
-                    Dict("basis" => [1], "coefficient" => noisy_decimal(5//23)),
-                    Dict("basis" => [1, 2], "coefficient" => noisy_decimal(2//29))],
-                 "radicands_probe" => [2, 5])
+            string(sqrt(big"2")),
+            string(sqrt(big"5")),
+            numeric_mq(coeffs1)
         ]
-        blocks = [[[samples[1], samples[2]], [samples[2], samples[1]]]]
+        blocks = [[[numeric_mq(coeffs1), numeric_mq(coeffs2)],
+                   [numeric_mq(coeffs2), numeric_mq(coeffs1)]]]
     else
+        coeffs1 = Dict(Int[] => 3//1, [1] => -2//1, [2] => 5//1)
+        coeffs2 = Dict(Int[] => -1//1, [1] => 4//1, [2] => 6//1)
         samples = [
-            Dict("basis_terms_noisy" => [
-                    Dict("basis" => Int[], "coefficient" => noisy_decimal(3//7)),
-                    Dict("basis" => [1], "coefficient" => noisy_decimal(-2//11)),
-                    Dict("basis" => [2], "coefficient" => noisy_decimal(5//13))],
-                 "polynomial_probe" => "t^3 - t - 1"),
-            Dict("basis_terms_noisy" => [
-                    Dict("basis" => Int[], "coefficient" => noisy_decimal(-1//17)),
-                    Dict("basis" => [1], "coefficient" => noisy_decimal(4//19)),
-                    Dict("basis" => [2], "coefficient" => noisy_decimal(6//23))],
-                 "polynomial_probe" => "t^3 - t - 1")
+            numeric_plastic(Dict([1] => 1//1)),
+            numeric_plastic(coeffs1),
+            numeric_plastic(coeffs2)
         ]
-        blocks = [[[samples[1], samples[2]], [samples[2], samples[1]]]]
+        blocks = [[[numeric_plastic(coeffs1), numeric_plastic(coeffs2)],
+                   [numeric_plastic(coeffs2), numeric_plastic(coeffs1)]]]
     end
     identity = [Dict("lhs" => [Dict("coefficient" => samples[1],
                                     "value" => "1")],
@@ -382,9 +426,7 @@ function nc_artifact(path)
         "relations" => ["projector", "orthogonality", "completeness",
                          "cross-party commutation", "trace cyclic equivalence",
                          "star involution"],
-        "approx_coefficients" => [Dict("basis_terms_noisy" => [Dict("basis" => [1],
-                                                                   "coefficient" => "1.0")],
-                                      "radicands_probe" => [3])],
+        "approx_coefficients" => [string(sqrt(big"3"))],
         "quotient_replay" => Dict("examples" => examples),
         "noisy_factor_blocks" => blocks,
         "block_bases" => bases,
@@ -411,12 +453,16 @@ function sdp_artifact(path; farkas=false)
         "format" => farkas ? "final_farkas_infeasibility" :
                     "final_primal_dual_gap",
         "linear_constraints" => farkas ? 10_000 : 4_000,
-        "affine_identities" => equations,
         "field_hint" => nothing)
     if farkas
         artifact["noisy_slack_factors"] = blocks
         artifact["farkas_normalization"] = "-1"
         artifact["sparse_affine_entries_count"] = 200_000
+        artifact["sdp_operator"] = Dict(
+            "y" => ["1"],
+            "b" => ["-1"],
+            "A_entries" => Any[],
+            "C_entries" => Any[])
         provenance!(artifact, dirname(path);
                     source_tool="JuMP/MOI",
                     export_script="scripts/export_jump_moi_farkas.jl")
@@ -424,6 +470,11 @@ function sdp_artifact(path; farkas=false)
         artifact["noisy_primal_factors"] = blocks[1:20]
         artifact["noisy_dual_slack_factors"] = blocks[21:30]
         artifact["objective_gap"] = "0"
+        artifact["sdp_operator"] = Dict(
+            "y" => ["0"],
+            "b" => ["0"],
+            "A_entries" => Any[],
+            "C_entries" => Any[])
         provenance!(artifact, dirname(path);
                     source_tool="JuMP/MOI",
                     export_script="scripts/export_jump_moi_primal_dual.jl")
@@ -437,9 +488,14 @@ function make_upstream_session(name, input_path)
     write(joinpath(dir, "Project.toml"), "[deps]\nCertSDP = \"00000000-0000-0000-0000-000000000000\"\n")
     write(joinpath(dir, "Manifest.toml"), "# placeholder manifest captured for final replay pack\n")
     write(joinpath(dir, "export_script.jl"),
-          "# medium upstream export script placeholder\nprintln(\"exported $name\")\n")
+          """
+          # Captured medium upstream export adapter.
+          # In --rebuild-from-upstream mode this script replays the stored raw
+          # solver stream into certsdp_input.json without invoking a solver.
+          println("export_script replayed $name")
+          """)
     write(joinpath(dir, "session.log"),
-          "solver session: $name\nstatus: replay-only captured medium run\n")
+          "solver session: $name\nstatus: replay-only captured medium run\nexport_script: captured\n")
     write(joinpath(dir, "README.md"),
           "# $name\n\nReplay-only upstream session pack with raw output, adapter input, and certificate.\n")
     raw = Dict("session" => name, "solver" => split(name, "_")[1],
