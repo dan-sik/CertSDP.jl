@@ -1,6 +1,8 @@
 const CERTSDP_2_0_ARTIFACT_VERSION = "2.0"
 const CERTSDP_REAL_GATE_MODE = Ref(false)
+const CERTSDP_FINAL_GATE_MODE = Ref(false)
 const REAL_GATE_CALLS = Dict{Symbol, Int}()
+const FINAL_GATE_CALLS = Dict{Symbol, Int}()
 const REAL_GATE_FORBIDDEN_METADATA_CLAIMS = (:all_psd_blocks_verified,
                                              :quotient_relations_verified,
                                              :field_minimal,
@@ -14,9 +16,21 @@ function _record_call!(name::Symbol)
     return nothing
 end
 
+function record_final_gate_call!(name::Symbol)
+    if CERTSDP_FINAL_GATE_MODE[]
+        FINAL_GATE_CALLS[name] = get(FINAL_GATE_CALLS, name, 0) + 1
+    end
+    return nothing
+end
+
 function reset_real_gate_call_trace!()
     empty!(REAL_GATE_CALLS)
     return REAL_GATE_CALLS
+end
+
+function reset_final_gate_call_trace!()
+    empty!(FINAL_GATE_CALLS)
+    return FINAL_GATE_CALLS
 end
 
 abstract type ExactFieldSpec end
@@ -177,12 +191,38 @@ Base.:-(a::Rational, b::FieldElement) = FieldElement(b.field, a) - b
 
 function Base.:*(a::FieldElement, b::FieldElement)
     field = _common_field(a, b)
+    field isa AlgebraicFieldSpec && return _multiply_algebraic_field_elements(field, a, b)
     coeffs = Dict{Vector{Int}, Rational{BigInt}}()
     for (left_basis, left_coefficient) in a.coeffs
         for (right_basis, right_coefficient) in b.coeffs
             basis, scale = _multiply_field_basis(field, left_basis, right_basis)
             coeffs[basis] = get(coeffs, basis, 0 // 1) +
                             left_coefficient * right_coefficient * scale
+        end
+    end
+    return FieldElement(field, coeffs)
+end
+
+function _multiply_algebraic_field_elements(field::AlgebraicFieldSpec,
+                                            a::FieldElement,
+                                            b::FieldElement)
+    coeffs = Dict{Vector{Int}, Rational{BigInt}}()
+    for (left_basis, left_coefficient) in a.coeffs
+        left_power = isempty(left_basis) ? 0 : sum(left_basis)
+        for (right_basis, right_coefficient) in b.coeffs
+            right_power = isempty(right_basis) ? 0 : sum(right_basis)
+            monomial = UnivariatePolynomial(vcat(fill(0 // 1,
+                                                      left_power + right_power),
+                                                  [1 // 1]))
+            reduced = polynomial_remainder(monomial, field.minimal_polynomial)
+            for power in 0:max(degree(reduced), 0)
+                coefficient = _coefficient(reduced, power)
+                iszero(coefficient) && continue
+                basis = power == 0 ? Int[] : Int[power]
+                coeffs[basis] = get(coeffs, basis, 0 // 1) +
+                                left_coefficient * right_coefficient * coefficient
+                iszero(coeffs[basis]) && delete!(coeffs, basis)
+            end
         end
     end
     return FieldElement(field, coeffs)
@@ -365,6 +405,10 @@ function objective_residual(cert::ExactCertificateArtifact)
     return witness == _identity_witness_hash(cert) ? 0 : 1
 end
 function nc_trace_residual(cert::ExactCertificateArtifact)
+    if haskey(cert.certificate, :nc_trace_coefficient_identity) &&
+       isdefined(@__MODULE__, :_verify_nc_trace_coefficient_identity)
+        return _verify_nc_trace_coefficient_identity(cert).status === :valid ? 0 : 1
+    end
     witness = String(get(cert.certificate, :trace_identity_witness_hash, ""))
     return witness == _identity_witness_hash(cert) ? 0 : 1
 end
@@ -2394,10 +2438,10 @@ function _minimal_common_field(fields::Vector{ExactFieldSpec}, max_degree::Integ
     all(field -> field == QQ, fields) && return QQ
     nonrational = [field for field in fields if field != QQ]
     if !all(field -> field isa QuadraticField, nonrational)
-        unique_fields = unique(nonrational)
-        if length(unique_fields) == 1 &&
-           field_degree(first(unique_fields)) <= max_degree
-            return first(unique_fields)
+        representative = first(nonrational)
+        if all(field -> field == representative, nonrational) &&
+           field_degree(representative) <= max_degree
+            return representative
         end
         throw(ArgumentError("approximate field evidence requires unsupported mixed algebraic field"))
     end
@@ -2598,6 +2642,9 @@ function supports_import(format::Symbol)
 end
 
 function _external_fixture_instance(format::Symbol; seed::Integer=0)
+    record_final_gate_call!(:_external_fixture_instance)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _external_fixture_instance")
     supports_import(format) || throw(ArgumentError("unsupported import format `$format`"))
     if format === :sumofsquares_like
         return Dict(:kind => :field_instance, :field_evidence => _field_evidence(QQ),
@@ -2621,6 +2668,9 @@ function _external_fixture_instance(format::Symbol; seed::Integer=0)
 end
 
 function _external_fixture_from_object(fixture)
+    record_final_gate_call!(:_external_fixture_from_object)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _external_fixture_from_object")
     format = Symbol(_external_fixture_required_string(fixture, :format, "fixture.format"))
     supports_import(format) || throw(ArgumentError("unsupported import format `$format`"))
     seed = has_exact_identity_key(fixture, :seed) ?
@@ -2738,6 +2788,9 @@ end
 
 function _bind_field_evidence!(instance::AbstractDict, fixture,
                                fallback::ExactFieldSpec)
+    record_final_gate_call!(:_bind_field_evidence!)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _bind_field_evidence!")
     evidence = has_exact_identity_key(fixture, :field_evidence) ?
                _plain_symbol_dict(_require_exact_identity_key(fixture,
                                                               :field_evidence,
@@ -2923,6 +2976,9 @@ end
 function compile_fixture(kind::Symbol; seed::Integer=0,
                          field::ExactFieldSpec=_default_fixture_field(kind))
     _record_call!(:compile_fixture)
+    record_final_gate_call!(:compile_fixture)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: compile_fixture")
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: compile_fixture")
     if kind === :sparse_opf_like
@@ -2948,6 +3004,9 @@ end
 
 function _saved_noisy_artifact(kind::Symbol, seed::Integer,
                                field::ExactFieldSpec=_default_fixture_field(kind))
+    record_final_gate_call!(:_saved_noisy_artifact)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _saved_noisy_artifact")
     path = _saved_noisy_artifact_path(kind, seed, field)
     isfile(path) || return Dict{Symbol, Any}()
     parsed = _read_json_document(read(path, String), "saved noisy solver artifact")
@@ -3027,6 +3086,9 @@ end
 
 function _compile_sparse_opf_like(seed::Integer; field::ExactFieldSpec=QQ)
     _record_call!(:_compile_sparse_opf_like)
+    record_final_gate_call!(:_compile_sparse_opf_like)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _compile_sparse_opf_like")
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _compile_sparse_opf_like")
     artifact = _saved_noisy_artifact(:sparse_opf_like, seed)
@@ -3103,6 +3165,9 @@ function _compile_symmetry_clustered_low_rank(seed::Integer;
                                               field::ExactFieldSpec=MultiquadraticField([2,
                                                                                          5]))
     _record_call!(:_compile_symmetry_clustered_low_rank)
+    record_final_gate_call!(:_compile_symmetry_clustered_low_rank)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _compile_symmetry_clustered_low_rank")
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _compile_symmetry_clustered_low_rank")
     artifact = _saved_noisy_artifact(:symmetry_clustered_low_rank, seed, field)
@@ -3165,6 +3230,9 @@ end
 
 function _compile_nc_trace_npa(seed::Integer; field::ExactFieldSpec=QuadraticField(3))
     _record_call!(:_compile_nc_trace_npa)
+    record_final_gate_call!(:_compile_nc_trace_npa)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _compile_nc_trace_npa")
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _compile_nc_trace_npa")
     artifact = _saved_noisy_artifact(:nc_trace_npa, seed, field)
@@ -3227,6 +3295,9 @@ end
 
 function _compile_quantum_code_infeasibility(seed::Integer; field::ExactFieldSpec=QQ)
     _record_call!(:_compile_quantum_code_infeasibility)
+    record_final_gate_call!(:_compile_quantum_code_infeasibility)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _compile_quantum_code_infeasibility")
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _compile_quantum_code_infeasibility")
     artifact = _saved_noisy_artifact(:quantum_code_infeasibility, seed, field)
@@ -4240,6 +4311,9 @@ function _make_factor_block(field::ExactFieldSpec, id::AbstractString,
                             clique::Vector{Int}; seed::Integer,
                             constraint=nothing)
     _record_call!(:_make_factor_block)
+    record_final_gate_call!(:_make_factor_block)
+    CERTSDP_FINAL_GATE_MODE[] &&
+        error("forbidden in 2.1-FINAL gate: _make_factor_block")
     CERTSDP_REAL_GATE_MODE[] &&
         error("synthetic compiler forbidden in real gate: _make_factor_block")
     factor = Vector{FieldElement}[]

@@ -1530,9 +1530,6 @@ function exact_polynomial_identity_verified(cert::ExactCertificateArtifact)
 end
 
 function _verify_real_sparse_identity_fast(cert::ExactCertificateArtifact)
-    cert.field == QQ ||
-        return ExactCertificateStatus(:invalid, :localizing_identity_error,
-                                      "real sparse fast replay supports QQ")
     payload = cert.certificate[:exact_sparse_identity]
     if haskey(payload, :compact_replay_verified)
         return ExactCertificateStatus(:invalid, :sparse_identity_error,
@@ -1541,13 +1538,15 @@ function _verify_real_sparse_identity_fast(cert::ExactCertificateArtifact)
         return ExactCertificateStatus(:invalid, :sparse_identity_error,
                                       "compact sparse identity needs streaming replay data, not a compact proof claim")
     end
+    cert.field == QQ && return _verify_real_sparse_identity_fast_qq(cert, payload)
     variables = Symbol.(String.(_get_exact_identity_key(payload, :variables)))
-    residual = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
+    residual = Dict{Tuple{Vararg{Int}}, FieldElement}()
     for term in _get_exact_identity_key(payload, :lhs)
         exponents = tuple(Int.(term[:exponents])...)
-        coefficient = _parse_rational_like(term[:coefficient];
-                                           name=:real_sparse_lhs)
-        residual[exponents] = get(residual, exponents, 0 // 1) + coefficient
+        coefficient = parse_field_element(cert.field, term[:coefficient])
+        residual[exponents] = get(residual, exponents,
+                                  FieldElement(cert.field, 0)) + coefficient
+        iszero(residual[exponents]) && delete!(residual, exponents)
     end
     blocks = Dict(block.id => block for block in cert.blocks)
     for rhs in _get_exact_identity_key(payload, :rhs_terms)
@@ -1556,7 +1555,59 @@ function _verify_real_sparse_identity_fast(cert::ExactCertificateArtifact)
             block = blocks[String(rhs[:block])]
             basis = rhs[:basis]
             for ((i, j), value) in block.gram_entries
-                coefficient = _field_element_as_rational(value, "real sparse replay")
+                multiplier = i == j ? 1 // 1 : 2 // 1
+                exponents = _payload_exponent_sum(basis[i], basis[j])
+                residual[exponents] = get(residual, exponents,
+                                          FieldElement(cert.field, 0)) -
+                                      FieldElement(cert.field, multiplier) * value
+                iszero(residual[exponents]) && delete!(residual, exponents)
+            end
+        elseif kind === :localizing_multiplier || kind === :equality_multiplier
+            multiplier = _fast_polynomial_map(cert.field, rhs[:multiplier])
+            constraint = _fast_polynomial_map(cert.field, rhs[:constraint])
+            scale = haskey(rhs, :scale) ?
+                    parse_field_element(cert.field, rhs[:scale]) :
+                    FieldElement(cert.field, 1)
+            for (left_exp, left_coeff) in multiplier
+                for (right_exp, right_coeff) in constraint
+                    exp = ntuple(index -> left_exp[index] + right_exp[index],
+                                 length(left_exp))
+                    residual[exp] = get(residual, exp,
+                                        FieldElement(cert.field, 0)) -
+                                    scale * left_coeff * right_coeff
+                    iszero(residual[exp]) && delete!(residual, exp)
+                end
+            end
+        end
+    end
+    isempty(residual) || return ExactCertificateStatus(:invalid,
+                                                       cert.type === :sos_gram_reconstruction ?
+                                                       :sos_identity_error :
+                                                       :sparse_identity_error,
+                                                       "real sparse residual has $(length(residual)) terms")
+    return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
+function _verify_real_sparse_identity_fast_qq(cert::ExactCertificateArtifact,
+                                              payload)
+    variables = Symbol.(String.(_get_exact_identity_key(payload, :variables)))
+    residual = Dict{Tuple{Vararg{Int}}, Rational{BigInt}}()
+    for term in _get_exact_identity_key(payload, :lhs)
+        exponents = tuple(Int.(term[:exponents])...)
+        coefficient = _parse_rational_like(term[:coefficient];
+                                           name=:real_sparse_lhs)
+        residual[exponents] = get(residual, exponents, 0 // 1) + coefficient
+        iszero(residual[exponents]) && delete!(residual, exponents)
+    end
+    blocks = Dict(block.id => block for block in cert.blocks)
+    for rhs in _get_exact_identity_key(payload, :rhs_terms)
+        kind = Symbol(rhs[:kind])
+        if kind === :block_gram
+            block = blocks[String(rhs[:block])]
+            basis = rhs[:basis]
+            for ((i, j), value) in block.gram_entries
+                coefficient = _field_element_as_rational(value,
+                                                         "real sparse replay")
                 multiplier = i == j ? 1 // 1 : 2 // 1
                 exponents = _payload_exponent_sum(basis[i], basis[j])
                 residual[exponents] = get(residual, exponents, 0 // 1) -
@@ -1567,7 +1618,8 @@ function _verify_real_sparse_identity_fast(cert::ExactCertificateArtifact)
             multiplier = _fast_polynomial_map(rhs[:multiplier])
             constraint = _fast_polynomial_map(rhs[:constraint])
             scale = haskey(rhs, :scale) ?
-                    _parse_rational_like(rhs[:scale]; name=:real_sparse_scale) :
+                    _parse_rational_like(rhs[:scale];
+                                         name=:real_sparse_scale) :
                     1 // 1
             for (left_exp, left_coeff) in multiplier
                 for (right_exp, right_coeff) in constraint
@@ -1586,6 +1638,19 @@ function _verify_real_sparse_identity_fast(cert::ExactCertificateArtifact)
                                                        :sparse_identity_error,
                                                        "real sparse residual has $(length(residual)) terms")
     return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
+function _fast_polynomial_map(field::ExactFieldSpec, payload)
+    map = Dict{Tuple{Vararg{Int}}, FieldElement}()
+    for term in payload
+        exponents = tuple(Int.(term[:exponents])...)
+        coefficient = parse_field_element(field, term[:coefficient])
+        iszero(coefficient) && continue
+        map[exponents] = get(map, exponents, FieldElement(field, 0)) +
+                         coefficient
+        iszero(map[exponents]) && delete!(map, exponents)
+    end
+    return map
 end
 
 function _fast_polynomial_map(payload)
@@ -1781,7 +1846,9 @@ function replay_in_fresh_julia_process(path::AbstractString; mode::Symbol=:stric
             did_not_load_original_artifact=true,
             did_not_call_reconstruct=true,
             did_not_call_import_artifact=true,
-            did_not_call_compile_fixture=true)
+            did_not_call_compile_fixture=true,
+            did_not_call_solver=true,
+            did_not_use_network=true)
 end
 
 function tamper_numeric_entry(path::AbstractString; entry::Integer,

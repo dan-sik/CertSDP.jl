@@ -1,0 +1,21 @@
+name: 2.1-FINAL Universal Exact Certificate Compiler Gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  hardgate-final:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+      - uses: julia-actions/cache@v2
+      - name: Instantiate
+        run: julia --project -e 'using Pkg; Pkg.instantiate()'
+      - name: Run 2.1-FINAL hard gate
+        run: julia --project test/hardgate_4_0_final.jl --replay-only
