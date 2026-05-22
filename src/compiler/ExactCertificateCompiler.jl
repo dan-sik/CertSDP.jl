@@ -1244,6 +1244,9 @@ end
 
 function _verify_type_specific_obligations(cert::ExactCertificateArtifact)
     if Bool(get(cert.metadata, :real_reconstruction, false))
+        if Bool(get(cert.metadata, :perfect_native_artifact, false))
+            return _verify_perfect_native_type_specific_obligations(cert)
+        end
         return _verify_real_type_specific_obligations(cert)
     end
     if cert.type === :sparse_putinar
@@ -1319,6 +1322,45 @@ function _verify_type_specific_obligations(cert::ExactCertificateArtifact)
         objective_gap_style(cert) === :farkas ||
             return ExactCertificateStatus(:invalid, :affine_dual_identity_error,
                                           "infeasibility certificate is not Farkas style")
+    end
+    return ExactCertificateStatus(:valid, nothing, "ok")
+end
+
+function _verify_perfect_native_type_specific_obligations(cert::ExactCertificateArtifact)
+    if cert.type === :sos_gram_reconstruction
+        exact_polynomial_identity_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :sos_identity_error,
+                                          "native SOS identity failed")
+        exact_low_rank_psd_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :psd_error,
+                                          "native SOS PSD replay failed")
+    elseif cert.type === :sparse_putinar
+        full_sparse_polynomial_identity_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :sparse_identity_error,
+                                          "native sparse identity failed")
+        all_localizing_multipliers_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :localizing_identity_error,
+                                          "native localizing replay failed")
+        all_equality_multipliers_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :equality_multiplier_error,
+                                          "native equality replay failed")
+    elseif cert.type === :nc_trace_npa
+        nc_trace_identity_verified_by_normal_form(cert) ||
+            return ExactCertificateStatus(:invalid, :nc_identity_error,
+                                          "native NC identity failed")
+        quotient_confluence_checked_on_support(cert) ||
+            return ExactCertificateStatus(:invalid, :trace_quotient_error,
+                                          "native NC quotient replay failed")
+    elseif cert.type === :infeasibility
+        exact_affine_matrix_identity_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :affine_dual_identity_error,
+                                          "native Farkas affine identity failed")
+        exact_farkas_normalization(cert) == -1 // 1 ||
+            return ExactCertificateStatus(:invalid, :farkas_normalization_error,
+                                          "native Farkas normalization failed")
+        all_psd_slack_blocks_verified(cert) ||
+            return ExactCertificateStatus(:invalid, :psd_factor_error,
+                                          "native Farkas PSD slack replay failed")
     end
     return ExactCertificateStatus(:valid, nothing, "ok")
 end

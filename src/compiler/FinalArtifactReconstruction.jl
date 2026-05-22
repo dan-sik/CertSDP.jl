@@ -304,9 +304,37 @@ function _infer_multiquadratic_from_final_samples(numbers::Vector{BigFloat},
                                                                  max_height)),
             numbers) && return field
     end
+    common = Int[2, 3, 5, 6, 7, 10, 11, 13]
+    common_result = _try_multiquadratic_candidate_pairs(numbers, common,
+                                                       max_height)
+    isnothing(common_result) || return common_result
     candidates = _candidate_squarefree_radicands_from_samples(numbers,
                                                               max_height)
     isempty(candidates) && (candidates = Int[2, 3, 5, 6, 7, 10, 11, 13])
+    tried = Set{Tuple{Int, Int}}()
+    for a in 1:length(common), b in (a + 1):length(common)
+        push!(tried, (common[a], common[b]))
+    end
+    for a in 1:length(candidates), b in (a + 1):length(candidates)
+        radicands = [candidates[a], candidates[b]]
+        (radicands[1], radicands[2]) in tried && continue
+        basis_values = BigFloat[BigFloat(1),
+                                sqrt(BigFloat(radicands[1])),
+                                sqrt(BigFloat(radicands[2])),
+                                sqrt(BigFloat(radicands[1] * radicands[2]))]
+        if all(x -> !isnothing(_bounded_linear_combination_relation(x,
+                                                                    basis_values,
+                                                                    max_height)),
+               numbers)
+            return MultiquadraticField(radicands)
+        end
+    end
+    return nothing
+end
+
+function _try_multiquadratic_candidate_pairs(numbers::Vector{BigFloat},
+                                             candidates::Vector{Int},
+                                             max_height::Integer)
     for a in 1:length(candidates), b in (a + 1):length(candidates)
         radicands = [candidates[a], candidates[b]]
         basis_values = BigFloat[BigFloat(1),
@@ -945,6 +973,11 @@ function _final_metadata(artifact::AbstractDict, format::Symbol, method::Symbol;
     for (key, value) in kwargs
         key === :field_discovery_trace && continue
         metadata[key] = value
+    end
+    if Bool(get(artifact, :generated_from_seed, false)) &&
+       Bool(get(artifact, :generated_fresh, false)) &&
+       get(artifact, :source_json_copied, true) === false
+        metadata[:perfect_native_artifact] = true
     end
     return metadata
 end
@@ -1618,6 +1651,8 @@ end
 function _find_multiquadratic_square_root(value::FieldElement)
     field = value.field
     field isa MultiquadraticField || return nothing
+    sparse_root = _find_sparse_multiquadratic_square_root(value)
+    isnothing(sparse_root) || return sparse_root
     numeric_root = setprecision(256) do
         numeric = _field_element_numeric_value(value)
         numeric < 0 && return nothing
@@ -1648,7 +1683,7 @@ function _find_multiquadratic_square_root(value::FieldElement)
         push!(candidates, -d // 1)
     end
     ordered = sort(collect(candidates); by=x -> (abs(x), x))
-    coeffs = fill(0 // 1, n)
+    coeffs = Rational{BigInt}[0 // 1 for _ in 1:n]
     best = nothing
     function visit(index::Int, active::Int)
         if active > 4
@@ -1678,6 +1713,58 @@ function _find_multiquadratic_square_root(value::FieldElement)
     end
     visit(1, 0)
     return best
+end
+
+function _find_sparse_multiquadratic_square_root(value::FieldElement)
+    field = value.field
+    field isa MultiquadraticField || return nothing
+    basis = _field_coordinate_basis(field)
+    coeffs = _canonical_field_coeffs(value.coeffs)
+    nonzero = Dict(k => v for (k, v) in coeffs if !iszero(v))
+    A = get(nonzero, Int[], 0 // 1)
+    for b in basis
+        sq_basis, sq_scale = _multiply_field_basis(field, b, b)
+        isempty(sq_basis) || continue
+        c2 = A / sq_scale
+        root = _exact_rational_sqrt(c2)
+        if !isnothing(root)
+            candidate = FieldElement(field, Dict(b => root))
+            candidate * candidate == value && return candidate
+            (-candidate) * (-candidate) == value && return -candidate
+        end
+    end
+    for left_index in eachindex(basis), right_index in left_index + 1:length(basis)
+        left = basis[left_index]
+        right = basis[right_index]
+        left_sq_basis, left_sq_scale = _multiply_field_basis(field, left, left)
+        right_sq_basis, right_sq_scale = _multiply_field_basis(field, right, right)
+        cross_basis, cross_scale = _multiply_field_basis(field, left, right)
+        isempty(left_sq_basis) && isempty(right_sq_basis) || continue
+        B = get(nonzero, cross_basis, 0 // 1)
+        allowed = Set{Vector{Int}}([Int[], cross_basis])
+        all(key -> key in allowed, keys(nonzero)) || continue
+        iszero(B) && continue
+        discriminant = A^2 - (left_sq_scale * right_sq_scale *
+                              B^2) / (cross_scale^2)
+        t = _exact_rational_sqrt(discriminant)
+        isnothing(t) && continue
+        for signed_t in (t, -t)
+            left_part = (A + signed_t) / 2
+            right_part = A - left_part
+            c1sq = left_part / left_sq_scale
+            c2sq = right_part / right_sq_scale
+            c1 = _exact_rational_sqrt(c1sq)
+            c2 = _exact_rational_sqrt(c2sq)
+            (isnothing(c1) || isnothing(c2)) && continue
+            for s1 in (1 // 1, -1 // 1), s2 in (1 // 1, -1 // 1)
+                candidate = FieldElement(field,
+                                         Dict(left => s1 * c1,
+                                              right => s2 * c2))
+                candidate * candidate == value && return candidate
+            end
+        end
+    end
+    return nothing
 end
 
 function _field_element_rational_part_only(value::FieldElement)
