@@ -1,0 +1,25 @@
+name: 2.1-ULTIMATE Gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ultimate-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - uses: julia-actions/cache@v2
+
+      - name: Instantiate
+        run: julia --project -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Run 2.1-ULTIMATE gate
+        run: julia --project test/hardgate_4_0_ultimate.jl

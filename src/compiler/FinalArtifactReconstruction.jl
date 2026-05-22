@@ -703,6 +703,12 @@ function _reconstruct_final_sparse_putinar(artifact::AbstractDict,
                                 :rhs_terms => rhs_terms,
                                 :streaming_residual_chunks =>
                                     _streaming_chunks_from_coefficient_map(coefficient_map))
+    if Bool(get(artifact, :generated_from_seed, false)) &&
+       Bool(get(artifact, :generated_fresh, false)) &&
+       get(artifact, :source_json_copied, true) === false
+        payload[:coefficient_map_replay] =
+            [deepcopy(item) for item in coefficient_map]
+    end
     metadata = _final_metadata(artifact, :final_sparse_putinar,
                                :streamed_sparse_residual;
                                dense_global_gram_used=false,

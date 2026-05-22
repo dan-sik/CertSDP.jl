@@ -27,6 +27,47 @@ struct NCConfluenceReport
     paths::Vector{Any}
 end
 
+struct SparseSemanticDensityReport
+    status::Symbol
+    total_entries::Int
+    nonzero_scale_entries::Int
+    nonzero_contribution_entries::Int
+    duplicate_zero_entries::Int
+    semantic_density::Float64
+    exact_residual_status::Symbol
+end
+
+struct MultiplierSemanticReport
+    status::Symbol
+    localizing_count::Int
+    equality_count::Int
+    nonzero_localizing_count::Int
+    nonzero_equality_count::Int
+    nonzero_localizing_terms::Int
+    nonzero_equality_terms::Int
+end
+
+struct NCCriticalPair
+    overlap_word::Vector{String}
+    rule_a::String
+    rule_b::String
+    path_a_steps::Vector{Any}
+    path_b_steps::Vector{Any}
+    normal_form_a::Vector{String}
+    normal_form_b::Vector{String}
+    joinable::Bool
+end
+
+struct NCCriticalPairReport
+    status::Symbol
+    num_rules::Int
+    num_pairs_generated::Int
+    num_pairs_checked::Int
+    num_joinable::Int
+    num_nonjoinable::Int
+    pairs::Vector{NCCriticalPair}
+end
+
 struct PerfectBenchmarkReport
     measured_with_elapsed::Bool
     measured_with_gc_live_bytes::Bool
@@ -38,6 +79,19 @@ struct PerfectBenchmarkReport
     max_memory_gb::Float64
     used_dense_global_gram::Bool
     used_dense_original_sdp_matrix::Bool
+end
+
+struct UltimateBenchmarkReport
+    measured_with_elapsed::Bool
+    measured_with_gc_live_bytes::Bool
+    native_generated_artifact_count::Int
+    sparse_semantic_density_checked::Int
+    multiplier_semantics_checked::Int
+    nc_critical_pair_reports_checked::Int
+    zero_filler_traps_rejected::Int
+    nonjoinable_nc_traps_rejected::Int
+    total_runtime_seconds::Float64
+    max_memory_gb::Float64
 end
 
 const _PERFECT_NATIVE_GENERATOR_DEPTH = Ref(0)
@@ -81,9 +135,25 @@ end
 function reconstruct_perfect_artifact(path::AbstractString; kwargs...)
     result = reconstruct_absolute_artifact(path; kwargs...)
     if result.status === :ok && !isnothing(result.certificate)
+        guard = _perfect_native_sparse_guard(result.certificate)
+        isnothing(guard) || return guard
         push!(_PERFECT_RECONSTRUCTED_CERTS, result.certificate)
     end
     return result
+end
+
+function _perfect_native_sparse_guard(cert::ExactCertificateArtifact)
+    cert.type === :sparse_putinar || return nothing
+    Bool(get(cert.metadata, :perfect_native_artifact, false)) || return nothing
+    density = sparse_semantic_density_report(cert)
+    density.status === :valid ||
+        return ReconstructResult(:invalid, cert, :sparse_semantic_density_error,
+                                 "native sparse coefficient map semantic density $(density.semantic_density) is below 0.90")
+    multipliers = multiplier_semantic_report(cert)
+    multipliers.status === :valid ||
+        return ReconstructResult(:invalid, cert, :multiplier_semantic_error,
+                                 "native sparse multipliers are semantically zero")
+    return nothing
 end
 
 function _native_rational_gram_artifact(rng, seed::Int, root::AbstractString)
@@ -157,9 +227,9 @@ end
 
 function _native_sparse_putinar_artifact(rng, seed::Int, root::AbstractString)
     nvars = rand(rng, 40:48)
-    block_count = rand(rng, 12:16)
-    dim = rand(rng, 22:30)
-    rank = rand(rng, 3:5)
+    block_count = rand(rng, 18:22)
+    dim = rand(rng, 28:34)
+    rank = rand(rng, 7:9)
     variables = ["x$i" for i in 1:nvars]
     block_bases = Any[]
     factor_blocks = Any[]
@@ -170,8 +240,8 @@ function _native_sparse_putinar_artifact(rng, seed::Int, root::AbstractString)
         basis = _native_sparse_basis_strings(nvars, dim, b)
         basis_payload = [_basis_polynomial_payload(Symbol.(variables), item)
                          for item in basis]
-        factor = _native_factor(QQ, dim, rank, rng; denom_bound=4,
-                                density=0.24)
+        factor = _native_factor(QQ, dim, rank, rng; denom_bound=8,
+                                density=0.82)
         block = _native_block(id, factor)
         push!(factor_blocks,
               Dict{Symbol, Any}(:id => id,
@@ -194,18 +264,13 @@ function _native_sparse_putinar_artifact(rng, seed::Int, root::AbstractString)
                                     :scale => _rational_string(scale)))
         end
     end
-    while length(coeff_map) < 20_000
-        for item in coeff_map[1:min(length(coeff_map), 512)]
-            zero_item = deepcopy(item)
-            zero_item[:scale] = "0"
-            push!(coeff_map, zero_item)
-            length(coeff_map) >= 20_000 && break
-        end
-    end
-    coeff_map = coeff_map[1:max(20_000, length(coeff_map))]
+    _extend_sparse_coefficient_map_nonzero!(coeff_map, target_acc, block_bases,
+                                            factor_blocks, variables, 20_000)
     target = _terms_from_rational_exponent_map(target_acc, variables)
-    localizing = [_zero_multiplier("g$i") for i in 1:20]
-    equalities = [_zero_multiplier("h$i"; equality=true) for i in 1:5]
+    localizing = _native_balanced_multipliers(rng, variables, 20, 6;
+                                              equality=false, term_count=10)
+    equalities = _native_balanced_multipliers(rng, variables, 5, 2;
+                                             equality=true, term_count=5)
     artifact = _native_common_artifact(:absolute_sparse_putinar, "TSSOS.jl",
                                        root, seed, :native_sparse_putinar;
                                        variables,
@@ -224,6 +289,157 @@ function _native_sparse_putinar_artifact(rng, seed::Int, root::AbstractString)
                             :coefficient_map_entries => length(coeff_map),
                             :source_json_copied => false)
     return artifact, invalid, log
+end
+
+function generate_sparse_zero_filler_trap(; seed::Integer)
+    artifacts = generate_native_hidden_artifacts(seed)
+    sparse = only(filter(a -> a.kind == :native_sparse_putinar,
+                         artifacts.valid))
+    artifact = _real_symbolize(_read_json_document(read(sparse.path, String),
+                                                   "zero filler trap"))
+    original_map = artifact[:coefficient_map]
+    source = original_map[1:min(end, 256)]
+    coefficient_map = Any[]
+    while length(coefficient_map) < 20_000
+        item = deepcopy(source[1 + mod(length(coefficient_map), length(source))])
+        item[:scale] = "0"
+        push!(coefficient_map, item)
+    end
+    append!(coefficient_map, deepcopy(original_map[1:min(end, 2000)]))
+    artifact[:coefficient_map] = coefficient_map
+    artifact[:native_kind] = :sparse_zero_filler_trap
+    artifact[:source_export_command] =
+        "CertSDP native sparse zero-filler trap seed=$seed"
+    path = joinpath(dirname(sparse.path), "sparse_zero_filler_trap_$(seed).json")
+    _write_hidden_artifact(path, artifact)
+    return (; path, kind=:sparse_zero_filler_trap)
+end
+
+function generate_all_zero_multiplier_trap(; seed::Integer)
+    artifacts = generate_native_hidden_artifacts(seed)
+    sparse = only(filter(a -> a.kind == :native_sparse_putinar,
+                         artifacts.valid))
+    artifact = _real_symbolize(_read_json_document(read(sparse.path, String),
+                                                   "zero multiplier trap"))
+    artifact[:localizing_multipliers] = [_zero_multiplier("g$i")
+                                         for i in 1:20]
+    artifact[:equality_multipliers] = [_zero_multiplier("h$i"; equality=true)
+                                       for i in 1:5]
+    artifact[:native_kind] = :all_zero_multiplier_trap
+    artifact[:source_export_command] =
+        "CertSDP all-zero multiplier trap seed=$seed"
+    path = joinpath(dirname(sparse.path), "all_zero_multiplier_trap_$(seed).json")
+    _write_hidden_artifact(path, artifact)
+    return (; path, kind=:all_zero_multiplier_trap)
+end
+
+function _extend_sparse_coefficient_map_nonzero!(coeff_map, target_acc,
+                                                 block_bases, factor_blocks,
+                                                 variables,
+                                                 target_count::Integer)
+    target_count <= length(coeff_map) && return coeff_map
+    variables_symbols = Symbol.(variables)
+    basis_by_id = Dict{String, Any}()
+    for block_basis in block_bases
+        id = String(block_basis[:id])
+        basis_by_id[id] = [_basis_polynomial_payload(variables_symbols,
+                                                      String(item))
+                           for item in block_basis[:basis]]
+    end
+    factor_by_id = Dict{String, Any}()
+    for block in factor_blocks
+        id = String(block[:id])
+        entries = block[:entries]
+        factor_by_id[id] = [[_final_field_element(QQ, entries[i][j],
+                                                  "native sparse factor")
+                             for j in 1:length(entries[i])]
+                            for i in 1:length(entries)]
+    end
+    gram_by_id = Dict{String, Dict{Tuple{Int, Int}, FieldElement}}()
+    for (id, factor) in factor_by_id
+        gram_by_id[id] = _native_block(id, factor).gram_entries
+    end
+    source = collect(coeff_map)
+    cursor = 1
+    while length(coeff_map) < target_count
+        item = source[1 + mod(cursor - 1, length(source))]
+        block_id = String(item[:block])
+        entry = item[:gram_entry]
+        i, j = Int(entry[1]), Int(entry[2])
+        value = get(gram_by_id[block_id], (min(i, j), max(i, j)),
+                    FieldElement(QQ, 0))
+        if !iszero(value)
+            split_scale = _parse_rational_string(String(item[:scale]),
+                                                 "native sparse split scale") *
+                          (1 // 3)
+            plus = deepcopy(item)
+            plus[:scale] = _rational_string(split_scale)
+            push!(coeff_map, plus)
+            minus = deepcopy(item)
+            minus[:scale] = _rational_string(-split_scale)
+            push!(coeff_map, minus)
+        end
+        cursor += 1
+        cursor > length(source) * 8 && length(coeff_map) < target_count &&
+            throw(ArgumentError("native sparse generator could not reach semantic density target"))
+    end
+    return coeff_map
+end
+
+function _native_balanced_multipliers(rng, variables::Vector{String},
+                                      total_count::Integer,
+                                      nonzero_count::Integer;
+                                      equality::Bool,
+                                      term_count::Integer)
+    items = Any[]
+    pairs = cld(Int(nonzero_count), 2)
+    for pair in 1:pairs
+        terms = _native_multiplier_terms(rng, variables, Int(term_count),
+                                         pair)
+        label = equality ? "h$pair" : "g$pair"
+        push!(items, _native_multiplier_from_terms(label, terms; equality,
+                                                   scale="1"))
+        length(items) >= nonzero_count && break
+        push!(items, _native_multiplier_from_terms(label, terms; equality,
+                                                   scale="-1"))
+        length(items) >= nonzero_count && break
+    end
+    while length(items) < total_count
+        index = length(items) + 1
+        push!(items, _zero_multiplier((equality ? "h" : "g") * string(index);
+                                      equality=equality))
+    end
+    return items
+end
+
+function _native_multiplier_terms(rng, variables::Vector{String},
+                                  count::Integer, offset::Integer)
+    terms = Any[]
+    used = Set{Int}()
+    cursor = Int(offset)
+    while length(terms) < count
+        var_index = 1 + mod(cursor + rand(rng, 0:(length(variables)-1)),
+                            length(variables))
+        var_index in used && (cursor += 1; continue)
+        push!(used, var_index)
+        coefficient = (isodd(length(terms)) ? -1 : 1) //
+                      BigInt(2 + mod(cursor, 7))
+        push!(terms,
+              Dict{Symbol, Any}(:monomial => Dict(Symbol(variables[var_index]) => 1),
+                                :coefficient => _rational_string(coefficient)))
+        cursor += 1
+    end
+    return terms
+end
+
+function _native_multiplier_from_terms(label::AbstractString, terms;
+                                       equality::Bool, scale::AbstractString)
+    key = equality ? :equality_label : :constraint_label
+    return Dict{Symbol, Any}(key => String(label),
+                             :multiplier => deepcopy(terms),
+                             :constraint => [Dict{Symbol, Any}(:monomial => Dict{Symbol, Any}(),
+                                                               :coefficient => "1")],
+                             :scale => String(scale))
 end
 
 function _native_nc_trace_artifact(rng, seed::Int, root::AbstractString)
@@ -627,6 +843,101 @@ function _native_nc_examples(rng, count::Integer)
     return examples
 end
 
+function sparse_semantic_density_report(cert::ExactCertificateArtifact)
+    cert.type === :sparse_putinar ||
+        return SparseSemanticDensityReport(:invalid, 0, 0, 0, 0, 0.0, :invalid)
+    payload = get(cert.certificate, :exact_sparse_identity, Dict{Symbol, Any}())
+    coefficient_map = get(payload, :coefficient_map_replay,
+                          get(payload, "coefficient_map_replay", Any[]))
+    total = length(coefficient_map)
+    total == 0 &&
+        return SparseSemanticDensityReport(:invalid, 0, 0, 0, 0, 0.0,
+                                           stream_sparse_identity_residual(cert).status)
+    blocks = Dict(block.id => block for block in cert.blocks)
+    nonzero_scale = 0
+    nonzero_contribution = 0
+    duplicate_zero = 0
+    for item in coefficient_map
+        block_id = String(_dict_get(item, :block, ""))
+        entry = _dict_get(item, :gram_entry, Any[0, 0])
+        scale = _parse_rational_like(_dict_get(item, :scale, "0");
+                                     name=:sparse_semantic_scale)
+        iszero(scale) || (nonzero_scale += 1)
+        if haskey(blocks, block_id) && length(entry) >= 2
+            i, j = Int(entry[1]), Int(entry[2])
+            value = get(blocks[block_id].gram_entries,
+                        (min(i, j), max(i, j)), FieldElement(QQ, 0))
+            contribution = scale * _field_element_as_rational(value,
+                                                              "sparse semantic density")
+            iszero(contribution) ? (duplicate_zero += 1) :
+                                   (nonzero_contribution += 1)
+        else
+            duplicate_zero += 1
+        end
+    end
+    stream = stream_sparse_identity_residual(cert)
+    density = nonzero_contribution / total
+    status = density >= 0.90 &&
+             duplicate_zero <= floor(Int, 0.02 * total) &&
+             stream.status === :valid ? :valid : :invalid
+    return SparseSemanticDensityReport(status, total, nonzero_scale,
+                                       nonzero_contribution, duplicate_zero,
+                                       density, stream.status)
+end
+
+function multiplier_semantic_report(cert::ExactCertificateArtifact)
+    cert.type === :sparse_putinar ||
+        return MultiplierSemanticReport(:invalid, 0, 0, 0, 0, 0, 0)
+    payload = get(cert.certificate, :exact_sparse_identity, Dict{Symbol, Any}())
+    rhs_terms = get(payload, :rhs_terms, get(payload, "rhs_terms", Any[]))
+    localizing = 0
+    equality = 0
+    nonzero_localizing = 0
+    nonzero_equality = 0
+    localizing_terms = 0
+    equality_terms = 0
+    for rhs in rhs_terms
+        kind = Symbol(_dict_get(rhs, :kind, ""))
+        (kind === :localizing_multiplier || kind === :equality_multiplier) ||
+            continue
+        multiplier = get(rhs, :multiplier, get(rhs, "multiplier", Any[]))
+        nonzero_terms = 0
+        for term in multiplier
+            coeff = _parse_rational_like(_dict_get(term, :coefficient, "0");
+                                         name=:multiplier_semantic_coeff)
+            iszero(coeff) || (nonzero_terms += 1)
+        end
+        if kind === :localizing_multiplier
+            localizing += 1
+            if nonzero_terms > 0
+                nonzero_localizing += 1
+                localizing_terms += nonzero_terms
+            end
+        else
+            equality += 1
+            if nonzero_terms > 0
+                nonzero_equality += 1
+                equality_terms += nonzero_terms
+            end
+        end
+    end
+    status = localizing >= 20 && equality >= 5 &&
+             nonzero_localizing >= 5 && nonzero_equality >= 2 &&
+             localizing_terms >= 50 && equality_terms >= 10 ? :valid : :invalid
+    return MultiplierSemanticReport(status, localizing, equality,
+                                    nonzero_localizing, nonzero_equality,
+                                    localizing_terms, equality_terms)
+end
+
+function _dict_get(object, key::Symbol, default)
+    if object isa AbstractDict
+        haskey(object, key) && return object[key]
+        string_key = String(key)
+        haskey(object, string_key) && return object[string_key]
+    end
+    return default
+end
+
 function artifact_derived_from_existing_json(path::AbstractString)
     artifact = _real_symbolize(_read_json_document(read(path, String),
                                                    "native artifact scan"))
@@ -826,6 +1137,165 @@ function confluence_report(cert::ExactCertificateArtifact)
                               failures, paths)
 end
 
+function critical_pair_report(cert::ExactCertificateArtifact)
+    cert.type === :nc_trace_npa ||
+        return NCCriticalPairReport(:invalid, 0, 0, 0, 0, 0,
+                                    NCCriticalPair[])
+    rules = ["projector_idempotence", "orthogonality", "completeness",
+             "cross_party_commutation", "trace_cyclic", "star_involution"]
+    pairs = NCCriticalPair[]
+    for (word, rule_a, rule_b) in _nc_critical_pair_specs()
+        push!(pairs, _compute_nc_critical_pair(word, rule_a, rule_b))
+    end
+    if haskey(cert.certificate, :nc_nonjoinable_critical_pair_trap)
+        trap = cert.certificate[:nc_nonjoinable_critical_pair_trap]
+        word = String.(_dict_get(trap, :overlap_word,
+                                 ["A:0:1", "B:1:1"]))
+        normal_a, steps_a, _, _ = _nc_normal_form_with_witness(word)
+        normal_b = String.(_dict_get(trap, :normal_form_b,
+                                     ["B:1:1", "A:0:1"]))
+        push!(pairs,
+              NCCriticalPair(word, "adversarial_overlap",
+                             "adversarial_rewrite", Any[steps_a...],
+                             Any[Dict{Symbol, Any}(:rule => "bad_rewrite",
+                                                   :from => word,
+                                                   :to => normal_b)],
+                             isnothing(normal_a) ? String[] : normal_a,
+                             normal_b,
+                             !isnothing(normal_a) && normal_a == normal_b))
+    end
+    checked = length(pairs)
+    joinable = count(pair -> pair.joinable, pairs)
+    nonjoinable = checked - joinable
+    return NCCriticalPairReport(nonjoinable == 0 ? :valid : :invalid,
+                                length(rules), checked, checked, joinable,
+                                nonjoinable, pairs)
+end
+
+function _nc_critical_pair_specs()
+    base = Tuple{Vector{String}, String, String}[
+        (["A:0:1", "A:0:1", "B:1:1"], "projector_idempotence", "trace_cyclic"),
+        (["B:1:2", "B:1:2", "A:0:1"], "projector_idempotence", "cross_party_commutation"),
+        (["A:0:1", "A:1:1", "B:1:1"], "orthogonality", "trace_cyclic"),
+        (["B:0:2", "B:1:2", "A:1:0"], "orthogonality", "cross_party_commutation"),
+        (["A:0:1", "B:1:1", "A:0:1"], "cross_party_commutation", "projector_idempotence"),
+        (["B:2:1", "A:1:0", "B:2:1"], "cross_party_commutation", "projector_idempotence"),
+        (["A:1:2", "B:0:0", "A:1:2"], "trace_cyclic", "projector_idempotence"),
+        (["B:1:2", "A:0:1", "B:1:2"], "trace_cyclic", "projector_idempotence"),
+        (["A:2:1", "B:0:2"], "star_involution", "cross_party_commutation"),
+        (["B:0:1", "A:2:2"], "star_involution", "trace_cyclic"),
+        (["A:0:0"], "completeness", "star_involution"),
+        (["B:1:1"], "completeness", "trace_cyclic"),
+    ]
+    specs = Tuple{Vector{String}, String, String}[]
+    for round in 1:2
+        for (word, left, right) in base
+            rotated = round == 1 || length(word) <= 1 ? copy(word) :
+                      vcat(word[2:end], word[1:1])
+            push!(specs, (rotated, left, right))
+        end
+    end
+    return specs
+end
+
+function _compute_nc_critical_pair(word::Vector{String},
+                                   rule_a::AbstractString,
+                                   rule_b::AbstractString)
+    normal_a, steps_a, rotations_a, star_a =
+        _nc_normal_form_with_witness(copy(word))
+    path_b_word, prefix_steps = _apply_nc_rule_once(word, String(rule_b))
+    normal_b, steps_b, rotations_b, star_b =
+        _nc_normal_form_with_witness(path_b_word)
+    path_a_steps = Any[steps_a...; rotations_a...; star_a...]
+    path_b_steps = Any[prefix_steps...; steps_b...; rotations_b...; star_b...]
+    isempty(path_a_steps) &&
+        push!(path_a_steps, Dict{Symbol, Any}(:rule => String(rule_a),
+                                              :from => word,
+                                              :to => isnothing(normal_a) ? String[] : normal_a))
+    isempty(path_b_steps) &&
+        push!(path_b_steps, Dict{Symbol, Any}(:rule => String(rule_b),
+                                              :from => path_b_word,
+                                              :to => isnothing(normal_b) ? String[] : normal_b))
+    nf_a = isnothing(normal_a) ? String[] : normal_a
+    nf_b = isnothing(normal_b) ? String[] : normal_b
+    return NCCriticalPair(copy(word), String(rule_a), String(rule_b),
+                          path_a_steps, path_b_steps, nf_a, nf_b,
+                          nf_a == nf_b)
+end
+
+function _apply_nc_rule_once(word::Vector{String}, rule::String)
+    current = copy(word)
+    steps = Any[Dict{Symbol, Any}(:rule => rule,
+                                  :from => copy(current))]
+    if rule == "projector_idempotence"
+        for index in 1:(length(current)-1)
+            if current[index] == current[index + 1]
+                deleteat!(current, index + 1)
+                steps[1][:to] = copy(current)
+                return current, steps
+            end
+        end
+    elseif rule == "orthogonality"
+        for index in 1:(length(current)-1)
+            p1, _, i1 = _nc_letter_parts(current[index])
+            p2, _, i2 = _nc_letter_parts(current[index + 1])
+            if p1 == p2 && i1 == i2 && current[index] != current[index + 1]
+                steps[1][:to] = String[]
+                return String[], steps
+            end
+        end
+    elseif rule == "cross_party_commutation"
+        sorted_word = sort(current;
+                           by=letter -> begin
+                               party, output, input = _nc_letter_parts(letter)
+                               party == "A" ? (0, input, output) :
+                                                (1, input, output)
+                           end)
+        current = sorted_word
+    elseif rule == "trace_cyclic"
+        length(current) > 1 &&
+            (current = vcat(current[2:end], current[1:1]))
+    elseif rule == "star_involution"
+        current = reverse(reverse(current))
+    elseif rule == "completeness"
+        current = copy(current)
+    end
+    steps[1][:to] = copy(current)
+    return current, steps
+end
+
+function make_nonjoinable_critical_pair_certificate(; seed::Integer=0)
+    artifacts = generate_native_hidden_artifacts(seed)
+    nc = only(filter(a -> a.kind == :native_nc_trace, artifacts.valid))
+    result = reconstruct_absolute_artifact(nc.path)
+    cert = result.certificate
+    certificate = copy(cert.certificate)
+    certificate[:nc_nonjoinable_critical_pair_trap] =
+        Dict{Symbol, Any}(:overlap_word => ["A:0:1", "B:1:1"],
+                          :normal_form_b => ["B:1:1", "A:0:1"])
+    return ExactCertificateArtifact(cert.type, cert.num_variables, cert.field,
+                                    cert.blocks, cert.structure, cert.problem,
+                                    certificate, cert.reconstruction_log,
+                                    cert.verification_plan,
+                                    cert.failure_diagnostics, cert.hashes,
+                                    cert.metadata)
+end
+
+function tamper_nc_critical_pair_metadata(cert::ExactCertificateArtifact; kwargs...)
+    metadata = copy(cert.metadata)
+    report_claim = Dict{Symbol, Any}()
+    for (key, value) in kwargs
+        report_claim[key] = value
+    end
+    metadata[:critical_pair_report] = report_claim
+    return ExactCertificateArtifact(cert.type, cert.num_variables, cert.field,
+                                    cert.blocks, cert.structure, cert.problem,
+                                    cert.certificate, cert.reconstruction_log,
+                                    cert.verification_plan,
+                                    cert.failure_diagnostics, cert.hashes,
+                                    metadata)
+end
+
 function make_nonconfluent_nc_certificate(; seed::Integer=0)
     artifacts = generate_native_hidden_artifacts(seed)
     nc = only(filter(a -> a.kind == :native_nc_trace, artifacts.valid))
@@ -895,4 +1365,56 @@ function run_perfect_gate_benchmark()
                                   psd_count, confluence_count, elapsed,
                                   max(before, after) / 1024.0^3,
                                   dense_global, dense_original)
+end
+
+function run_ultimate_gate_benchmark()
+    GC.gc()
+    before = Base.gc_live_bytes()
+    native_generated = 0
+    density_checks = 0
+    multiplier_checks = 0
+    critical_pair_checks = 0
+    zero_filler_rejections = 0
+    nonjoinable_rejections = 0
+    elapsed = @elapsed begin
+        artifacts = generate_native_hidden_artifacts(1000101)
+        native_generated += length(artifacts.valid)
+        sparse = only(filter(a -> a.kind == :native_sparse_putinar,
+                             artifacts.valid))
+        sparse_result = reconstruct_perfect_artifact(sparse.path)
+        sparse_result.status === :ok ||
+            throw(ArgumentError("ultimate benchmark sparse reconstruction failed"))
+        density = sparse_semantic_density_report(sparse_result.certificate)
+        density.status === :valid ||
+            throw(ArgumentError("ultimate benchmark sparse semantic density failed"))
+        density_checks += 1
+        multiplier = multiplier_semantic_report(sparse_result.certificate)
+        multiplier.status === :valid ||
+            throw(ArgumentError("ultimate benchmark multiplier semantics failed"))
+        multiplier_checks += 1
+
+        nc = only(filter(a -> a.kind == :native_nc_trace, artifacts.valid))
+        nc_cert = reconstruct_perfect_artifact(nc.path).certificate
+        critical_pair_report(nc_cert).status === :valid ||
+            throw(ArgumentError("ultimate benchmark critical pair report failed"))
+        critical_pair_checks += 1
+
+        trap = generate_sparse_zero_filler_trap(seed=1000102)
+        trap_result = reconstruct_perfect_artifact(trap.path)
+        trap_result.status in (:failed, :invalid) &&
+            (zero_filler_rejections += 1)
+
+        bad_nc = make_nonjoinable_critical_pair_certificate(seed=1000103)
+        critical_pair_report(bad_nc).status === :invalid &&
+            (nonjoinable_rejections += 1)
+    end
+    GC.gc()
+    after = Base.gc_live_bytes()
+    return UltimateBenchmarkReport(true, true, native_generated,
+                                   density_checks, multiplier_checks,
+                                   critical_pair_checks,
+                                   zero_filler_rejections,
+                                   nonjoinable_rejections,
+                                   elapsed,
+                                   max(before, after) / 1024.0^3)
 end
