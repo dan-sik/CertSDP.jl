@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://certsdp.local/schemas/certsdp_certificate_v3.schema.json",
+  "title": "CertSDP Certificate v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certsdp_certificate_version",
+    "certificate_type",
+    "certificate_id",
+    "problem_hash",
+    "claim",
+    "proof",
+    "proof_dag",
+    "metadata",
+    "hash"
+  ],
+  "properties": {
+    "certsdp_certificate_version": { "const": "3.0" },
+    "certificate_type": {
+      "enum": ["low_rank_psd_certificate", "chordal_psd_certificate"]
+    },
+    "certificate_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "problem_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "claim": { "type": "object" },
+    "proof": { "type": "object" },
+    "proof_dag": { "$ref": "#/$defs/proof_dag" },
+    "metadata": { "type": "object" },
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "$defs": {
+    "proof_dag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_type", "nodes", "root_hash", "schema_version"],
+      "properties": {
+        "claim_type": { "type": "string" },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/proof_node" }
+        },
+        "root_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "schema_version": { "const": "3.0" }
+      }
+    },
+    "proof_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "inputs", "output_hash", "checker", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "type": "string" },
+        "inputs": { "type": "array", "items": { "type": "string" } },
+        "output_hash": { "type": "string" },
+        "checker": { "type": "string" },
+        "status": { "const": "accepted" }
+      }
+    }
+  }
+}

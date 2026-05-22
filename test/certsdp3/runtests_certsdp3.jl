@@ -1,0 +1,56 @@
+using Test
+using CertSDP
+
+for name in names(CertSDP; all=true)
+    text = String(name)
+    (occursin("#", text) || startswith(text, "_")) && continue
+    name in (:CertSDP, :eval, :include) && continue
+    isdefined(@__MODULE__, name) && continue
+    @eval const $(name) = getproperty(CertSDP, $(QuoteNode(name)))
+end
+
+    include("helpers.jl")
+
+@testset "CertSDP 3.0 focused gates" begin
+    include("kernel_trust_boundary.jl")
+    include("adapter_untrusted_metadata_rejection.jl")
+    include("exactify_candidates_must_replay.jl")
+    include("schema_strict.jl")
+    include("schema_fuzz_mutations.jl")
+    include("sparse_ir.jl")
+    include("psd_low_rank_factor.jl")
+    include("psd_chordal_completion.jl")
+    include("psd_planner_policy.jl")
+    include("chordal_psd_certificate.jl")
+    include("no_densification_budget.jl")
+    include("proof_dag_roundtrip.jl")
+    include("proof_dag_tamper.jl")
+    include("diagnostics_report.jl")
+    include("cli_replay_explain.jl")
+    include("block_native_incidence.jl")
+    include("block_native_algebraic_certificate.jl")
+    include("primal_dual_optimality.jl")
+    include("farkas_certificate.jl")
+    include("objective_bound_certificate.jl")
+    include("sparse_sos_certificate.jl")
+    include("localizing_matrix_replay.jl")
+    include("putinar_certificate.jl")
+    include("tssos_importer.jl")
+    include("tssos_tamper_rejection.jl")
+    include("nctssos_importer.jl")
+    include("nc_rewrite_witness.jl")
+    include("quantum_bound_certificate.jl")
+    include("npa_certificate_replay.jl")
+    include("field_layer.jl")
+    include("cli_product_surface.jl")
+    include("paper_bundle.jl")
+    include("hash_stability.jl")
+    include("backward_compatibility.jl")
+    include("migration_v1_v2_to_v3.jl")
+    include("algebraic_backend_interface.jl")
+    include("msolve_fixture_backend.jl")
+    include("backend_failure_semantics.jl")
+    include("sdpa_sparse_adapter.jl")
+    include("symmetry_reduction.jl")
+    include("mutation_corpus.jl")
+end

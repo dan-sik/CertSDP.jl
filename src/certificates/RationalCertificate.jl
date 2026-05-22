@@ -281,7 +281,7 @@ load_certificate(path::AbstractString) = read_certificate(path)
 Parse a certificate JSON file. Structural JSON problems raise `ArgumentError`;
 mathematical validity is checked by `verify(cert)`.
 """
-function parse_certificate_json(json_text::AbstractString)
+function parse_certificate_json(json_text::AbstractString; strict::Bool=false)
     parsed = try
         JSON3.read(json_text)
     catch err
@@ -289,6 +289,10 @@ function parse_certificate_json(json_text::AbstractString)
     end
 
     _require_object(parsed, "root")
+    if haskey(parsed, CERTSDP_CERTIFICATE_VERSION_KEY) &&
+       String(parsed[CERTSDP_CERTIFICATE_VERSION_KEY]) == Kernel.CERTSDP3_SCHEMA_VERSION
+        return Kernel.parse_certificate_json_v3(json_text; strict)
+    end
     if haskey(parsed, :certsdp_artifact_version) &&
        String(parsed[:certsdp_artifact_version]) == CERTSDP_2_0_ARTIFACT_VERSION
         return _parse_exact_certificate_object(parsed)
@@ -646,6 +650,32 @@ end
 function verify(path::AbstractString; io::Union{Nothing, IO}=nothing, kwargs...)
     return verify(read_certificate(path); io, kwargs...)
 end
+
+function verify(cert::Kernel.V3Certificate; io::Union{Nothing, IO}=nothing,
+                kwargs...)
+    return Kernel.verify_certificate(cert; io).accepted
+end
+
+function migrate_certificate_v1_to_v3(cert::RationalCertificate)
+    substituted = substitute(cert.problem, cert.solution)
+    entries = Tuple{Int, Int, Rational{BigInt}}[]
+    matrix = rational_matrix(substituted)
+    for i in 1:size(matrix, 1), j in i:size(matrix, 2)
+        value = matrix[i, j]
+        iszero(value) || push!(entries, (i, j, value))
+    end
+    sparse_matrix = Kernel.SparseSymmetricRationalMatrix(size(matrix, 1),
+                                                         entries)
+    n = size(matrix, 1)
+    factor = [[i == j ? 1//1 : 0//1 for j in 1:n] for i in 1:n]
+    diagonal = Rational{BigInt}[matrix[i, i] for i in 1:n]
+    proof = Kernel.ExactLowRankPSDProof(sparse_matrix, factor, diagonal)
+    return Kernel.make_low_rank_psd_certificate(sparse_matrix, proof;
+                                                claim=Dict{Symbol, Any}(
+                                                    :description => "migrated v1 rational certificate exact replay",
+                                                    :source_hash => cert.hash))
+end
+
 
 function _verify_rational_certificate(cert::RationalCertificate, io::Union{Nothing, IO})
     try

@@ -407,6 +407,7 @@ function _exactify_reconstruct_symmetric_pair(left,
     if left isa AbstractFloat || right isa AbstractFloat
         isnothing(tolerance) &&
             throw(ArgumentError("$path is floating-point data; pass an explicit tolerance"))
+        # CERTSDP_NUMERIC_DIAGNOSTIC_ONLY: tolerance checks are candidate filtering, never verifier acceptance
         l = BigFloat(left)
         r = BigFloat(right)
         abs(l - r) <= BigFloat(tolerance) ||

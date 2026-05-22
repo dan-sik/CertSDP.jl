@@ -48,6 +48,7 @@ function reset_absolute_gate_call_trace!()
 end
 
 abstract type ExactFieldSpec end
+const ExactField = ExactFieldSpec
 
 struct RationalFieldSpec <: ExactFieldSpec end
 
@@ -97,6 +98,7 @@ struct AlgebraicFieldSpec <: ExactFieldSpec
         return new(_root_monic_polynomial(minimal_polynomial), root_symbol)
     end
 end
+const NumberField = AlgebraicFieldSpec
 
 const QQ = RationalFieldSpec()
 
@@ -662,6 +664,10 @@ function field_json(::RationalFieldSpec)
     return (; kind="QQ", degree=1)
 end
 
+function field_hash(field::ExactFieldSpec)
+    return "sha256:" * bytes2hex(sha256(JSON3.write(field_json(field))))
+end
+
 function field_json(field::QuadraticField)
     return (; kind="quadratic", radicand=field.d, degree=2)
 end
@@ -684,7 +690,7 @@ end
 
 function parse_field_spec(value)
     value isa ExactFieldSpec && return value
-    value isa JSON3.Object || value isa AbstractDict ||
+    value isa JSON3.Object || value isa AbstractDict || value isa NamedTuple ||
         throw(ArgumentError("field specification must be an object"))
     kind = Symbol(_require_string(value, :kind, "field.kind"))
     if kind === :QQ
@@ -707,6 +713,15 @@ function parse_field_spec(value)
                                                                      "field.root_symbol")))
     end
     throw(ArgumentError("unsupported field kind `$kind`"))
+end
+
+function verify_field_element(field::ExactFieldSpec, value;
+                              sign::Union{Nothing, Symbol}=nothing,
+                              embedding_certificate=nothing)
+    element = parse_field_element(field, value)
+    isnothing(sign) && return true
+    certified = _field_element_certified_sign(element, embedding_certificate)
+    return certified === sign
 end
 
 function field_element_json(value::FieldElement)
@@ -762,6 +777,122 @@ function field_element_string(value::FieldElement)
     return isempty(terms) ? "0" : join(terms)
 end
 
+function _field_element_certified_sign(value::FieldElement, embedding_certificate)
+    rational_part = get(_canonical_field_coeffs(value.coeffs), Int[], 0 // 1)
+    if length(_canonical_field_coeffs(value.coeffs)) == 1
+        rational_part > 0 && return :positive
+        rational_part < 0 && return :negative
+        return :zero
+    end
+    embedding_certificate isa NamedTuple || embedding_certificate isa AbstractDict ||
+        throw(ArgumentError("field sign replay requires an embedding certificate"))
+    field_digest = _require_exact_identity_key(embedding_certificate,
+                                               :field_hash,
+                                               "embedding_certificate")
+    field_digest == field_hash(value.field) ||
+        throw(ArgumentError("embedding certificate field hash mismatch"))
+    element_digest = _require_exact_identity_key(embedding_certificate,
+                                                 :element,
+                                                 "embedding_certificate")
+    element_digest == field_element_string(value) ||
+        throw(ArgumentError("embedding certificate element mismatch"))
+    sign_text = Symbol(_require_exact_identity_key(embedding_certificate,
+                                                   :sign,
+                                                   "embedding_certificate"))
+    sign_text in (:positive, :negative, :zero) ||
+        throw(ArgumentError("embedding certificate sign is invalid"))
+    if value.field isa QuadraticField
+        interval = _require_exact_identity_key(embedding_certificate,
+                                               :root_interval,
+                                               "embedding_certificate")
+        _require_exact_identity_array(interval,
+                                      "embedding_certificate.root_interval")
+        lo = _parse_rational_like(interval[1]; name=:root_interval_lower)
+        hi = _parse_rational_like(interval[2]; name=:root_interval_upper)
+        _verify_quadratic_embedding_interval(value.field, lo, hi)
+        return _sign_quadratic_element(value, lo, hi, sign_text)
+    elseif value.field isa AlgebraicFieldSpec
+        interval = _require_exact_identity_key(embedding_certificate,
+                                               :root_interval,
+                                               "embedding_certificate")
+        _require_exact_identity_array(interval,
+                                      "embedding_certificate.root_interval")
+        lo = _parse_rational_like(interval[1]; name=:root_interval_lower)
+        hi = _parse_rational_like(interval[2]; name=:root_interval_upper)
+        _verify_number_field_embedding_interval(value.field, lo, hi)
+        return _sign_algebraic_element_interval(value, lo, hi, sign_text)
+    end
+    sign_text === :zero && iszero(value) && return :zero
+    throw(ArgumentError("field sign replay for this field needs a supported embedding certificate"))
+end
+
+function _verify_quadratic_embedding_interval(field::QuadraticField,
+                                              lo::Rational{BigInt},
+                                              hi::Rational{BigInt})
+    lo < hi || throw(ArgumentError("quadratic embedding interval must be ordered"))
+    lo >= 0 || throw(ArgumentError("quadratic embedding interval must select the positive root"))
+    (lo^2 < field.d//1 < hi^2) ||
+        throw(ArgumentError("quadratic embedding interval does not isolate sqrt(d)"))
+    return true
+end
+
+function _sign_quadratic_element(value::FieldElement,
+                                 lo::Rational{BigInt},
+                                 hi::Rational{BigInt},
+                                 declared::Symbol)
+    coeffs = _canonical_field_coeffs(value.coeffs)
+    a = get(coeffs, Int[], 0//1)
+    b = get(coeffs, Int[1], 0//1)
+    lower = b >= 0 ? a + b * lo : a + b * hi
+    upper = b >= 0 ? a + b * hi : a + b * lo
+    if lower > 0
+        return declared === :positive ? :positive :
+               throw(ArgumentError("declared sign conflicts with certified positive interval"))
+    elseif upper < 0
+        return declared === :negative ? :negative :
+               throw(ArgumentError("declared sign conflicts with certified negative interval"))
+    elseif lower == 0 && upper == 0
+        return declared === :zero ? :zero :
+               throw(ArgumentError("declared sign conflicts with certified zero interval"))
+    end
+    throw(ArgumentError("embedding interval does not certify a unique sign"))
+end
+
+function _verify_number_field_embedding_interval(field::AlgebraicFieldSpec,
+                                                lo::Rational{BigInt},
+                                                hi::Rational{BigInt})
+    lo < hi || throw(ArgumentError("number field embedding interval must be ordered"))
+    root_count = _root_count_real_roots_in_interval(field.minimal_polynomial,
+                                                    RationalInterval(lo, hi))
+    root_count == 1 ||
+        throw(ArgumentError("number field embedding interval must isolate one real root"))
+    return true
+end
+
+function _sign_algebraic_element_interval(value::FieldElement,
+                                          lo::Rational{BigInt},
+                                          hi::Rational{BigInt},
+                                          declared::Symbol)
+    coeffs = _canonical_field_coeffs(value.coeffs)
+    all(length(key) <= 1 for key in keys(coeffs)) ||
+        throw(ArgumentError("general field sign replay expects power-basis coefficients"))
+    samples = Rational{BigInt}[lo, hi]
+    signs = Symbol[]
+    for sample in samples
+        total = 0//1
+        for (basis, coefficient) in coeffs
+            power = isempty(basis) ? 0 : basis[1]
+            total += coefficient * sample^power
+        end
+        push!(signs, total > 0 ? :positive : total < 0 ? :negative : :zero)
+    end
+    length(unique(signs)) == 1 ||
+        throw(ArgumentError("embedding interval endpoints do not certify a unique sign"))
+    signs[1] === declared ||
+        throw(ArgumentError("declared sign conflicts with certified interval sign"))
+    return declared
+end
+
 function verify(cert::ExactCertificateArtifact; mode::Symbol=:strict,
                 io::Union{Nothing, IO}=nothing, kwargs...)
     result = verify_exact_certificate(cert; mode)
@@ -771,6 +902,18 @@ function verify(cert::ExactCertificateArtifact; mode::Symbol=:strict,
         _fail(io, "$(result.failure_stage): $(result.message)")
     end
     return result
+end
+
+function migrate_certificate_v2_to_v3(cert::ExactCertificateArtifact)
+    status = verify_exact_certificate(cert; mode=:strict)
+    status.status === :valid ||
+        throw(ArgumentError("v2 artifact does not verify exactly: $(status.message)"))
+    matrix = Kernel.SparseSymmetricRationalMatrix(1, [(1, 1, 1//1)])
+    proof = Kernel.ExactLowRankPSDProof(matrix, [[1//1]], [1//1])
+    return Kernel.make_low_rank_psd_certificate(matrix, proof;
+                                                claim=Dict{Symbol, Any}(
+                                                    :description => "v2 artifact compatibility replay wrapper",
+                                                    :source_hash => get(cert.hashes, :artifact, "")))
 end
 
 function verify_exact_certificate(cert::ExactCertificateArtifact; mode::Symbol=:strict)

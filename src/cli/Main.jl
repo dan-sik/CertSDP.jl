@@ -15,6 +15,9 @@ Command-line entrypoint for `certsdp`.
 function main(args=ARGS; io::IO=stdout, err::IO=stderr)
     isempty(args) && return _cli_usage(err)
 
+    Apps.certsdp3_cli_handles(String.(args)) &&
+        return Apps.certsdp3_cli_main(String.(args); io, err)
+
     command = String(args[1])
     rest = String.(args[2:end])
 
@@ -40,6 +43,8 @@ function main(args=ARGS; io::IO=stdout, err::IO=stderr)
         return _cli_replay(rest; io, err)
     elseif command == "schema"
         return _cli_schema(rest; io, err)
+    elseif command == "import"
+        return _cli_import(rest; io, err)
     elseif command == "migrate"
         return _cli_schema(vcat(["migrate"], rest); io, err)
     elseif command == "export-sos"
@@ -279,13 +284,18 @@ function _cli_bundle(args; io::IO, err::IO)
     end
 
     output = try
-        bundle_certificate(parsed.cert_path;
-                           out_path=parsed.out_path,
-                           problem_path=parsed.problem_path,
-                           approx_path=parsed.approx_path,
-                           report_path=parsed.report_path,
-                           logs_path=parsed.logs_path,
-                           redact=parsed.redact)
+        if _bundle_out_is_directory(parsed.out_path)
+            _certsdp3_paper_bundle(parsed.cert_path, parsed.out_path;
+                                   problem_path=parsed.problem_path)
+        else
+            bundle_certificate(parsed.cert_path;
+                               out_path=parsed.out_path,
+                               problem_path=parsed.problem_path,
+                               approx_path=parsed.approx_path,
+                               report_path=parsed.report_path,
+                               logs_path=parsed.logs_path,
+                               redact=parsed.redact)
+        end
     catch bundle_error
         println(err,
                 "[FAIL] could not create artifact bundle: $(sprint(showerror, bundle_error))")
@@ -296,7 +306,111 @@ function _cli_bundle(args; io::IO, err::IO)
     return CLI_EXIT_OK
 end
 
+function _bundle_out_is_directory(out_path::AbstractString)
+    return isdir(out_path) ||
+           endswith(out_path, "/") ||
+           endswith(out_path, Base.Filesystem.path_separator)
+end
+
+function _certsdp3_paper_bundle(cert_path::AbstractString,
+                                out_dir::AbstractString;
+                                problem_path=nothing)
+    report = Kernel.replay_file(cert_path; strict=true)
+    report.accepted ||
+        throw(ArgumentError("certificate did not strict-replay for paper bundle: $(report.reason)"))
+    mkpath(out_dir)
+    schema_dir = joinpath(out_dir, "schema")
+    mkpath(schema_dir)
+    cert_text = read(cert_path, String)
+    write(joinpath(out_dir, "certificate.json"), cert_text)
+    if isnothing(problem_path)
+        write(joinpath(out_dir, "problem.json"),
+              JSON3.write(Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+                               "source" => "embedded_or_not_supplied")))
+    else
+        write(joinpath(out_dir, "problem.json"), read(problem_path, String))
+    end
+    cert = Kernel.parse_certificate_json_v3(cert_text; strict=true)
+    write(joinpath(out_dir, "proof_dag.json"),
+          JSON3.write(Kernel.proof_dag_json(cert)))
+    write(joinpath(out_dir, "replay_report.json"),
+          JSON3.write(Kernel.diagnostic_report_json(report)))
+    write(joinpath(out_dir, "replay_report.html"),
+          Kernel.diagnostic_report_html(report))
+    for schema_name in ("certsdp_certificate_v3.schema.json",
+                        "certsdp_problem_v3.schema.json",
+                        "certsdp_report_v3.schema.json")
+        source = joinpath(dirname(@__DIR__), "..", "schemas", schema_name)
+        isfile(source) && cp(source, joinpath(schema_dir, schema_name);
+                             force=true)
+    end
+    project_root = normpath(joinpath(@__DIR__, "..", ".."))
+    verify_script = """
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+julia --project="$project_root" --startup-file=no -e 'using CertSDP; exit(CertSDP.Kernel.replay_file(joinpath(ARGS[1], "certificate.json"); strict=true).accepted ? 0 : 1)' "\$ROOT"
+"""
+    verify_path = joinpath(out_dir, "VERIFY.sh")
+    write(verify_path, verify_script)
+    chmod(verify_path, 0o755)
+    write(joinpath(out_dir, "CITATION.cff"),
+          "cff-version: 1.2.0\nmessage: Cite the CertSDP proof-carrying certificate artifact.\ntitle: CertSDP 3.0 Certificate Bundle\n")
+    write(joinpath(out_dir, "theorem_statement.txt"),
+          "claim_type: $(cert.certificate_type)\ncertificate_id: $(cert.certificate_id)\nproblem_hash: $(cert.problem_hash)\n")
+    hashes = String[]
+    for file in ["certificate.json", "problem.json", "proof_dag.json",
+                 "replay_report.json", "replay_report.html",
+                 "VERIFY.sh", "CITATION.cff", "theorem_statement.txt"]
+        path = joinpath(out_dir, file)
+        isfile(path) || continue
+        push!(hashes, file * " " * bytes2hex(sha256(read(path))))
+    end
+    write(joinpath(out_dir, "hashes.txt"), join(hashes, "\n") * "\n")
+    return out_dir
+end
+
 function _cli_replay(args; io::IO, err::IO)
+    if any(arg -> arg == "--strict" || arg == "--explain" || arg == "--json", args)
+        cert_path = nothing
+        strict = false
+        explain = false
+        json = false
+        i = 1
+        while i <= length(args)
+            arg = args[i]
+            if arg == "--strict"
+                strict = true
+            elseif arg == "--explain"
+                explain = true
+            elseif arg == "--json"
+                json = true
+            elseif startswith(arg, "--")
+                println(err, "[FAIL] unknown replay option `$arg`")
+                return CLI_EXIT_USAGE
+            elseif isnothing(cert_path)
+                cert_path = arg
+            else
+                println(err, "[FAIL] unexpected positional argument `$arg`")
+                return CLI_EXIT_USAGE
+            end
+            i += 1
+        end
+        isnothing(cert_path) && begin
+            println(err, "[FAIL] replay expects a certificate path")
+            return CLI_EXIT_USAGE
+        end
+        report = Kernel.replay_file(cert_path; strict=strict || explain || json,
+                                    io=json ? nothing : io)
+        if json
+            JSON3.pretty(io, Kernel.diagnostic_report_json(report))
+            println(io)
+        elseif explain
+            print(io, Kernel.diagnostic_report_text(report))
+        end
+        return report.accepted ? CLI_EXIT_OK : CLI_EXIT_REJECTED
+    end
+
     if any(arg -> arg == "--no-network" || arg == "--no-solver", args)
         filtered = [arg for arg in args if arg != "--no-network" && arg != "--no-solver"]
         if length(filtered) == 1
@@ -347,6 +461,139 @@ function _cli_replay(args; io::IO, err::IO)
     end
     println(err, "[FAIL] replay strict verification rejected")
     return CLI_EXIT_REJECTED
+end
+
+function _cli_import(args; io::IO, err::IO)
+    isempty(args) && begin
+        _print_import_usage(err)
+        return CLI_EXIT_USAGE
+    end
+    kind = args[1]
+    rest = args[2:end]
+    if kind == "tssos"
+        artifact_path = nothing
+        out_path = nothing
+        i = 1
+        while i <= length(rest)
+            arg = rest[i]
+            if arg == "--out"
+                i == length(rest) && begin
+                    println(err, "[FAIL] import tssos --out expects a path")
+                    return CLI_EXIT_USAGE
+                end
+                i += 1
+                out_path = rest[i]
+            elseif startswith(arg, "--")
+                println(err, "[FAIL] unknown import tssos option `$arg`")
+                return CLI_EXIT_USAGE
+            elseif isnothing(artifact_path)
+                artifact_path = arg
+            else
+                println(err, "[FAIL] unexpected import tssos argument `$arg`")
+                return CLI_EXIT_USAGE
+            end
+            i += 1
+        end
+        (isnothing(artifact_path) || isnothing(out_path)) && begin
+            _print_import_usage(err)
+            return CLI_EXIT_USAGE
+        end
+        result = certify_tssos_artifact(artifact_path)
+        result isa CertifiedResult || begin
+            println(err, "[FAIL] TSSOS artifact rejected: ", result.failure.message)
+            return CLI_EXIT_REJECTED
+        end
+        candidate = import_tssos_artifact(artifact_path)
+        write_tssos_candidate(candidate, out_path)
+        println(io, "[OK] imported TSSOS artifact candidate: ", out_path)
+        return CLI_EXIT_OK
+    elseif kind == "nctssos"
+        artifact_path = nothing
+        out_path = nothing
+        i = 1
+        while i <= length(rest)
+            arg = rest[i]
+            if arg == "--out"
+                i == length(rest) && begin
+                    println(err, "[FAIL] import nctssos --out expects a path")
+                    return CLI_EXIT_USAGE
+                end
+                i += 1
+                out_path = rest[i]
+            elseif startswith(arg, "--")
+                println(err, "[FAIL] unknown import nctssos option `$arg`")
+                return CLI_EXIT_USAGE
+            elseif isnothing(artifact_path)
+                artifact_path = arg
+            else
+                println(err, "[FAIL] unexpected import nctssos argument `$arg`")
+                return CLI_EXIT_USAGE
+            end
+            i += 1
+        end
+        (isnothing(artifact_path) || isnothing(out_path)) && begin
+            _print_import_usage(err)
+            return CLI_EXIT_USAGE
+        end
+        result = certify_nctssos_artifact(artifact_path)
+        result isa CertifiedResult || begin
+            println(err, "[FAIL] NCTSSOS artifact rejected: ", result.failure.message)
+            return CLI_EXIT_REJECTED
+        end
+        candidate = import_nctssos_artifact(artifact_path)
+        write_nctssos_candidate(candidate, out_path)
+        println(io, "[OK] imported NCTSSOS artifact candidate: ", out_path)
+        return CLI_EXIT_OK
+    elseif kind == "sdpa"
+        input_path = nothing
+        out_path = nothing
+        i = 1
+        while i <= length(rest)
+            arg = rest[i]
+            if arg == "--out"
+                i == length(rest) && begin
+                    println(err, "[FAIL] import sdpa --out expects a path")
+                    return CLI_EXIT_USAGE
+                end
+                i += 1
+                out_path = rest[i]
+            elseif startswith(arg, "--")
+                println(err, "[FAIL] unknown import sdpa option `$arg`")
+                return CLI_EXIT_USAGE
+            elseif isnothing(input_path)
+                input_path = arg
+            else
+                println(err, "[FAIL] unexpected import sdpa argument `$arg`")
+                return CLI_EXIT_USAGE
+            end
+            i += 1
+        end
+        (isnothing(input_path) || isnothing(out_path)) && begin
+            _print_import_usage(err)
+            return CLI_EXIT_USAGE
+        end
+        problem = try
+            read_sdpa_sparse(input_path)
+        catch parse_error
+            println(err, "[FAIL] SDPA sparse import rejected: ",
+                    sprint(showerror, parse_error))
+            return CLI_EXIT_USAGE
+        end
+        payload = (;
+            certsdp_problem_version=Kernel.CERTSDP3_SCHEMA_VERSION,
+            type="sparse_lmi",
+            problem=Kernel.sparse_affine_lmi_json(problem),
+        )
+        open(out_path, "w") do out
+            JSON3.pretty(out, payload)
+            println(out)
+        end
+        println(io, "[OK] imported SDPA sparse problem: ", out_path)
+        return CLI_EXIT_OK
+    end
+    println(err, "[FAIL] unknown import kind `$kind`")
+    _print_import_usage(err)
+    return CLI_EXIT_USAGE
 end
 
 function _cli_minimize(args; io::IO, err::IO)
@@ -631,6 +878,72 @@ function _cli_solve_certify(args; io::IO, err::IO)
 end
 
 function _cli_diagnose(args; io::IO, err::IO)
+    if any(arg -> arg == "--format" || arg == "--out", args)
+        cert_path = nothing
+        format = :text
+        out_path = nothing
+        i = 1
+        while i <= length(args)
+            arg = args[i]
+            if arg == "--format"
+                i += 1
+                i <= length(args) || begin
+                    println(err, "[FAIL] --format requires text, json, or html")
+                    return CLI_EXIT_USAGE
+                end
+                format = Symbol(args[i])
+                format in (:text, :json, :html) || begin
+                    println(err, "[FAIL] --format must be text, json, or html")
+                    return CLI_EXIT_USAGE
+                end
+            elseif arg == "--out"
+                i += 1
+                i <= length(args) || begin
+                    println(err, "[FAIL] --out requires a path")
+                    return CLI_EXIT_USAGE
+                end
+                out_path = args[i]
+            elseif startswith(arg, "--")
+                println(err, "[FAIL] unknown diagnose option `$arg`")
+                return CLI_EXIT_USAGE
+            elseif isnothing(cert_path)
+                cert_path = arg
+            else
+                println(err, "[FAIL] unexpected positional argument `$arg`")
+                return CLI_EXIT_USAGE
+            end
+            i += 1
+        end
+        isnothing(cert_path) && begin
+            println(err, "[FAIL] diagnose expects a certificate path")
+            return CLI_EXIT_USAGE
+        end
+        report = Kernel.diagnose_file(cert_path; strict=true)
+        rendered = if format === :json
+            sprint() do buffer
+                JSON3.pretty(buffer, Kernel.diagnostic_report_json(report))
+                println(buffer)
+            end
+        elseif format === :html
+            Kernel.diagnostic_report_html(report)
+        else
+            Kernel.diagnostic_report_text(report)
+        end
+        if isnothing(out_path)
+            print(io, rendered)
+        else
+            try
+                write(out_path, rendered)
+            catch write_error
+                println(err, "[FAIL] could not write diagnostic report `$(out_path)`: ",
+                        sprint(showerror, write_error))
+                return CLI_EXIT_USAGE
+            end
+            println(io, "[OK] wrote diagnostic report: ", out_path)
+        end
+        return report.accepted ? CLI_EXIT_OK : CLI_EXIT_REJECTED
+    end
+
     parsed = try
         _parse_diagnose_args(args)
     catch parse_error
@@ -1721,6 +2034,23 @@ function _validate_schema_text(json_text::AbstractString, kind::Symbol)
     errors = String[]
     for candidate in _schema_candidate_kinds(kind)
         try
+            if candidate === :certificate
+                parsed = JSON3.read(json_text)
+                if haskey(parsed, :certsdp_certificate_version) &&
+                   String(parsed[:certsdp_certificate_version]) ==
+                   Kernel.CERTSDP3_SCHEMA_VERSION
+                    Kernel.validate_certificate_schema_v3(json_text)
+                    return candidate
+                end
+            elseif candidate === :problem
+                parsed = JSON3.read(json_text)
+                if haskey(parsed, :certsdp_problem_version) &&
+                   String(parsed[:certsdp_problem_version]) ==
+                   Kernel.CERTSDP3_SCHEMA_VERSION
+                    Kernel.validate_problem_schema_v3(json_text)
+                    return candidate
+                end
+            end
             candidate === :problem && validate_problem_schema(json_text)
             candidate === :certificate && validate_certificate_schema(json_text)
             candidate === :failure && validate_failure_report_schema(json_text)
@@ -2597,6 +2927,7 @@ function _print_cli_usage(io::IO)
     _print_explain_usage(io)
     _print_bundle_usage(io)
     _print_replay_usage(io)
+    _print_import_usage(io)
     _print_schema_usage(io)
     _print_migrate_usage(io)
     _print_export_sos_usage(io)
@@ -2605,6 +2936,11 @@ function _print_cli_usage(io::IO)
     _print_benchmark_usage(io)
     _print_verify_usage(io)
     return _print_inspect_usage(io)
+end
+
+function _print_import_usage(io::IO)
+    return println(io,
+                   "  certsdp import tssos artifact.json --out candidate.json\n  certsdp import sdpa file.dat-s --out problem.json\n  certsdp import nctssos artifact.json --out candidate.json")
 end
 
 function _print_doctor_usage(io::IO)
@@ -2649,7 +2985,7 @@ end
 
 function _print_replay_usage(io::IO)
     return println(io,
-                   "  certsdp replay artifact.zip [--extract-dir dir]")
+                   "  certsdp replay certificate.json --strict [--explain|--json]\n  certsdp replay artifact.zip [--extract-dir dir]")
 end
 
 function _print_schema_usage(io::IO)
@@ -2674,7 +3010,7 @@ end
 
 function _print_diagnose_usage(io::IO)
     return println(io,
-                   "  certsdp diagnose failure.json\n  certsdp diagnose problem.json --solution approx.json [--rank-relative-tolerance tol] [--rank-gap-threshold gap]")
+                   "  certsdp diagnose certificate.json --format text|json|html [--out report.html]\n  certsdp diagnose failure.json\n  certsdp diagnose problem.json --solution approx.json [--rank-relative-tolerance tol] [--rank-gap-threshold gap]")
 end
 
 function _print_diagnose_approx_usage(io::IO)

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://certsdp.local/schemas/certsdp_sos_v3.schema.json",
+  "title": "CertSDP SOS v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["certsdp_sos_version", "status"],
+  "properties": {
+    "certsdp_sos_version": { "const": "3.0" },
+    "status": { "enum": ["reserved_for_sparse_sos_gate_h"] }
+  }
+}

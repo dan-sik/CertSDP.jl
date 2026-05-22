@@ -1,0 +1,33 @@
+{
+    "field_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "element": [
+        {
+            "basis": [
+            ],
+            "coefficient": "2"
+        },
+        {
+            "basis": [
+                1
+            ],
+            "coefficient": "1"
+        }
+    ],
+    "arithmetic_roundtrip": true,
+    "field": {
+        "kind": "quadratic",
+        "radicand": 2,
+        "degree": 2
+    },
+    "psd_sign_proof": {
+        "field_hash": "sha256:08b362550cd5788652201135a262060692fbb5a7b2988b9a284d69a71e0d6d45",
+        "element": "2 + sqrt(2)",
+        "root_interval": [
+            "7/5",
+            "3/2"
+        ],
+        "sign": "positive"
+    },
+    "sos_coefficient_matching": true,
+    "element_string": "2 + sqrt(2)"
+}

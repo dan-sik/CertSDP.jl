@@ -1,0 +1,9 @@
+{
+    "status": "fixture_only_no_external_msolve",
+    "candidate_hashes": {
+        "4": "sha256:4f61e692d8a299e76edb6f346e8eabee4dc37b776e4a927ebfbaa3a5977b220f",
+        "1": "sha256:94d6adb0c7fd984002440ed7b188f474e80a54a898cb3092143a6bc5420b7adb",
+        "2": "sha256:1cc3b6ddbdff79eb5b4f651a012aed807fd65671ac618513bf4495af11e8dc3e",
+        "3": "sha256:beab9a32a15cc6ce459381ccabd61d3a2df2ebaf717ea513d8ffc4916982a242"
+    }
+}

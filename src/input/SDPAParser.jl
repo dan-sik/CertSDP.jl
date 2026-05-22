@@ -11,6 +11,9 @@ Finite decimal entries are converted exactly to rationals.
 """
 read_sdpa(path::AbstractString) = parse_sdpa(read(path, String); source=path)
 
+read_sdpa_sparse(path::AbstractString) =
+    parse_sdpa_sparse(read(path, String); source=path)
+
 """
     parse_sdpa(text; source="<memory>") -> BlockLMIProblem
 
@@ -106,6 +109,100 @@ function parse_sdpa(text::AbstractString; source::AbstractString="<memory>")
                                  :source => source,
                                  :sdpa_standard_form => "sum_i Fi xi - F0 >= 0")
     return BlockLMIProblem(block_problems; objective, block_kinds=kinds, metadata)
+end
+
+function parse_sdpa_sparse(text::AbstractString; source::AbstractString="<memory>")
+    tokens = _sdpa_numeric_tokens(text)
+    length(tokens) >= 3 ||
+        throw(ArgumentError("malformed SDPA input `$source`: expected header and sparse entries"))
+    cursor = 1
+    m_dim = _parse_sdpa_positive_integer(tokens[cursor], "mDIM")
+    cursor += 1
+    n_blocks = _parse_sdpa_positive_integer(tokens[cursor], "nBLOCK")
+    cursor += 1
+    length(tokens) >= cursor + n_blocks - 1 ||
+        throw(ArgumentError("malformed SDPA input `$source`: block structure is incomplete"))
+    block_structure = Int[]
+    total_dim = 0
+    offsets = Int[]
+    for block_index in 1:n_blocks
+        push!(offsets, total_dim)
+        block_size = _parse_sdpa_integer_token(tokens[cursor],
+                                               "bLOCKsTRUCT[$block_index]")
+        block_size != 0 ||
+            throw(ArgumentError("malformed SDPA input `$source`: zero block size"))
+        push!(block_structure, block_size)
+        total_dim += abs(block_size)
+        cursor += 1
+    end
+    length(tokens) >= cursor + m_dim - 1 ||
+        throw(ArgumentError("malformed SDPA input `$source`: objective vector is incomplete"))
+    cursor += m_dim
+    (length(tokens) - cursor + 1) % 5 == 0 ||
+        throw(ArgumentError("malformed SDPA input `$source`: sparse rows must use 5 fields"))
+    accumulators = [Dict{Tuple{Int, Int}, Rational{BigInt}}()
+                    for _ in 0:m_dim]
+    seen = [Set{Tuple{Int, Int}}() for _ in 0:m_dim]
+    while cursor <= length(tokens)
+        matrix_number = _parse_sdpa_integer_token(tokens[cursor],
+                                                  "sparse row matrix number")
+        block_number = _parse_sdpa_integer_token(tokens[cursor + 1],
+                                                 "sparse row block number")
+        row = _parse_sdpa_integer_token(tokens[cursor + 2], "sparse row row index")
+        col = _parse_sdpa_integer_token(tokens[cursor + 3], "sparse row column index")
+        value = _parse_sdpa_rational(tokens[cursor + 4], "sparse row value")
+        cursor += 5
+        0 <= matrix_number <= m_dim ||
+            throw(ArgumentError("malformed SDPA input `$source`: matrix number out of range"))
+        1 <= block_number <= n_blocks ||
+            throw(ArgumentError("malformed SDPA input `$source`: block number out of range"))
+        block_size = abs(block_structure[block_number])
+        1 <= row <= block_size && 1 <= col <= block_size ||
+            throw(ArgumentError("malformed SDPA input `$source`: row/col out of block range"))
+        block_structure[block_number] < 0 && row != col &&
+            throw(ArgumentError("malformed SDPA input `$source`: diagonal block has off-diagonal entry"))
+        i = offsets[block_number] + row
+        j = offsets[block_number] + col
+        i <= j || ((i, j) = (j, i))
+        key = (i, j)
+        matrix_seen = seen[matrix_number + 1]
+        if key in matrix_seen && get(accumulators[matrix_number + 1], key, 0//1) != value
+            throw(ArgumentError("malformed SDPA input `$source`: conflicting duplicate sparse entry"))
+        end
+        push!(matrix_seen, key)
+        accumulators[matrix_number + 1][key] = value
+    end
+    variables = [Symbol("x", i) for i in 1:m_dim]
+    matrices = [Kernel.SparseSymmetricRationalMatrix(total_dim,
+        [(i, j, value) for ((i, j), value) in accum])
+                for accum in accumulators]
+    A0_entries = [(i, j, -value) for (i, j, value) in matrices[1].entries]
+    A0 = Kernel.SparseSymmetricRationalMatrix(total_dim, A0_entries)
+    A = matrices[2:end]
+    metadata = Dict{Symbol, Any}(:source_format => SDPA_SOURCE_FORMAT,
+                                 :source => source,
+                                 :block_struct => block_structure)
+    return Kernel.SparseAffineLMI(variables, A0, A; metadata)
+end
+
+function write_sdpa_sparse(problem::Kernel.SparseAffineLMI,
+                           path::AbstractString)
+    open(path, "w") do io
+        println(io, "\"CertSDP sparse-preserving SDPA export\"")
+        println(io, length(problem.variables), " = mDIM")
+        println(io, 1, " = nBLOCK")
+        println(io, problem.A0.n, " = bLOCKsTRUCT")
+        println(io, join(fill("0", length(problem.variables)), ", "))
+        for (matrix_number, matrix) in enumerate([problem.A0; problem.A])
+            sdpa_number = matrix_number - 1
+            for (i, j, value) in matrix.entries
+                emitted = sdpa_number == 0 ? -value : value
+                println(io, sdpa_number, " 1 ", i, " ", j, " ",
+                        _rational_string(emitted))
+            end
+        end
+    end
+    return path
 end
 
 """

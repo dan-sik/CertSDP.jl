@@ -9,6 +9,8 @@ const CERTSDP_ACTIVE_ALL_TAGS = Set(["essential", "regression", "cli",
                                      "production", "hardgate_real"])
 const CERTSDP_SELECTED_TAGS = if isempty(CERTSDP_TEST_ARGS)
     CERTSDP_DEFAULT_TAGS
+elseif "certsdp3" in CERTSDP_TEST_ARGS
+    Set(["certsdp3"])
 elseif !isdisjoint(CERTSDP_TEST_ARGS, Set(["all", "full"]))
     union(setdiff(CERTSDP_TEST_ARGS, Set(["all", "full"])),
           CERTSDP_ACTIVE_ALL_TAGS)
@@ -61,3 +63,4 @@ certsdp_include("hardgate_4_0_real_artifacts.jl", "hardgate_real", "release",
                 "contract")
 certsdp_include("production_gates_2_1.jl", "production", "validation",
                 "compiler")
+certsdp_include("certsdp3/runtests_certsdp3.jl", "certsdp3", "validation")

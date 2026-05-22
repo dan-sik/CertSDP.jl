@@ -1,0 +1,8 @@
+{
+    "certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+    "certsdp_sparse_sos_candidate_version": "3.0",
+    "source": "tssos",
+    "problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+    "artifact_hash": "sha256:76e2d4728e43be839c3643d256098a7b5c3bcd349076b34865186a6b97315685",
+    "source_hash": "sha256:dc6523025b1aa0d951683c0c61b8d3150e439714b9aafaa8e15dc08d7386a169"
+}

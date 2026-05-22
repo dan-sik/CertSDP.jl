@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://certsdp.local/schemas/certsdp_nc_quantum_v3.schema.json",
+  "title": "CertSDP NC Quantum v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["certsdp_nc_quantum_version", "status"],
+  "properties": {
+    "certsdp_nc_quantum_version": { "const": "3.0" },
+    "status": { "enum": ["reserved_for_nc_quantum_gate_j"] }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://certsdp.local/schemas/certsdp_sparse_lmi_v3.schema.json",
+  "title": "CertSDP Sparse LMI v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["variables", "A0", "A", "blocks", "metadata", "hash"],
+  "properties": {
+    "variables": { "type": "array", "items": { "type": "string" } },
+    "A0": { "$ref": "#/$defs/sparse_matrix" },
+    "A": { "type": "array", "items": { "$ref": "#/$defs/sparse_matrix" } },
+    "blocks": { "type": "array" },
+    "metadata": { "type": "object" },
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "$defs": {
+    "sparse_matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n", "entries", "hash"],
+      "properties": {
+        "n": { "type": "integer", "minimum": 1 },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["i", "j", "value"],
+            "properties": {
+              "i": { "type": "integer", "minimum": 1 },
+              "j": { "type": "integer", "minimum": 1 },
+              "value": { "type": "string" }
+            }
+          }
+        },
+        "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

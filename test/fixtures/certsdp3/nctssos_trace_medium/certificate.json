@@ -1,0 +1,8 @@
+{
+    "certsdp_quantum_candidate_version": "3.0",
+    "certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+    "source": "nctssos",
+    "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
+    "artifact_hash": "sha256:9edf3b5fc3699cce8b0d2d93bf8e02dd6f1bc03040da9ccd9acec070eef0949b",
+    "source_hash": "sha256:04f1f98b4e368d7a2e98294e185c15af100187eae784ffac7e6b706e1885ea71"
+}

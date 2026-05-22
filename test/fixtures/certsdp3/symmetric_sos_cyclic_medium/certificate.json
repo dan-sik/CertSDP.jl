@@ -1,0 +1,542 @@
+{
+    "certsdp_symmetry_certificate_version": "3.0",
+    "problem_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+    "group": {
+        "variables": [
+            "x1",
+            "x2",
+            "x3",
+            "x4",
+            "x5",
+            "x6"
+        ],
+        "generators": [
+            {
+                "id": "cyclic_shift",
+                "image": [
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    1
+                ]
+            }
+        ],
+        "action_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
+    },
+    "orbit_basis": {
+        "monomial_exponents": [
+            [
+                2,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                2,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                2,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                2,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                2,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                2
+            ],
+            [
+                1,
+                1,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                1,
+                1,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                1,
+                1,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                1,
+                1,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1
+            ],
+            [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+            ],
+            [
+                1,
+                0,
+                1,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                1,
+                0,
+                1,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                1,
+                0,
+                1,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                1,
+                0,
+                1
+            ],
+            [
+                1,
+                0,
+                0,
+                0,
+                1,
+                0
+            ],
+            [
+                0,
+                1,
+                0,
+                0,
+                0,
+                1
+            ]
+        ],
+        "orbits": [
+            [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            ],
+            [
+                7,
+                8,
+                9,
+                10,
+                11,
+                12
+            ],
+            [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+            ]
+        ],
+        "orbit_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+    },
+    "projection_blocks": [
+        {
+            "n": 18,
+            "entries": [
+                {
+                    "i": 1,
+                    "j": 1,
+                    "value": "1"
+                },
+                {
+                    "i": 2,
+                    "j": 2,
+                    "value": "1"
+                },
+                {
+                    "i": 3,
+                    "j": 3,
+                    "value": "1"
+                },
+                {
+                    "i": 4,
+                    "j": 4,
+                    "value": "1"
+                },
+                {
+                    "i": 5,
+                    "j": 5,
+                    "value": "1"
+                },
+                {
+                    "i": 6,
+                    "j": 6,
+                    "value": "1"
+                }
+            ],
+            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408"
+        },
+        {
+            "n": 18,
+            "entries": [
+                {
+                    "i": 7,
+                    "j": 7,
+                    "value": "1"
+                },
+                {
+                    "i": 8,
+                    "j": 8,
+                    "value": "1"
+                },
+                {
+                    "i": 9,
+                    "j": 9,
+                    "value": "1"
+                },
+                {
+                    "i": 10,
+                    "j": 10,
+                    "value": "1"
+                },
+                {
+                    "i": 11,
+                    "j": 11,
+                    "value": "1"
+                },
+                {
+                    "i": 12,
+                    "j": 12,
+                    "value": "1"
+                }
+            ],
+            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce"
+        },
+        {
+            "n": 18,
+            "entries": [
+                {
+                    "i": 13,
+                    "j": 13,
+                    "value": "1"
+                },
+                {
+                    "i": 14,
+                    "j": 14,
+                    "value": "1"
+                },
+                {
+                    "i": 15,
+                    "j": 15,
+                    "value": "1"
+                },
+                {
+                    "i": 16,
+                    "j": 16,
+                    "value": "1"
+                },
+                {
+                    "i": 17,
+                    "j": 17,
+                    "value": "1"
+                },
+                {
+                    "i": 18,
+                    "j": 18,
+                    "value": "1"
+                }
+            ],
+            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff"
+        }
+    ],
+    "original_matrix": {
+        "n": 18,
+        "entries": [
+            {
+                "i": 1,
+                "j": 1,
+                "value": "1"
+            },
+            {
+                "i": 2,
+                "j": 2,
+                "value": "1"
+            },
+            {
+                "i": 3,
+                "j": 3,
+                "value": "1"
+            },
+            {
+                "i": 4,
+                "j": 4,
+                "value": "1"
+            },
+            {
+                "i": 5,
+                "j": 5,
+                "value": "1"
+            },
+            {
+                "i": 6,
+                "j": 6,
+                "value": "1"
+            },
+            {
+                "i": 7,
+                "j": 7,
+                "value": "1"
+            },
+            {
+                "i": 8,
+                "j": 8,
+                "value": "1"
+            },
+            {
+                "i": 9,
+                "j": 9,
+                "value": "1"
+            },
+            {
+                "i": 10,
+                "j": 10,
+                "value": "1"
+            },
+            {
+                "i": 11,
+                "j": 11,
+                "value": "1"
+            },
+            {
+                "i": 12,
+                "j": 12,
+                "value": "1"
+            },
+            {
+                "i": 13,
+                "j": 13,
+                "value": "1"
+            },
+            {
+                "i": 14,
+                "j": 14,
+                "value": "1"
+            },
+            {
+                "i": 15,
+                "j": 15,
+                "value": "1"
+            },
+            {
+                "i": 16,
+                "j": 16,
+                "value": "1"
+            },
+            {
+                "i": 17,
+                "j": 17,
+                "value": "1"
+            },
+            {
+                "i": 18,
+                "j": 18,
+                "value": "1"
+            }
+        ],
+        "hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+    },
+    "reconstructed_matrix": {
+        "n": 18,
+        "entries": [
+            {
+                "i": 1,
+                "j": 1,
+                "value": "1"
+            },
+            {
+                "i": 2,
+                "j": 2,
+                "value": "1"
+            },
+            {
+                "i": 3,
+                "j": 3,
+                "value": "1"
+            },
+            {
+                "i": 4,
+                "j": 4,
+                "value": "1"
+            },
+            {
+                "i": 5,
+                "j": 5,
+                "value": "1"
+            },
+            {
+                "i": 6,
+                "j": 6,
+                "value": "1"
+            },
+            {
+                "i": 7,
+                "j": 7,
+                "value": "1"
+            },
+            {
+                "i": 8,
+                "j": 8,
+                "value": "1"
+            },
+            {
+                "i": 9,
+                "j": 9,
+                "value": "1"
+            },
+            {
+                "i": 10,
+                "j": 10,
+                "value": "1"
+            },
+            {
+                "i": 11,
+                "j": 11,
+                "value": "1"
+            },
+            {
+                "i": 12,
+                "j": 12,
+                "value": "1"
+            },
+            {
+                "i": 13,
+                "j": 13,
+                "value": "1"
+            },
+            {
+                "i": 14,
+                "j": 14,
+                "value": "1"
+            },
+            {
+                "i": 15,
+                "j": 15,
+                "value": "1"
+            },
+            {
+                "i": 16,
+                "j": 16,
+                "value": "1"
+            },
+            {
+                "i": 17,
+                "j": 17,
+                "value": "1"
+            },
+            {
+                "i": 18,
+                "j": 18,
+                "value": "1"
+            }
+        ],
+        "hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+    },
+    "proof_dag": {
+        "claim_type": "symmetry_reduction",
+        "nodes": [
+            {
+                "id": "symmetry_group",
+                "kind": "hash",
+                "inputs": [
+                ],
+                "output_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                "checker": "symmetry_group_hash",
+                "status": "accepted"
+            },
+            {
+                "id": "orbit_basis",
+                "kind": "hash",
+                "inputs": [
+                    "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
+                ],
+                "output_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                "checker": "orbit_basis_hash",
+                "status": "accepted"
+            },
+            {
+                "id": "block_reconstruction",
+                "kind": "exact_identity",
+                "inputs": [
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                ],
+                "output_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                "checker": "verify_block_diagonalization_certificate",
+                "status": "accepted"
+            }
+        ],
+        "root_hash": "sha256:869c975e8e09206a33d7b7e5ca5930263a8e510f74dbdcf6ec3cf6b2e0c63df1",
+        "schema_version": "3.0"
+    },
+    "certificate_hash": "sha256:bbe816faf182967a0a8e453e5a87b05a9cc7890ed7e98449c6d612ecff321b31"
+}

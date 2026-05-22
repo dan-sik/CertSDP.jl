@@ -118,11 +118,191 @@ function build_incidence_system(P::LMIProblem, approx::ApproxSolution; kwargs...
     return build_incidence_system(P, approx, rank_profile; kwargs...)
 end
 
+"""
+    build_incidence_system(P::BlockLMIProblem, approx; block_strategy=:active_blocks, ...)
+
+Build a block-native incidence system descriptor. Each rank-deficient active
+PSD block receives its own kernel variables and gauge rows while the original
+`x` variables remain shared. This path never constructs the dense block
+diagonal aggregate; it records per-block hashes and diagnostics for exact
+candidate replay.
+"""
+function build_incidence_system(P::BlockLMIProblem,
+                                approx;
+                                block_strategy::Symbol=:active_blocks,
+                                rank_profiles=nothing,
+                                active_blocks=nothing,
+                                inactive_blocks=nothing,
+                                slicing::Symbol=:none,
+                                kernel_prefix::Symbol=:B)
+    block_strategy === :active_blocks ||
+        throw(ArgumentError("block-native incidence currently supports block_strategy=:active_blocks"))
+    profiles = _block_native_rank_profiles(P, rank_profiles)
+    active_set, inactive_set = _block_native_active_sets(P, profiles,
+                                                        active_blocks,
+                                                        inactive_blocks)
+    blocks = Kernel.BlockNativeIncidenceBlock[]
+    for (block_index, block) in enumerate(P.blocks)
+        profile = profiles[block_index]
+        rank = profile.rank
+        dimension = matrix_size(block)
+        kernel_dimension = dimension - rank
+        active = block_index in active_set
+        if active
+            kernel_dimension > 0 ||
+                throw(ArgumentError("active block $block_index must be rank-deficient"))
+            variable_names = _block_native_variable_names(P, block_index,
+                                                          dimension,
+                                                          kernel_dimension,
+                                                          kernel_prefix)
+            gauge_rows = _incidence_complement_indices(dimension,
+                                                       profile.pivot_cols)
+            system_hash = _block_native_block_system_hash(block,
+                                                          block_index,
+                                                          rank,
+                                                          kernel_dimension,
+                                                          variable_names,
+                                                          gauge_rows,
+                                                          slicing,
+                                                          true)
+        else
+            block_index in inactive_set ||
+                throw(ArgumentError("block $block_index is neither active nor inactive"))
+            variable_names = Symbol[]
+            gauge_rows = Int[]
+            system_hash = _block_native_block_system_hash(block,
+                                                          block_index,
+                                                          rank,
+                                                          kernel_dimension,
+                                                          variable_names,
+                                                          gauge_rows,
+                                                          :inactive_psd_margin,
+                                                          false)
+        end
+        push!(blocks,
+              Kernel.BlockNativeIncidenceBlock(block_index,
+                                               lmi_problem_hash(block),
+                                               rank,
+                                               kernel_dimension,
+                                               variable_names,
+                                               gauge_rows,
+                                               active ? slicing :
+                                               :inactive_psd_margin,
+                                               active,
+                                               system_hash))
+    end
+    system_hash = _block_native_system_hash(P, blocks)
+    return Kernel.BlockNativeIncidenceSystem(block_lmi_problem_hash(P),
+                                             copy(P.vars),
+                                             blocks,
+                                             system_hash)
+end
+
 function build_incidence_system(P::LMIProblem,
                                 approx::ApproxSolution,
                                 rank_profile::UnstableRankProfile;
                                 kwargs...,)
     throw(ArgumentError("cannot build incidence system from unstable rank profile: $(rank_profile.reason)"))
+end
+
+function _block_native_rank_profiles(P::BlockLMIProblem, rank_profiles)
+    if isnothing(rank_profiles)
+        return [RankProfile(max(0, matrix_size(block) - 1),
+                            collect(1:max(0, matrix_size(block) - 1)),
+                            collect(1:max(0, matrix_size(block) - 1)),
+                            collect(1:matrix_size(block)),
+                            BigFloat(0),
+                            BigFloat[],
+                            BigFloat(0),
+                            :fixture)
+                for block in P.blocks]
+    end
+    length(rank_profiles) == num_blocks(P) ||
+        throw(ArgumentError("rank_profiles has length $(length(rank_profiles)); expected $(num_blocks(P))"))
+    profiles = RankProfile[]
+    for (block_index, profile) in enumerate(rank_profiles)
+        profile isa RankProfile ||
+            throw(ArgumentError("rank_profiles[$block_index] must be a RankProfile"))
+        _validate_incidence_rank_profile(profile, matrix_size(P.blocks[block_index]))
+        push!(profiles, profile)
+    end
+    return profiles
+end
+
+function _block_native_active_sets(P::BlockLMIProblem,
+                                   profiles::Vector{RankProfile},
+                                   active_blocks,
+                                   inactive_blocks)
+    all_blocks = Set(1:num_blocks(P))
+    active = if isnothing(active_blocks)
+        Set(i for (i, profile) in enumerate(profiles)
+            if profile.rank < matrix_size(P.blocks[i]))
+    else
+        Set(Int.(collect(active_blocks)))
+    end
+    inactive = if isnothing(inactive_blocks)
+        setdiff(all_blocks, active)
+    else
+        Set(Int.(collect(inactive_blocks)))
+    end
+    union(active, inactive) == all_blocks ||
+        throw(ArgumentError("active/inactive block sets must cover every block"))
+    isempty(intersect(active, inactive)) ||
+        throw(ArgumentError("active/inactive block sets must be disjoint"))
+    for index in union(active, inactive)
+        1 <= index <= num_blocks(P) ||
+            throw(ArgumentError("block index $index out of range"))
+    end
+    return active, inactive
+end
+
+function _block_native_variable_names(P::BlockLMIProblem,
+                                      block_index::Integer,
+                                      dimension::Integer,
+                                      kernel_dimension::Integer,
+                                      kernel_prefix::Symbol)
+    prefix = String(kernel_prefix)
+    names = Symbol[
+        Symbol(prefix, block_index, "_Y_", row, "_", col)
+        for col in 1:kernel_dimension
+        for row in 1:dimension
+    ]
+    all_names = vcat(P.vars, names)
+    length(unique(all_names)) == length(all_names) ||
+        throw(ArgumentError("block $block_index incidence variable names collide with shared variables"))
+    return names
+end
+
+function _block_native_block_system_hash(block::LMIProblem,
+                                         block_index::Integer,
+                                         rank::Integer,
+                                         kernel_dimension::Integer,
+                                         variable_names::Vector{Symbol},
+                                         gauge_rows::Vector{Int},
+                                         slicing_strategy::Symbol,
+                                         active::Bool)
+    payload = (;
+        block_index=Int(block_index),
+        block_hash=lmi_problem_hash(block),
+        rank=Int(rank),
+        kernel_dimension=Int(kernel_dimension),
+        active,
+        variable_names=String.(variable_names),
+        gauge_rows,
+        slicing_strategy=String(slicing_strategy),
+    )
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
+end
+
+function _block_native_system_hash(P::BlockLMIProblem,
+                                   blocks::Vector{Kernel.BlockNativeIncidenceBlock})
+    payload = (;
+        problem_hash=block_lmi_problem_hash(P),
+        shared_variables=String.(P.vars),
+        blocks=[Kernel.block_native_incidence_block_json(block)
+                for block in blocks],
+    )
+    return "sha256:" * bytes2hex(sha256(JSON3.write(payload)))
 end
 
 function _validate_incidence_approximation(P::LMIProblem, approx::ApproxSolution)

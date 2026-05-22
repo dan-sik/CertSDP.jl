@@ -1,0 +1,22 @@
+{
+    "field_hash": "sha256:8ae0f70b39be39e6a87c96a6a573e0039ed703d6e947ce17dd3259f89d13e42b",
+    "element": [
+        {
+            "basis": [
+            ],
+            "coefficient": "3"
+        }
+    ],
+    "arithmetic_roundtrip": true,
+    "field": {
+        "kind": "multiquadratic",
+        "radicands": [
+            2,
+            3
+        ],
+        "degree": 4
+    },
+    "psd_sign_proof": null,
+    "sos_coefficient_matching": true,
+    "element_string": "3"
+}

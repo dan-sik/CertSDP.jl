@@ -2,6 +2,7 @@ module CertSDP
 
 using LinearAlgebra: det, dot
 using Random: MersenneTwister, shuffle!
+using SHA: sha256
 
 # The stable public surface is deliberately small. The exact certificate
 # compiler internals stay module-qualified unless promoted in docs/API_STABILITY.md.
@@ -16,12 +17,29 @@ export LMIProblem,
        write_certificate,
        certify_sos,
        verify_sos,
+       import_tssos_artifact,
+       certify_tssos_artifact,
+       verify_tssos_certificate,
+       import_nctssos_artifact,
+       certify_nctssos_artifact,
+       ExactField,
+       NumberField,
+       field_hash,
+       field_element_string,
+       parse_field_element,
+       verify_field_element,
        export_sos_decomposition,
        sos_decomposition_text,
        sos_decomposition_latex,
        sos_decomposition_sage,
        sos_decomposition_julia
 
+include("kernel/Kernel.jl")
+include("kernel/Debug.jl")
+include("exactify/Backends3.jl")
+include("schemas/Schemas.jl")
+include("reports/Reports.jl")
+include("perf/Perf.jl")
 include("input/LMIProblem.jl")
 include("input/JSONParser.jl")
 include("input/SDPAParser.jl")
@@ -33,6 +51,8 @@ include("algebraic/AlgebraicLMI.jl")
 include("algebraic/SignTests.jl")
 include("algebraic/PolynomialSystem.jl")
 include("certify/Results.jl")
+include("adapters/Adapters.jl")
+include("apps/Apps.jl")
 include("backends/AlgebraicBackend.jl")
 include("backends/MsolveBackend.jl")
 include("systems/IncidenceBuilder.jl")
@@ -59,6 +79,25 @@ include("compiler/PerfectGateReconstruction.jl")
 include("tooling/ReplayTools.jl")
 include("tooling/PaperArtifacts.jl")
 include("cli/Main.jl")
+
+const SparseSOSCertificateCandidate = Adapters.SparseSOSCertificateCandidate
+const QuantumCertificateCandidate = Adapters.QuantumCertificateCandidate
+import_tssos_artifact(args...; kwargs...) =
+    Adapters.import_tssos_artifact(args...; kwargs...)
+certify_tssos_artifact(args...; kwargs...) =
+    Adapters.certify_tssos_artifact(args...; kwargs...)
+verify_tssos_certificate(args...; kwargs...) =
+    Adapters.verify_tssos_certificate(args...; kwargs...)
+tssos_artifact_hash(args...; kwargs...) =
+    Adapters.tssos_artifact_hash(args...; kwargs...)
+write_tssos_candidate(args...; kwargs...) =
+    Adapters.write_tssos_candidate(args...; kwargs...)
+import_nctssos_artifact(args...; kwargs...) =
+    Adapters.import_nctssos_artifact(args...; kwargs...)
+certify_nctssos_artifact(args...; kwargs...) =
+    Adapters.certify_nctssos_artifact(args...; kwargs...)
+write_nctssos_candidate(args...; kwargs...) =
+    Adapters.write_nctssos_candidate(args...; kwargs...)
 
 """
 package_marker() -> Symbol

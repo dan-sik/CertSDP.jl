@@ -1,0 +1,19 @@
+{
+    "field_hash": "sha256:7841035d399b1f86a2fbe9f866259fab320ec83770399a5f2a4f4c94d24c4a11",
+    "element": [
+        {
+            "basis": [
+            ],
+            "coefficient": "1"
+        }
+    ],
+    "arithmetic_roundtrip": true,
+    "field": {
+        "kind": "cyclotomic",
+        "conductor": 5,
+        "degree": 4
+    },
+    "psd_sign_proof": null,
+    "sos_coefficient_matching": true,
+    "element_string": "1"
+}

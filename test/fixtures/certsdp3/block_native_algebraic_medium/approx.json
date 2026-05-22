@@ -1,0 +1,65 @@
+{
+    "certsdp_fixture": "block_native_rank_profiles",
+    "rank_profiles": [
+        {
+            "rank": 18,
+            "block_index": 1,
+            "kernel_dimension": 2
+        },
+        {
+            "rank": 18,
+            "block_index": 2,
+            "kernel_dimension": 2
+        },
+        {
+            "rank": 18,
+            "block_index": 3,
+            "kernel_dimension": 2
+        },
+        {
+            "rank": 18,
+            "block_index": 4,
+            "kernel_dimension": 2
+        },
+        {
+            "rank": 20,
+            "block_index": 5,
+            "kernel_dimension": 0
+        },
+        {
+            "rank": 20,
+            "block_index": 6,
+            "kernel_dimension": 0
+        },
+        {
+            "rank": 20,
+            "block_index": 7,
+            "kernel_dimension": 0
+        },
+        {
+            "rank": 20,
+            "block_index": 8,
+            "kernel_dimension": 0
+        },
+        {
+            "rank": 20,
+            "block_index": 9,
+            "kernel_dimension": 0
+        },
+        {
+            "rank": 20,
+            "block_index": 10,
+            "kernel_dimension": 0
+        },
+        {
+            "rank": 20,
+            "block_index": 11,
+            "kernel_dimension": 0
+        },
+        {
+            "rank": 20,
+            "block_index": 12,
+            "kernel_dimension": 0
+        }
+    ]
+}

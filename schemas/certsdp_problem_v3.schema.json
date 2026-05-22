@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://certsdp.local/schemas/certsdp_problem_v3.schema.json",
+  "title": "CertSDP Problem v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["certsdp_problem_version", "type", "problem"],
+  "properties": {
+    "certsdp_problem_version": { "const": "3.0" },
+    "type": { "enum": ["sparse_lmi"] },
+    "problem": { "type": "object" }
+  }
+}

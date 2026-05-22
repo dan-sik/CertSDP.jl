@@ -1,0 +1,20 @@
+{
+    "field_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "element": [
+        {
+            "basis": [
+            ],
+            "coefficient": "2"
+        }
+    ],
+    "arithmetic_roundtrip": true,
+    "field": {
+        "kind": "algebraic",
+        "minimal_polynomial": "t^3 - t - 1",
+        "root_symbol": "alpha",
+        "degree": 3
+    },
+    "psd_sign_proof": null,
+    "sos_coefficient_matching": true,
+    "element_string": "2"
+}

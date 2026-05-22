@@ -1,0 +1,402 @@
+module Apps
+
+using ..Kernel
+using ..Adapters
+using JSON3: JSON3
+using SHA: sha256
+
+export app_layer_marker,
+       certsdp3_cli_handles,
+       certsdp3_cli_main
+
+const CLI_EXIT_OK = 0
+const CLI_EXIT_VERIFICATION_FAILED = 1
+const CLI_EXIT_INVALID_INPUT = 2
+
+app_layer_marker() = :certsdp3_apps_cli_reports
+
+function certsdp3_cli_handles(args::AbstractVector{<:AbstractString})
+    isempty(args) && return false
+    command = first(args)
+    command in ("help", "--help", "-h") && return false
+    command in ("version", "--version") && return "--json" in args[2:end]
+    command in ("replay", "diagnose", "bundle", "import") && return true
+    command == "schema" || return false
+    return _schema_args_are_v3(args[2:end])
+end
+
+function certsdp3_cli_main(args=String[]; io::IO=stdout, err::IO=stderr)
+    argv = String.(args)
+    isempty(argv) && return _usage(err)
+    command = first(argv)
+    rest = argv[2:end]
+    if command in ("help", "--help", "-h")
+        _print_usage(io)
+        return CLI_EXIT_OK
+    elseif command in ("version", "--version")
+        if "--json" in rest
+            JSON3.pretty(io, Dict("name" => "CertSDP",
+                                  "certsdp3" => true,
+                                  "schema_version" => Kernel.CERTSDP3_SCHEMA_VERSION))
+            println(io)
+        else
+            println(io, "CertSDP.jl CertSDP 3.0")
+        end
+        return CLI_EXIT_OK
+    elseif command == "replay"
+        return _replay(rest; io, err)
+    elseif command == "diagnose"
+        return _diagnose(rest; io, err)
+    elseif command == "schema"
+        return _schema(rest; io, err)
+    elseif command == "bundle"
+        return _bundle(rest; io, err)
+    elseif command == "import"
+        return _import(rest; io, err)
+    end
+    println(err, "[FAIL] unknown CertSDP 3.0 command `$command`")
+    return _usage(err)
+end
+
+function _replay(args; io::IO, err::IO)
+    cert_path = nothing
+    strict = false
+    explain = false
+    json = false
+    for arg in args
+        if arg == "--strict"
+            strict = true
+        elseif arg == "--explain"
+            explain = true
+        elseif arg == "--json"
+            json = true
+        elseif startswith(arg, "--")
+            println(err, "[FAIL] unknown replay option `$arg`")
+            return CLI_EXIT_INVALID_INPUT
+        elseif isnothing(cert_path)
+            cert_path = arg
+        else
+            println(err, "[FAIL] unexpected replay argument `$arg`")
+            return CLI_EXIT_INVALID_INPUT
+        end
+    end
+    isnothing(cert_path) && begin
+        println(err, "[FAIL] replay expects a certificate path")
+        return CLI_EXIT_INVALID_INPUT
+    end
+    report = Kernel.replay_file(cert_path; strict=strict || explain || json,
+                                io=json ? nothing : io)
+    if json
+        JSON3.pretty(io, Kernel.diagnostic_report_json(report))
+        println(io)
+    elseif explain
+        print(io, Kernel.diagnostic_report_text(report))
+    end
+    return report.accepted ? CLI_EXIT_OK : CLI_EXIT_VERIFICATION_FAILED
+end
+
+function _diagnose(args; io::IO, err::IO)
+    cert_path = nothing
+    format = :text
+    out_path = nothing
+    i = 1
+    while i <= length(args)
+        arg = args[i]
+        if arg == "--format"
+            i += 1
+            i <= length(args) || return _fail(err, "--format requires a value")
+            format = Symbol(args[i])
+            format in (:text, :json, :html) ||
+                return _fail(err, "--format must be text, json, or html")
+        elseif arg == "--out"
+            i += 1
+            i <= length(args) || return _fail(err, "--out requires a path")
+            out_path = args[i]
+        elseif startswith(arg, "--")
+            return _fail(err, "unknown diagnose option `$arg`")
+        elseif isnothing(cert_path)
+            cert_path = arg
+        else
+            return _fail(err, "unexpected diagnose argument `$arg`")
+        end
+        i += 1
+    end
+    isnothing(cert_path) && return _fail(err, "diagnose expects a certificate path")
+    report = Kernel.diagnose_file(cert_path; strict=true)
+    rendered = if format === :json
+        sprint() do buffer
+            JSON3.pretty(buffer, Kernel.diagnostic_report_json(report))
+            println(buffer)
+        end
+    elseif format === :html
+        Kernel.diagnostic_report_html(report)
+    else
+        Kernel.diagnostic_report_text(report)
+    end
+    if isnothing(out_path)
+        print(io, rendered)
+    else
+        write(out_path, rendered)
+        println(io, "[OK] wrote diagnostic report: ", out_path)
+    end
+    return report.accepted ? CLI_EXIT_OK : CLI_EXIT_VERIFICATION_FAILED
+end
+
+function _schema(args; io::IO, err::IO)
+    length(args) >= 2 || return _fail(err, "schema expects validate and a file")
+    action = args[1]
+    action == "validate" || return _fail(err, "schema action must be validate")
+    path = nothing
+    kind = :auto
+    i = 2
+    while i <= length(args)
+        arg = args[i]
+        if arg == "--kind"
+            i += 1
+            i <= length(args) || return _fail(err, "--kind requires a value")
+            kind = Symbol(args[i])
+            kind in (:auto, :problem, :certificate) ||
+                return _fail(err, "--kind must be auto, problem, or certificate")
+        elseif startswith(arg, "--")
+            return _fail(err, "unknown schema option `$arg`")
+        elseif isnothing(path)
+            path = arg
+        else
+            return _fail(err, "unexpected schema argument `$arg`")
+        end
+        i += 1
+    end
+    isnothing(path) && return _fail(err, "schema validate expects a path")
+    text = read(path, String)
+    try
+        if kind === :certificate
+            Kernel.validate_certificate_schema_v3(text)
+        elseif kind === :problem
+            Kernel.validate_problem_schema_v3(text)
+        else
+            _validate_auto_schema(text)
+        end
+    catch validation_error
+        println(err, "[FAIL] schema validation failed: ",
+                sprint(showerror, validation_error))
+        return CLI_EXIT_INVALID_INPUT
+    end
+    println(io, "[OK] schema valid: ", kind)
+    return CLI_EXIT_OK
+end
+
+function _bundle(args; io::IO, err::IO)
+    cert_path, out_path = _parse_path_out(args, "bundle", err)
+    (isnothing(cert_path) || isnothing(out_path)) && return CLI_EXIT_INVALID_INPUT
+    try
+        _paper_bundle(cert_path, out_path)
+    catch bundle_error
+        println(err, "[FAIL] could not create paper bundle: ",
+                sprint(showerror, bundle_error))
+        return CLI_EXIT_INVALID_INPUT
+    end
+    println(io, "[OK] wrote artifact bundle: ", out_path)
+    return CLI_EXIT_OK
+end
+
+function _import(args; io::IO, err::IO)
+    isempty(args) && return _fail(err, "import expects sdpa, tssos, or nctssos")
+    kind = first(args)
+    input_path, out_path = _parse_path_out(args[2:end], "import $kind", err)
+    (isnothing(input_path) || isnothing(out_path)) && return CLI_EXIT_INVALID_INPUT
+    try
+        if kind == "sdpa"
+            problem = Main.CertSDP.read_sdpa_sparse(input_path)
+            payload = (; certsdp_problem_version=Kernel.CERTSDP3_SCHEMA_VERSION,
+                       type="sparse_lmi",
+                       problem=Kernel.sparse_affine_lmi_json(problem))
+            _write_json(out_path, payload)
+        elseif kind == "tssos"
+            result = Adapters.certify_tssos_artifact(input_path)
+            result isa Main.CertSDP.CertifiedResult ||
+                throw(ArgumentError(result.failure.message))
+            Adapters.write_tssos_candidate(Adapters.import_tssos_artifact(input_path),
+                                           out_path)
+        elseif kind == "nctssos"
+            result = Adapters.certify_nctssos_artifact(input_path)
+            result isa Main.CertSDP.CertifiedResult ||
+                throw(ArgumentError(result.failure.message))
+            Adapters.write_nctssos_candidate(Adapters.import_nctssos_artifact(input_path),
+                                             out_path)
+        else
+            return _fail(err, "unknown import kind `$kind`")
+        end
+    catch import_error
+        println(err, "[FAIL] import $kind rejected: ", sprint(showerror, import_error))
+        return CLI_EXIT_INVALID_INPUT
+    end
+    println(io, "[OK] imported ", kind, ": ", out_path)
+    return CLI_EXIT_OK
+end
+
+function _paper_bundle(cert_path::AbstractString, out_dir::AbstractString)
+    report = Kernel.replay_file(cert_path; strict=true)
+    report.accepted ||
+        throw(ArgumentError("certificate did not strict-replay: $(report.reason)"))
+    mkpath(out_dir)
+    schema_dir = joinpath(out_dir, "schema")
+    mkpath(schema_dir)
+    cert_text = read(cert_path, String)
+    write(joinpath(out_dir, "certificate.json"), cert_text)
+    write(joinpath(out_dir, "problem.json"),
+          JSON3.write(Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+                           "source" => "embedded_or_not_supplied")))
+    cert = Kernel.parse_certificate_json_v3(cert_text; strict=true)
+    _write_json(joinpath(out_dir, "proof_dag.json"), Kernel.proof_dag_json(cert))
+    _write_json(joinpath(out_dir, "replay_report.json"),
+                Kernel.diagnostic_report_json(report))
+    write(joinpath(out_dir, "replay_report.html"),
+          Kernel.diagnostic_report_html(report))
+    for schema_name in ("certsdp_certificate_v3.schema.json",
+                        "certsdp_problem_v3.schema.json",
+                        "certsdp_report_v3.schema.json")
+        source = normpath(joinpath(@__DIR__, "..", "..", "schemas", schema_name))
+        isfile(source) && cp(source, joinpath(schema_dir, schema_name); force=true)
+    end
+    project_root = normpath(joinpath(@__DIR__, "..", ".."))
+    verify_script = """
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+julia --project="$project_root" --startup-file=no -e 'using CertSDP; exit(CertSDP.Kernel.replay_file(joinpath(ARGS[1], "certificate.json"); strict=true).accepted ? 0 : 1)' "\$ROOT"
+"""
+    write(joinpath(out_dir, "VERIFY.sh"), verify_script)
+    chmod(joinpath(out_dir, "VERIFY.sh"), 0o755)
+    write(joinpath(out_dir, "CITATION.cff"),
+          "cff-version: 1.2.0\nmessage: Cite the CertSDP proof-carrying certificate artifact.\ntitle: CertSDP 3.0 Certificate Bundle\n")
+    write(joinpath(out_dir, "theorem_statement.txt"),
+          "claim_type: $(cert.certificate_type)\ncertificate_id: $(cert.certificate_id)\nproblem_hash: $(cert.problem_hash)\n")
+    hashes = String[]
+    for file in ["certificate.json", "problem.json", "proof_dag.json",
+                 "replay_report.json", "replay_report.html", "VERIFY.sh",
+                 "CITATION.cff", "theorem_statement.txt"]
+        path = joinpath(out_dir, file)
+        isfile(path) && push!(hashes, file * " " * bytes2hex(sha256(read(path))))
+    end
+    write(joinpath(out_dir, "hashes.txt"), join(hashes, "\n") * "\n")
+    return out_dir
+end
+
+function _parse_path_out(args, command::AbstractString, err::IO)
+    input_path = nothing
+    out_path = nothing
+    i = 1
+    while i <= length(args)
+        arg = args[i]
+        if arg == "--out"
+            i += 1
+            i <= length(args) || begin
+                println(err, "[FAIL] $command --out expects a path")
+                return nothing, nothing
+            end
+            out_path = args[i]
+        elseif startswith(arg, "--")
+            println(err, "[FAIL] unknown $command option `$arg`")
+            return nothing, nothing
+        elseif isnothing(input_path)
+            input_path = arg
+        else
+            println(err, "[FAIL] unexpected $command argument `$arg`")
+            return nothing, nothing
+        end
+        i += 1
+    end
+    if isnothing(input_path) || isnothing(out_path)
+        println(err, "[FAIL] $command requires input path and --out")
+        return nothing, nothing
+    end
+    return input_path, out_path
+end
+
+function _validate_auto_schema(text::AbstractString)
+    try
+        Kernel.validate_certificate_schema_v3(text)
+        return true
+    catch
+    end
+    Kernel.validate_problem_schema_v3(text)
+    return true
+end
+
+function _schema_args_are_v3(args::AbstractVector{String})
+    length(args) >= 2 || return false
+    args[1] == "validate" || return false
+    path = nothing
+    kind = :auto
+    i = 2
+    while i <= length(args)
+        arg = args[i]
+        if arg == "--kind"
+            i += 1
+            i <= length(args) || return false
+            kind = Symbol(args[i])
+        elseif startswith(arg, "--")
+            return false
+        elseif isnothing(path)
+            path = arg
+        else
+            return false
+        end
+        i += 1
+    end
+    isnothing(path) && return false
+    kind in (:auto, :certificate, :problem) || return false
+    text = try
+        read(path, String)
+    catch
+        return false
+    end
+    parsed = try
+        JSON3.read(text)
+    catch
+        return false
+    end
+    if kind in (:auto, :certificate) &&
+       haskey(parsed, :certsdp_certificate_version) &&
+       String(parsed[:certsdp_certificate_version]) == Kernel.CERTSDP3_SCHEMA_VERSION
+        return true
+    end
+    return kind in (:auto, :problem) &&
+           haskey(parsed, :certsdp_problem_version) &&
+           String(parsed[:certsdp_problem_version]) == Kernel.CERTSDP3_SCHEMA_VERSION
+end
+
+function _write_json(path::AbstractString, object)
+    open(path, "w") do io
+        JSON3.pretty(io, object)
+        println(io)
+    end
+    return path
+end
+
+function _fail(err::IO, message::AbstractString)
+    println(err, "[FAIL] ", message)
+    return CLI_EXIT_INVALID_INPUT
+end
+
+function _usage(err::IO)
+    _print_usage(err)
+    return CLI_EXIT_INVALID_INPUT
+end
+
+function _print_usage(io::IO)
+    println(io, "usage:")
+    println(io, "  certsdp verify <certificate.json>")
+    println(io, "  certsdp replay certificate.json --strict [--explain|--json]")
+    println(io, "  certsdp diagnose certificate.json --format text|json|html [--out report.html]")
+    println(io, "  certsdp import sdpa file.dat-s --out problem.json")
+    println(io, "  certsdp import tssos artifact.json --out candidate.json")
+    println(io, "  certsdp import nctssos artifact.json --out candidate.json")
+    println(io, "  certsdp certify problem.json --candidate candidate.json --out certificate.json")
+    println(io, "  certsdp bundle certificate.json --out paper-bundle/")
+    println(io, "  certsdp schema validate file.json [--kind problem|certificate|auto]")
+    println(io, "  certsdp version --json")
+    return nothing
+end
+
+end
