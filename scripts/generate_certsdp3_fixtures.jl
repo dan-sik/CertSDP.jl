@@ -10,6 +10,7 @@ using SHA: sha256
 include(joinpath(@__DIR__, "..", "test", "certsdp3", "helpers.jl"))
 
 const ROOT = normpath(joinpath(@__DIR__, "..", "test", "fixtures", "certsdp3"))
+const EXTERNAL_ROOT = normpath(joinpath(@__DIR__, "..", "test", "fixtures_external"))
 
 function write_json(path, object)
     mkpath(dirname(path))
@@ -18,6 +19,40 @@ function write_json(path, object)
         println(io)
     end
     return path
+end
+
+function fixture_entry(; fixture_id, problem_family, expected_accepted=true,
+                       tamper_files, max_runtime_seconds, max_memory_mb,
+                       certificate_hash, problem_hash,
+                       validation_purpose, gate_ids_covered,
+                       source_class="synthetic_unit",
+                       generated_by="scripts/generate_certsdp3_fixtures.jl",
+                       source_file=nothing,
+                       source_notes="deterministic replay fixture",
+                       semantic_checks_required=Any[],
+                       subprocess_cli_commands=Any[])
+    return Dict(
+        "fixture_id" => fixture_id,
+        "problem_family" => problem_family,
+        "expected_accepted" => expected_accepted,
+        "tamper_files" => tamper_files,
+        "max_runtime_seconds" => max_runtime_seconds,
+        "max_memory_mb" => max_memory_mb,
+        "certificate_hash" => certificate_hash,
+        "problem_hash" => problem_hash,
+        "required_optional_deps" => Any[],
+        "validation_purpose" => validation_purpose,
+        "gate_ids_covered" => gate_ids_covered,
+        "source_class" => source_class,
+        "generated_by" => generated_by,
+        "source_file" => isnothing(source_file) ? "" : source_file,
+        "source_notes" => source_notes,
+        "semantic_checks_required" => semantic_checks_required,
+        "subprocess_cli_commands" => subprocess_cli_commands,
+        "performance_budget" => Dict("max_runtime_seconds" => max_runtime_seconds),
+        "memory_budget" => Dict("max_memory_mb" => max_memory_mb),
+        "densification_budget" => Dict("max_count" => occursin("chordal", problem_family) ? 0 : 999999),
+    )
 end
 
 function hash_payload(object)
@@ -180,6 +215,34 @@ function nctssos_fixture_artifact()
         "objective_bound" => "3",
         "provenance" => Dict("frontend" => "NCTSSOS fixture",
                              "status" => "ignored_candidate_metadata"),
+        "frontend_metadata" => Dict("package" => "NCTSSOS-like",
+                                    "relaxation" => "trace_medium"),
+        "solver_metadata" => Dict("solver_status" => "optimal",
+                                  "residual" => "ignored_untrusted"),
+        "rewrite_witnesses" => Any[
+            Dict("input_word" => [variables[1], variables[1]],
+                 "steps" => Any[
+                     Dict("relation_id" => "proj_$(variables[1])",
+                          "rule" => "projection_idempotent",
+                          "before" => [variables[1], variables[1]],
+                          "after" => [variables[1]])
+                 ],
+                 "final_word" => [variables[1]],
+                 "relation_ids_used" => ["proj_$(variables[1])"],
+                 "trace_rotations" => Any[],
+                 "star_steps" => Any[]),
+            Dict("input_word" => [variables[1], variables[end]],
+                 "steps" => Any[
+                     Dict("relation_id" => "comm_AB",
+                          "rule" => "commutation",
+                          "before" => [variables[1], variables[end]],
+                          "after" => [variables[end], variables[1]])
+                 ],
+                 "final_word" => [variables[end], variables[1]],
+                 "relation_ids_used" => ["comm_AB"],
+                 "trace_rotations" => Any[],
+                 "star_steps" => Any[])
+        ],
         "source_hash" => hash_payload(Dict("source" => "nctssos_trace_medium")),
     )
     add_artifact_hash(artifact)
@@ -242,35 +305,49 @@ function sparse_sos_fixture(variable_count::Int, block_count::Int;
     for block_index in 1:block_count
         exponents = fill(0, variable_count)
         exponents[((block_index - 1) % variable_count) + 1] = 2
-        term = K3.PolynomialTerm(exponents, 1//1)
         matrix = K3.SparseSymmetricRationalMatrix(40,
                                                   [(i, i, 1//1) for i in 1:40])
         factor = [[i == j ? 1//1 : 0//1 for j in 1:40] for i in 1:40]
         proof = K3.ExactLowRankPSDProof(matrix, factor, fill(1//1, 40))
-        basis = [copy(exponents) for _ in 1:40]
+        basis = Vector{Int}[]
+        for basis_index in 1:40
+            row = fill(0, variable_count)
+            row[((block_index + basis_index - 2) % variable_count) + 1] = 1
+            push!(basis, row)
+        end
+        gram_terms = CertSDP.SOSGramExpansion.gram_polynomial(
+            K3.SparseSOSBlock(Symbol("tmp_", block_index),
+                              Symbol("clique_", ((block_index - 1) % 4) + 1),
+                              basis,
+                              matrix,
+                              proof,
+                              K3.PolynomialTerm[]))
+        block_terms = [K3.PolynomialTerm(exp, coeff)
+                       for (exp, coeff) in gram_terms]
         block = K3.SparseSOSBlock(Symbol("gram_", block_index),
                                   Symbol("clique_", ((block_index - 1) % 4) + 1),
                                   basis,
                                   matrix,
                                   proof,
-                                  [term])
+                                  block_terms)
         if putinar
+            constraint = [K3.PolynomialTerm(fill(0, variable_count), 1//1)]
             push!(localizing,
                   K3.LocalizingMatrixProof(Symbol("localizing_", block_index),
                                            block.clique_id,
-                                           [term],
+                                           constraint,
                                            block))
         else
             push!(blocks, block)
+            append!(terms, block_terms)
         end
-        push!(terms, term)
+        putinar && append!(terms, block_terms)
     end
     cliques = [variables[1:min(variable_count, 4)],
                variables[max(1, variable_count - 3):variable_count],
                variables[1:2:variable_count],
                variables[2:2:variable_count]]
-    problem = K3.SparseSOSProblem(variables, terms, cliques,
-                                  putinar ? 1//1 : 0//1)
+    problem = K3.SparseSOSProblem(variables, terms, cliques, 0//1)
     putinar_cert = if putinar
         identity_hash = "sha256:" * bytes2hex(sha256(JSON3.write((;
             bound=K3.rational_string(problem.lower_bound),
@@ -330,6 +407,7 @@ end
 
 function main()
     mkpath(ROOT)
+    mkpath(EXTERNAL_ROOT)
 
     rank = 10
     low_factor = [[i == j ? 1//1 : 0//1 for j in 1:rank] for i in 1:150]
@@ -567,9 +645,45 @@ function main()
         "bound" => "0",
         "provenance" => Dict("frontend" => "TSSOS fixture",
                              "status" => "ignored_candidate_metadata"),
+        "frontend_metadata" => Dict("package" => "TSSOS-like",
+                                    "relaxation_order" => 2),
+        "solver_metadata" => Dict("solver_status" => "optimal",
+                                  "residual" => "ignored_untrusted"),
         "source_raw_hash" => hash_payload(Dict("source" => "tssos_sparse_industry_medium")),
     ))
     write_json(joinpath(tssos_dir, "artifact.json"), tssos_artifact)
+    tssos_raw = Dict(
+        "tssos_raw_artifact_version" => "external-like-1",
+        "variables" => tssos_variables,
+        "objective" => objective_terms,
+        "constraints" => tssos_artifact["constraints"],
+        "relaxation_order" => 2,
+        "correlative_sparsity_cliques" => tssos_cliques,
+        "monomial_bases" => monomial_bases,
+        "gram_blocks" => gram_blocks,
+        "localizing_matrices" => Any[],
+        "coefficient_maps" => coefficient_maps,
+        "bound" => "0",
+        "frontend_metadata" => Dict("package" => "TSSOS-like external",
+                                    "artifact_shape" => "raw"),
+        "solver_metadata" => Dict("solver_status" => "optimal",
+                                  "residual" => "ignored_untrusted",
+                                  "raw_log_excerpt" => "untrusted log is not proof")
+    )
+    tssos_external = joinpath(EXTERNAL_ROOT, "tssos")
+    mkpath(tssos_external)
+    write_json(joinpath(tssos_external, "raw_tssos_sparse_poly_medium.json"),
+               tssos_raw)
+    opf_raw = deepcopy(tssos_raw)
+    opf_raw["frontend_metadata"]["case"] = "opf_like_5bus"
+    write_json(joinpath(tssos_external, "raw_tssos_opf_like_5bus.json"),
+               opf_raw)
+    control_raw = deepcopy(tssos_raw)
+    control_raw["frontend_metadata"]["case"] = "control_lyapunov"
+    write_json(joinpath(tssos_external, "raw_tssos_control_lyapunov.json"),
+               control_raw)
+    write(joinpath(tssos_external, "README_SOURCE.txt"),
+          "External-like TSSOS artifacts shaped after sparse moment-SOS frontend exports. Solver metadata is untrusted and ignored by CertSDP replay.\n")
     tssos_candidate = CertSDP.import_tssos_artifact(joinpath(tssos_dir, "artifact.json"))
     write_json(joinpath(tssos_dir, "certificate.json"),
                K3.sparse_sos_certificate_json(tssos_candidate.certificate))
@@ -658,6 +772,34 @@ function main()
     nctssos_dir = joinpath(ROOT, "nctssos_trace_medium")
     nctssos_artifact = nctssos_fixture_artifact()
     write_json(joinpath(nctssos_dir, "artifact.json"), nctssos_artifact)
+    nctssos_raw = Dict(
+        "nctssos_raw_artifact_version" => "external-like-1",
+        "nc_variables" => nctssos_artifact["variables"],
+        "word_basis" => nctssos_artifact["words"],
+        "star_convention" => nctssos_artifact["involution_convention"],
+        "trace_cyclic" => nctssos_artifact["trace_cyclic"],
+        "relations" => nctssos_artifact["quotient_relations"],
+        "block_bases" => nctssos_artifact["block_bases"],
+        "moment_blocks" => nctssos_artifact["gram_blocks"],
+        "coefficient_maps" => nctssos_artifact["coefficient_maps"],
+        "bound" => nctssos_artifact["objective_bound"],
+        "frontend_metadata" => Dict("package" => "NCTSSOS-like external",
+                                    "artifact_shape" => "raw"),
+        "solver_metadata" => Dict("solver_status" => "optimal",
+                                  "residual" => "ignored_untrusted",
+                                  "raw_log_excerpt" => "untrusted log is not proof"),
+        "rewrite_witnesses" => nctssos_artifact["rewrite_witnesses"],
+    )
+    nctssos_external = joinpath(EXTERNAL_ROOT, "nctssos")
+    mkpath(nctssos_external)
+    write_json(joinpath(nctssos_external, "raw_nctssos_trace_medium.json"),
+               nctssos_raw)
+    i3322_raw = deepcopy(nctssos_raw)
+    i3322_raw["frontend_metadata"]["case"] = "quantum_i3322_medium"
+    write_json(joinpath(nctssos_external, "raw_nctssos_quantum_i3322_medium.json"),
+               i3322_raw)
+    write(joinpath(nctssos_external, "README_SOURCE.txt"),
+          "External-like NCTSSOS artifacts shaped after trace/noncommutative frontend exports. Rewrite witnesses are explicit input data and are not synthesized by the importer.\n")
     nctssos_candidate = CertSDP.import_nctssos_artifact(joinpath(nctssos_dir,
                                                                  "artifact.json"))
     write_json(joinpath(nctssos_dir, "certificate.json"),
@@ -917,6 +1059,48 @@ function main()
             )
         ]
     )
+    for fixture in index["fixtures"]
+        id = String(fixture["fixture_id"])
+        family = String(fixture["problem_family"])
+        source_class = if id == "sparse_chordal_stress_3000"
+            "generated_stress"
+        elseif id in ("tssos_sparse_industry_medium", "nctssos_trace_medium")
+            "external_like"
+        elseif id == "quantum_i3322_medium"
+            "external_like"
+        else
+            "synthetic_unit"
+        end
+        fixture["source_class"] = source_class
+        fixture["generated_by"] = "scripts/generate_certsdp3_fixtures.jl"
+        fixture["source_file"] = if id == "tssos_sparse_industry_medium"
+            "test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json"
+        elseif id == "nctssos_trace_medium"
+            "test/fixtures_external/nctssos/raw_nctssos_trace_medium.json"
+        elseif id == "quantum_i3322_medium"
+            "test/fixtures_external/nctssos/raw_nctssos_quantum_i3322_medium.json"
+        else
+            ""
+        end
+        fixture["source_notes"] = source_class == "external_like" ?
+                                  "external-like raw frontend artifact is replayed through importer and normal verifier" :
+                                  "deterministic exact replay fixture"
+        fixture["semantic_checks_required"] = if occursin("sos", family)
+            Any["gram_expansion", "coefficient_identity", "psd_replay"]
+        elseif occursin("quantum", family) || occursin("nctssos", family)
+            Any["rewrite_witnesses", "moment_psd", "objective_replay"]
+        elseif occursin("chordal", family)
+            Any["clique_cover", "separator_consistency", "no_densification"]
+        else
+            Any["strict_schema", "exact_replay", "dag_replay"]
+        end
+        fixture["subprocess_cli_commands"] = Any[
+            "replay $(id)/certificate.json --strict"
+        ]
+        fixture["performance_budget"] = Dict("max_runtime_seconds" => fixture["max_runtime_seconds"])
+        fixture["memory_budget"] = Dict("max_memory_mb" => fixture["max_memory_mb"])
+        fixture["densification_budget"] = Dict("max_count" => occursin("chordal", family) ? 0 : 999999)
+    end
     write_json(joinpath(ROOT, "index.json"), index)
     write(joinpath(ROOT, "README_GENERATED_FROM_TESTS.md"),
           "# CertSDP 3.0 Fixture Index\n\nGenerated by `scripts/generate_certsdp3_fixtures.jl`.\n")

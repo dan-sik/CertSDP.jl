@@ -1,5 +1,5 @@
 {
-    "certificate_hash": "sha256:1c9b3609ec9ef1fd6998a2c70ff43408174272938c8076f5e2e384ab675fa0f6",
+    "certificate_hash": "sha256:3ae71c0c90b7f039028466fa828684019d40a02220389d8662b3795e29f43459",
     "objective_terms": [
         {
             "word": [
@@ -1410,6 +1410,16 @@
                 "inputs": [
                     "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa"
                 ],
+                "kind": "sparse_matrix",
+                "status": "accepted",
+                "id": "moment_matrix",
+                "checker": "canonical_sparse_matrix_hash",
+                "output_hash": "sha256:724976e24b9aaf8a55b2a713aa3d35977a84d2c41e4a3f937677af4b467c0900"
+            },
+            {
+                "inputs": [
+                    "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa"
+                ],
                 "kind": "exact_rewrite",
                 "status": "accepted",
                 "id": "nc_rewrite_witnesses",
@@ -1428,6 +1438,17 @@
             },
             {
                 "inputs": [
+                    "sha256:806ac07155a06773da2dbfc8dacc85ec17ae66266af87580763f35f655e911c2",
+                    "sha256:e824524ab0b72e6be6735b30121975abfc2fc6a418a4efa325d96da88bb7de4f"
+                ],
+                "kind": "npa_moment_matrix",
+                "status": "accepted",
+                "id": "moment_certificate",
+                "checker": "check_npa_moment_entry",
+                "output_hash": "sha256:ca2c00fa1f6594ca4185b43ed614fa4a49812d3f069848876ded81e112e89cde"
+            },
+            {
+                "inputs": [
                     "sha256:ca2c00fa1f6594ca4185b43ed614fa4a49812d3f069848876ded81e112e89cde"
                 ],
                 "kind": "exact_equality",
@@ -1437,7 +1458,7 @@
                 "output_hash": "sha256:0430c0d108e26469e55a44530e2b6217b02a87e76d763fd43f350412dd7aa7ae"
             }
         ],
-        "root_hash": "sha256:d5d86575b49d25e3deffd274dac7734c6f570c00cb795d08eff73c6f2eac04f2",
+        "root_hash": "sha256:4fb53754c7cedceb95b589d6c0054e5de14bf3001584ecdb7a8fe969efb7a000",
         "schema_version": "3.0"
     },
     "problem": {

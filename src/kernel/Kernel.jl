@@ -2254,6 +2254,9 @@ function make_quantum_bound_certificate(problem::NPAProblem,
     nodes = ProofNode[
         ProofNode(:npa_problem, :hash, String[],
                   problem.problem_hash, :npa_problem_hash, :accepted),
+        ProofNode(:moment_matrix, :sparse_matrix, [problem.problem_hash],
+                  moment_certificate.moment_matrix.hash,
+                  :canonical_sparse_matrix_hash, :accepted),
         ProofNode(:nc_rewrite_witnesses, :exact_rewrite, [problem.problem_hash],
                   _sha256_payload([nc_rewrite_witness_json(witness)
                                    for witness in moment_certificate.witnesses]),
@@ -2261,6 +2264,12 @@ function make_quantum_bound_certificate(problem::NPAProblem,
         ProofNode(:moment_psd, :psd, [moment_certificate.moment_matrix.hash],
                   moment_certificate.psd_proof.identity_proof_hash,
                   :verify_low_rank_psd, :accepted),
+        ProofNode(:moment_certificate, :npa_moment_matrix,
+                  [_sha256_payload([nc_rewrite_witness_json(witness)
+                                    for witness in moment_certificate.witnesses]),
+                   moment_certificate.psd_proof.identity_proof_hash],
+                  moment_certificate.certificate_hash,
+                  :check_npa_moment_entry, :accepted),
         ProofNode(:objective_bound, :exact_equality,
                   [moment_certificate.certificate_hash],
                   _sha256_payload((; objective=[nc_term_json(term)
@@ -2437,6 +2446,7 @@ function verify_sparse_sos_certificate(cert::SparseSOSCertificate)
                            "sparse SOS certificate hash mismatch";
                            problem_hash=cert.problem.problem_hash,
                            certificate_hash=cert.certificate_hash)
+        expansion = getfield(parentmodule(@__MODULE__), :SOSGramExpansion)
         accumulated = Dict{Vector{Int}, Rational{BigInt}}()
         for block in cert.sos_blocks
             report = verify_low_rank_psd(block.gram_matrix, block.psd_proof)
@@ -2445,7 +2455,20 @@ function verify_sparse_sos_certificate(cert::SparseSOSCertificate)
                                       family=:sparse_sos,
                                       block_id=block.id,
                                       certificate_hash=cert.certificate_hash)
-            _accumulate_polynomial_terms!(accumulated, block.coefficient_terms)
+            derived = expansion.gram_polynomial(block)
+            cached = expansion.polynomial_dict(block.coefficient_terms)
+            derived == cached ||
+                return _reject(:H, :sparse_sos, :coefficient_matching,
+                               Symbol("cached_terms_", block.id),
+                               "cached SOS coefficient_terms do not match Gram expansion";
+                               problem_hash=cert.problem.problem_hash,
+                               certificate_hash=cert.certificate_hash,
+                               block_id=block.id,
+                               details=Dict{Symbol, Any}(:derived_terms => length(derived),
+                                                         :cached_terms => length(cached)))
+            for (exp, coeff) in derived
+                _add_polynomial_coefficient!(accumulated, exp, coeff)
+            end
         end
         if !isnothing(cert.putinar)
             cert.putinar.bound == cert.problem.lower_bound ||
@@ -2462,8 +2485,22 @@ function verify_sparse_sos_certificate(cert::SparseSOSCertificate)
                                           family=:putinar,
                                           block_id=localizing.id,
                                           certificate_hash=cert.certificate_hash)
-                _accumulate_polynomial_terms!(accumulated,
-                                              localizing.sos_block.coefficient_terms)
+                derived_local = expansion.localizing_polynomial(localizing)
+                cached_local = expansion.multiply_polynomials(
+                    expansion.polynomial_dict(localizing.sos_block.coefficient_terms),
+                    expansion.polynomial_dict(localizing.constraint_terms))
+                derived_local == cached_local ||
+                    return _reject(:H, :putinar, :coefficient_matching,
+                                   Symbol("cached_localizing_", localizing.id),
+                                   "cached localizing coefficient_terms do not match Gram expansion";
+                                   problem_hash=cert.problem.problem_hash,
+                                   certificate_hash=cert.certificate_hash,
+                                   block_id=localizing.id,
+                                   details=Dict{Symbol, Any}(:derived_terms => length(derived_local),
+                                                             :cached_terms => length(cached_local)))
+                for (exp, coeff) in derived_local
+                    _add_polynomial_coefficient!(accumulated, exp, coeff)
+                end
             end
             cert.putinar.identity_hash == _sha256_payload((;
                 bound=rational_string(cert.putinar.bound),
@@ -2477,6 +2514,11 @@ function verify_sparse_sos_certificate(cert::SparseSOSCertificate)
         end
         target = Dict{Vector{Int}, Rational{BigInt}}()
         _accumulate_polynomial_terms!(target, cert.problem.target_terms)
+        if cert.problem.lower_bound != 0
+            zero_exp = isempty(cert.problem.variables) ? Int[] :
+                       zeros(Int, length(cert.problem.variables))
+            _add_polynomial_coefficient!(target, zero_exp, -cert.problem.lower_bound)
+        end
         accumulated == target ||
             return _reject(:H, :sparse_sos, :coefficient_matching,
                            :polynomial_identity,
@@ -2484,7 +2526,9 @@ function verify_sparse_sos_certificate(cert::SparseSOSCertificate)
                            problem_hash=cert.problem.problem_hash,
                            certificate_hash=cert.certificate_hash,
                            details=Dict{Symbol, Any}(:actual_terms => length(accumulated),
-                                                     :target_terms => length(target)))
+                                                     :target_terms => length(target),
+                                                     :actual => expansion.polynomial_payload(accumulated),
+                                                     :target => expansion.polynomial_payload(target)))
         dag_report = verify_proof_dag(cert.dag)
         dag_report.accepted || return dag_report
         return _accept(:H, :sparse_sos, :coefficient_matching,
@@ -2593,10 +2637,17 @@ end
 function _accumulate_polynomial_terms!(target::Dict{Vector{Int}, Rational{BigInt}},
                                        terms::AbstractVector{PolynomialTerm})
     for term in terms
-        key = copy(term.exponents)
-        target[key] = get(target, key, 0//1) + term.coefficient
-        iszero(target[key]) && delete!(target, key)
+        _add_polynomial_coefficient!(target, term.exponents, term.coefficient)
     end
+    return target
+end
+
+function _add_polynomial_coefficient!(target::Dict{Vector{Int}, Rational{BigInt}},
+                                      exponents::Vector{Int},
+                                      coefficient::Rational{BigInt})
+    key = copy(exponents)
+    target[key] = get(target, key, 0//1) + coefficient
+    iszero(target[key]) && delete!(target, key)
     return target
 end
 
@@ -2712,25 +2763,58 @@ function verify_proof_dag(cert::V3Certificate)
 end
 
 function verify_proof_dag(dag::CertificateDAG)
+    checker_module = getfield(parentmodule(@__MODULE__), :DAGCheckerRegistry)
+    checker_module.reset_dag_checker_calls!()
     dag.schema_version == CERTSDP3_SCHEMA_VERSION ||
         return _reject(:E, dag.claim_type, :proof_dag, :schema_version,
                        "DAG schema version mismatch";
                        certificate_hash=dag.root_hash)
+    isempty(dag.nodes) &&
+        return _reject(:E, dag.claim_type, :proof_dag, :nodes,
+                       "DAG has no proof nodes";
+                       certificate_hash=dag.root_hash)
     ids = Set{Symbol}()
+    outputs = Dict{String, Symbol}()
     for node in dag.nodes
         node.id in ids &&
             return _reject(:E, dag.claim_type, :proof_dag, node.id,
                            "duplicate DAG node id";
                            certificate_hash=dag.root_hash)
         push!(ids, node.id)
-        node.status === :accepted ||
-            return _reject(:E, dag.claim_type, :proof_dag, node.id,
-                           "DAG node status is not accepted";
-                           certificate_hash=dag.root_hash)
         isempty(node.output_hash) &&
             return _reject(:E, dag.claim_type, :proof_dag, node.id,
                            "DAG node output hash is empty";
                            certificate_hash=dag.root_hash)
+        haskey(outputs, node.output_hash) &&
+            return _reject(:E, dag.claim_type, :proof_dag, node.id,
+                           "DAG duplicate output hash";
+                           certificate_hash=dag.root_hash,
+                           details=Dict{Symbol, Any}(:first_node => String(outputs[node.output_hash])))
+        outputs[node.output_hash] = node.id
+    end
+    for node in dag.nodes
+        for input in node.inputs
+            haskey(outputs, input) ||
+                return _reject(:E, dag.claim_type, :proof_dag, node.id,
+                               "DAG node depends on missing output hash";
+                               certificate_hash=dag.root_hash,
+                               details=Dict{Symbol, Any}(:missing_input => input))
+        end
+    end
+    for node in dag.nodes
+        checker_report = checker_module.run_dag_checker(node.checker, node, dag)
+        checker_report.accepted ||
+            return _reject(:E, dag.claim_type, :proof_dag, node.id,
+                           checker_report.reason;
+                           certificate_hash=dag.root_hash,
+                           details=checker_report.details)
+        checker_report.output_hash == node.output_hash ||
+            return _reject(:E, dag.claim_type, :proof_dag, node.id,
+                           "DAG checker output hash mismatch";
+                           certificate_hash=dag.root_hash,
+                           details=Dict{Symbol, Any}(:expected => node.output_hash,
+                                                     :actual => checker_report.output_hash,
+                                                     :checker => String(node.checker)))
     end
     expected = certificate_dag_hash_without_root(dag)
     dag.root_hash == expected ||
@@ -2740,7 +2824,9 @@ function verify_proof_dag(dag::CertificateDAG)
                        details=Dict{Symbol, Any}(:expected => expected,
                                                  :actual => dag.root_hash))
     return _accept(:E, dag.claim_type, :proof_dag, :root_hash;
-                   certificate_hash=dag.root_hash)
+                   certificate_hash=dag.root_hash,
+                       details=Dict{Symbol, Any}(
+                       :checker_calls => String.(checker_module.dag_checker_calls())))
 end
 
 function certificate_dag_json(dag::CertificateDAG)

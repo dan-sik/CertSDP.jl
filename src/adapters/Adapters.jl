@@ -94,6 +94,8 @@ function import_tssos_artifact(path::AbstractString)::SparseSOSCertificateCandid
                               :coefficient_maps,
                               :bound,
                               :provenance,
+                              :frontend_metadata,
+                              :solver_metadata,
                               :source_raw_hash,
                               :artifact_hash]),
                    "root")
@@ -238,6 +240,9 @@ function import_nctssos_artifact(path::AbstractString)::QuantumCertificateCandid
                               :coefficient_maps,
                               :objective_bound,
                               :provenance,
+                              :frontend_metadata,
+                              :solver_metadata,
+                              :rewrite_witnesses,
                               :source_hash,
                               :artifact_hash]),
                    "root")
@@ -282,7 +287,12 @@ function import_nctssos_artifact(path::AbstractString)::QuantumCertificateCandid
     block_id = Symbol(String(block[:id]))
     haskey(coefficient_maps, block_id) ||
         throw(ArgumentError("root.gram_blocks[1].id is missing coefficient map"))
-    witnesses = _artifact_rewrite_witnesses(problem.relations)
+    haskey(parsed, :rewrite_witnesses) ||
+        throw(ArgumentError("root.rewrite_witnesses is required; importer will not invent NC witnesses"))
+    witnesses = _parse_rewrite_witnesses(parsed[:rewrite_witnesses],
+                                         "root.rewrite_witnesses")
+    isempty(witnesses) &&
+        throw(ArgumentError("root.rewrite_witnesses must contain explicit witness chains"))
     moment = Kernel.NCMomentMatrixCertificate(problem, matrix, proof,
                                               coefficient_maps[block_id],
                                               witnesses)
@@ -461,6 +471,47 @@ function _artifact_rewrite_witnesses(relations)
     return witnesses
 end
 
+function _parse_rewrite_witnesses(values, path::AbstractString)
+    values isa AbstractVector || throw(ArgumentError("$path must be an array"))
+    witnesses = Kernel.NCRewriteWitness[]
+    for (i, witness) in enumerate(values)
+        wpath = "$path[$i]"
+        _strict_object(witness,
+                       Set(Symbol[:input_word, :steps, :final_word,
+                                  :relation_ids_used, :trace_rotations,
+                                  :star_steps]),
+                       wpath)
+        steps = Kernel.NCRewriteStep[]
+        for (j, step) in enumerate(witness[:steps])
+            spath = "$wpath.steps[$j]"
+            _strict_object(step,
+                           Set(Symbol[:relation_id, :rule, :before, :after]),
+                           spath)
+            push!(steps,
+                  Kernel.NCRewriteStep(Symbol(String(step[:relation_id])),
+                                       Symbol(String(step[:rule])),
+                                       _parse_symbol_vector(step[:before],
+                                                            "$spath.before"),
+                                       _parse_symbol_vector(step[:after],
+                                                            "$spath.after")))
+        end
+        push!(witnesses,
+              Kernel.NCRewriteWitness(_parse_symbol_vector(witness[:input_word],
+                                                           "$wpath.input_word"),
+                                      steps,
+                                      _parse_symbol_vector(witness[:final_word],
+                                                           "$wpath.final_word"),
+                                      Symbol.(String.(witness[:relation_ids_used])),
+                                      [_parse_symbol_vector(row,
+                                                            "$wpath.trace_rotations[]")
+                                       for row in witness[:trace_rotations]],
+                                      [_parse_symbol_vector(row,
+                                                            "$wpath.star_steps[]")
+                                       for row in witness[:star_steps]]))
+    end
+    return witnesses
+end
+
 function _parse_sos_block(block, basis_by_id, coefficient_maps,
                           variable_count::Int, path::AbstractString)
     _strict_object(block,
@@ -628,6 +679,7 @@ function _reject_trusted_metadata!(value, path::AbstractString)
     if value isa JSON3.Object || value isa AbstractDict
         for key in keys(value)
             symbol = Symbol(key)
+            symbol in (:frontend_metadata, :solver_metadata, :provenance) && continue
             symbol in forbidden &&
                 throw(ArgumentError("$path.$(String(symbol)) is forbidden in imported TSSOS artifacts"))
             _reject_trusted_metadata!(value[key], "$path.$(String(symbol))")

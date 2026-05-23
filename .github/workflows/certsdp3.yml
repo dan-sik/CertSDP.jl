@@ -1,0 +1,38 @@
+name: CertSDP 3.0 Strict Audit
+
+on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  certsdp3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        julia-version: ["1.10", "1"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.julia-version }}
+      - uses: julia-actions/cache@v2
+      - name: Instantiate
+        run: julia --project=. --startup-file=no -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+      - name: Pkg.test()
+        run: julia --project=. --startup-file=no -e 'using Pkg; Pkg.test()'
+      - name: Static rules
+        run: julia --project=. --startup-file=no scripts/check_certsdp3_static_rules.jl
+      - name: Validation corpus
+        run: julia --project=. --startup-file=no scripts/validate_certsdp3.jl --max-memory-gb=12 --timeout-minutes=30
+      - name: Strict full release audit
+        run: julia --project=. --startup-file=no scripts/release_audit_certsdp3.jl --strict --full
+      - name: CLI subprocess smoke
+        run: |
+          julia --project=. --startup-file=no -e 'using CertSDP; exit(CertSDP.main(ARGS))' replay test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict
+          julia --project=. --startup-file=no -e 'using CertSDP; exit(CertSDP.main(ARGS))' bundle verify test/fixtures/certsdp3/bundles/paper_bundle_demo

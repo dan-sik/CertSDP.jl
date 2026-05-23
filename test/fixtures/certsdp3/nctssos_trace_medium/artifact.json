@@ -1,4 +1,8 @@
 {
+    "frontend_metadata": {
+        "relaxation": "trace_medium",
+        "package": "NCTSSOS-like"
+    },
     "provenance": {
         "status": "ignored_candidate_metadata",
         "frontend": "NCTSSOS fixture"
@@ -31,6 +35,68 @@
         "B1",
         "B2",
         "B3"
+    ],
+    "rewrite_witnesses": [
+        {
+            "star_steps": [
+            ],
+            "steps": [
+                {
+                    "after": [
+                        "A1"
+                    ],
+                    "relation_id": "proj_A1",
+                    "rule": "projection_idempotent",
+                    "before": [
+                        "A1",
+                        "A1"
+                    ]
+                }
+            ],
+            "relation_ids_used": [
+                "proj_A1"
+            ],
+            "final_word": [
+                "A1"
+            ],
+            "trace_rotations": [
+            ],
+            "input_word": [
+                "A1",
+                "A1"
+            ]
+        },
+        {
+            "star_steps": [
+            ],
+            "steps": [
+                {
+                    "after": [
+                        "B3",
+                        "A1"
+                    ],
+                    "relation_id": "comm_AB",
+                    "rule": "commutation",
+                    "before": [
+                        "A1",
+                        "B3"
+                    ]
+                }
+            ],
+            "relation_ids_used": [
+                "comm_AB"
+            ],
+            "final_word": [
+                "B3",
+                "A1"
+            ],
+            "trace_rotations": [
+            ],
+            "input_word": [
+                "A1",
+                "B3"
+            ]
+        }
     ],
     "words": [
         [
@@ -503,7 +569,7 @@
             "A1"
         ]
     ],
-    "artifact_hash": "sha256:9edf3b5fc3699cce8b0d2d93bf8e02dd6f1bc03040da9ccd9acec070eef0949b",
+    "artifact_hash": "sha256:6117a72550505b78c0a22dd46a2105d55eba9067d2bd8d027984cc3540473d9e",
     "quotient_relations": [
         {
             "kind": "ProjectionRelation",
@@ -8004,5 +8070,9 @@
                 "identity_proof_hash": "sha256:c31b42427fa08e3def0e9baa4e01307d8400174bc4572c3a00a1ae339a0c25c2"
             }
         }
-    ]
+    ],
+    "solver_metadata": {
+        "solver_status": "optimal",
+        "residual": "ignored_untrusted"
+    }
 }

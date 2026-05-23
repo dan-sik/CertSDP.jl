@@ -1,4 +1,8 @@
 {
+    "frontend_metadata": {
+        "package": "TSSOS-like",
+        "relaxation_order": 2
+    },
     "certsdp_tssos_artifact_version": "3.0",
     "localizing_blocks": [
     ],
@@ -1052,7 +1056,7 @@
             "x12"
         ]
     ],
-    "artifact_hash": "sha256:76e2d4728e43be839c3643d256098a7b5c3bcd349076b34865186a6b97315685",
+    "artifact_hash": "sha256:61fd207d93fc9d085ce2e273f0bc4424b2b6362694cae8ee9c3724ac4114f070",
     "monomial_bases": [
         {
             "id": "basis_1",
@@ -3028,5 +3032,9 @@
                 "identity_proof_hash": "sha256:5524583142139cc18816035f3280ab3d30f0adaf8ce579995b4faa78f4584d03"
             }
         }
-    ]
+    ],
+    "solver_metadata": {
+        "solver_status": "optimal",
+        "residual": "ignored_untrusted"
+    }
 }

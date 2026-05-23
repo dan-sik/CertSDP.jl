@@ -293,16 +293,24 @@ function _import(args; io::IO, err::IO)
                        problem=Kernel.sparse_affine_lmi_json(problem))
             _write_json(out_path, payload)
         elseif kind == "tssos"
-            result = Adapters.certify_tssos_artifact(input_path)
+            raw = _looks_like_raw_tssos(input_path)
+            result = raw ? Main.CertSDP.certify_raw_tssos_artifact(input_path) :
+                     Adapters.certify_tssos_artifact(input_path)
             result isa Main.CertSDP.CertifiedResult ||
                 throw(ArgumentError(result.failure.message))
-            Adapters.write_tssos_candidate(Adapters.import_tssos_artifact(input_path),
+            candidate = raw ? Main.CertSDP.import_raw_tssos_artifact(input_path) :
+                        Adapters.import_tssos_artifact(input_path)
+            Adapters.write_tssos_candidate(candidate,
                                            out_path)
         elseif kind == "nctssos"
-            result = Adapters.certify_nctssos_artifact(input_path)
+            raw = _looks_like_raw_nctssos(input_path)
+            result = raw ? Main.CertSDP.certify_raw_nctssos_artifact(input_path) :
+                     Adapters.certify_nctssos_artifact(input_path)
             result isa Main.CertSDP.CertifiedResult ||
                 throw(ArgumentError(result.failure.message))
-            Adapters.write_nctssos_candidate(Adapters.import_nctssos_artifact(input_path),
+            candidate = raw ? Main.CertSDP.import_raw_nctssos_artifact(input_path) :
+                        Adapters.import_nctssos_artifact(input_path)
+            Adapters.write_nctssos_candidate(candidate,
                                              out_path)
         else
             return _fail(err, "unknown import kind `$kind`")
@@ -313,6 +321,16 @@ function _import(args; io::IO, err::IO)
     end
     println(io, "[OK] imported ", kind, ": ", out_path)
     return CLI_EXIT_OK
+end
+
+function _looks_like_raw_tssos(path::AbstractString)
+    parsed = JSON3.read(read(path, String))
+    return haskey(parsed, :tssos_raw_artifact_version)
+end
+
+function _looks_like_raw_nctssos(path::AbstractString)
+    parsed = JSON3.read(read(path, String))
+    return haskey(parsed, :nctssos_raw_artifact_version)
 end
 
 function _paper_bundle(cert_path::AbstractString, out_dir::AbstractString)
@@ -400,42 +418,17 @@ julia --project="\$PROJECT" --startup-file=no -e 'using CertSDP; exit(CertSDP.Ke
         path = joinpath(out_dir, file)
         isfile(path) && push!(hashes, file * " " * bytes2hex(sha256(read(path))))
     end
+    for schema_file in sort!(readdir(schema_dir))
+        rel = joinpath("schema", schema_file)
+        path = joinpath(out_dir, rel)
+        isfile(path) && push!(hashes, rel * " " * bytes2hex(sha256(read(path))))
+    end
     write(joinpath(out_dir, "hashes.txt"), join(hashes, "\n") * "\n")
     return out_dir
 end
 
 function _verify_paper_bundle(dir::AbstractString)
-    required = ["CERTSDP_BUNDLE.json", "certificate.json", "problem.json",
-                "schema.json", "VERIFY.sh", "audit_expected.json",
-                "proof_dag.json", "replay_report.json"]
-    for file in required
-        isfile(joinpath(dir, file)) ||
-            return (passed=false, reason="missing bundle file $file")
-    end
-    manifest = JSON3.read(read(joinpath(dir, "CERTSDP_BUNDLE.json"), String))
-    expected = JSON3.read(read(joinpath(dir, "audit_expected.json"), String))
-    cert_path = joinpath(dir, "certificate.json")
-    report = Kernel.replay_file(cert_path; strict=true, io=nothing)
-    report.accepted ||
-        return (passed=false, reason="certificate replay rejected: $(report.reason)")
-    String(manifest[:certificate_hash]) == report.certificate_hash ||
-        return (passed=false, reason="manifest certificate_hash mismatch")
-    String(manifest[:problem_hash]) == report.problem_hash ||
-        return (passed=false, reason="manifest problem_hash mismatch")
-    dag_root = _dag_root_from_replay_artifact(JSON3.read(read(cert_path, String)))
-    String(manifest[:dag_root_hash]) == dag_root ||
-        return (passed=false, reason="manifest dag_root_hash mismatch")
-    String(expected[:certificate_hash]) == report.certificate_hash ||
-        return (passed=false, reason="audit_expected certificate_hash mismatch")
-    String(expected[:dag_root_hash]) == dag_root ||
-        return (passed=false, reason="audit_expected dag_root_hash mismatch")
-    schema_path = joinpath(dir, "schema", "certsdp_certificate_v3.schema.json")
-    if isfile(schema_path)
-        schema_hash = "sha256:" * bytes2hex(sha256(read(schema_path)))
-        String(manifest[:schema_hash]) == schema_hash ||
-            return (passed=false, reason="schema_hash mismatch")
-    end
-    return (passed=true, reason="accepted")
+    return getfield(parentmodule(@__MODULE__), :BundleVerify).verify_bundle_directory(dir)
 end
 
 function _proof_dag_json_from_replay_artifact(text::AbstractString, parsed)

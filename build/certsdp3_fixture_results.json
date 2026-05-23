@@ -1,0 +1,210 @@
+{
+    "fixtures": [
+        {
+            "id": "sparse_sos_control_lyapunov",
+            "path": "test/fixtures/certsdp3/sparse_sos_control_lyapunov/certificate.json",
+            "family": "sparse_sos_certificate",
+            "passed": false,
+            "accepted": true,
+            "stage": "coefficient_matching",
+            "reason": "accepted",
+            "runtime_seconds": 1.097893166,
+            "allocated_bytes": 0,
+            "budget_runtime": true,
+            "budget_memory": true,
+            "densification_count": 0,
+            "no_densification": true,
+            "cli_exit": 0,
+            "schema_api": {
+                "passed": true,
+                "reason": "accepted"
+            },
+            "schema_cli_exit": 0,
+            "dag": {
+                "present": true,
+                "root_hash": "sha256:bab1961b1f10b9dbc9427349ca1b408c26bc2a42330ca442f5420362b96b0f8f",
+                "accepted": true,
+                "reason": "accepted"
+            },
+            "hashes": {
+                "problem_hash": "sha256:76942e0424497d25a664634c36cecf8b51604834fdbccfe737be7709c5545bd7",
+                "certificate_hash": "sha256:a30957053c36465d8521d1b291b86ca03745537f165be463ff6b19b8718d51fb",
+                "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                "dag_root_hash": "sha256:bab1961b1f10b9dbc9427349ca1b408c26bc2a42330ca442f5420362b96b0f8f",
+                "replay_problem_hash": "sha256:76942e0424497d25a664634c36cecf8b51604834fdbccfe737be7709c5545bd7",
+                "replay_certificate_hash": "sha256:a30957053c36465d8521d1b291b86ca03745537f165be463ff6b19b8718d51fb",
+                "accepted": true
+            },
+            "roundtrip": {
+                "passed": true,
+                "hash": "sha256:a30957053c36465d8521d1b291b86ca03745537f165be463ff6b19b8718d51fb",
+                "roundtrip_hash": "sha256:a30957053c36465d8521d1b291b86ca03745537f165be463ff6b19b8718d51fb"
+            },
+            "shape": {
+                "passed": true,
+                "failures": [
+                ]
+            },
+            "authenticity": {
+                "passed": true,
+                "source_class": "synthetic_unit",
+                "reason": "accepted"
+            },
+            "source_class": "synthetic_unit",
+            "import_check": {
+                "passed": true,
+                "command": "not_applicable"
+            },
+            "deterministic": {
+                "passed": true,
+                "hashes": [
+                ],
+                "accepted": [
+                ]
+            },
+            "cli_command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_sos_control_lyapunov/certificate.json --strict --json",
+            "exact_verifier_functions_called": [
+                "verify_certificate",
+                "verify_low_rank_psd"
+            ]
+        },
+        {
+            "id": "tssos_sparse_industry_medium",
+            "path": "test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json",
+            "family": "tssos_sparse_sos_import",
+            "passed": false,
+            "accepted": true,
+            "stage": "coefficient_matching",
+            "reason": "accepted",
+            "runtime_seconds": 0.851646125,
+            "allocated_bytes": 0,
+            "budget_runtime": true,
+            "budget_memory": true,
+            "densification_count": 0,
+            "no_densification": true,
+            "cli_exit": 0,
+            "schema_api": {
+                "passed": true,
+                "reason": "accepted"
+            },
+            "schema_cli_exit": 0,
+            "dag": {
+                "present": true,
+                "root_hash": "sha256:00bf0f73810f6de30162c35b7906b3dcbf26e7d1cb2aae71eb9237cc60d93782",
+                "accepted": true,
+                "reason": "accepted"
+            },
+            "hashes": {
+                "problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+                "certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                "dag_root_hash": "sha256:00bf0f73810f6de30162c35b7906b3dcbf26e7d1cb2aae71eb9237cc60d93782",
+                "replay_problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+                "replay_certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                "accepted": true
+            },
+            "roundtrip": {
+                "passed": true,
+                "hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                "roundtrip_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956"
+            },
+            "shape": {
+                "passed": true,
+                "failures": [
+                ]
+            },
+            "authenticity": {
+                "passed": true,
+                "source_class": "external_like",
+                "reason": "accepted"
+            },
+            "source_class": "external_like",
+            "import_check": {
+                "passed": true,
+                "command": "import_tssos",
+                "raw_external": "test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json",
+                "raw_external_passed": true
+            },
+            "deterministic": {
+                "passed": true,
+                "hashes": [
+                ],
+                "accepted": [
+                ]
+            },
+            "cli_command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json --strict --json",
+            "exact_verifier_functions_called": [
+                "verify_certificate",
+                "verify_low_rank_psd"
+            ]
+        },
+        {
+            "id": "sparse_putinar_opf_5bus",
+            "path": "test/fixtures/certsdp3/sparse_putinar_opf_5bus/certificate.json",
+            "family": "sparse_sos_certificate",
+            "passed": false,
+            "accepted": true,
+            "stage": "coefficient_matching",
+            "reason": "accepted",
+            "runtime_seconds": 0.293897958,
+            "allocated_bytes": 0,
+            "budget_runtime": true,
+            "budget_memory": true,
+            "densification_count": 0,
+            "no_densification": true,
+            "cli_exit": 0,
+            "schema_api": {
+                "passed": true,
+                "reason": "accepted"
+            },
+            "schema_cli_exit": 0,
+            "dag": {
+                "present": true,
+                "root_hash": "sha256:5ad5f20d3066c4097ab2fb712f272125ea3aba9f8cbb58025c095e4fc94b33e5",
+                "accepted": true,
+                "reason": "accepted"
+            },
+            "hashes": {
+                "problem_hash": "sha256:99978fe69182218f540ac6b2665b4ccb34f3d508defa8d2614d5eae19293af61",
+                "certificate_hash": "sha256:f08e8eedd7b50dab325f62155e7a81204cdacecd27fdb7b3ecc51f46348c7db4",
+                "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                "dag_root_hash": "sha256:5ad5f20d3066c4097ab2fb712f272125ea3aba9f8cbb58025c095e4fc94b33e5",
+                "replay_problem_hash": "sha256:99978fe69182218f540ac6b2665b4ccb34f3d508defa8d2614d5eae19293af61",
+                "replay_certificate_hash": "sha256:f08e8eedd7b50dab325f62155e7a81204cdacecd27fdb7b3ecc51f46348c7db4",
+                "accepted": true
+            },
+            "roundtrip": {
+                "passed": true,
+                "hash": "sha256:f08e8eedd7b50dab325f62155e7a81204cdacecd27fdb7b3ecc51f46348c7db4",
+                "roundtrip_hash": "sha256:f08e8eedd7b50dab325f62155e7a81204cdacecd27fdb7b3ecc51f46348c7db4"
+            },
+            "shape": {
+                "passed": true,
+                "failures": [
+                ]
+            },
+            "authenticity": {
+                "passed": true,
+                "source_class": "synthetic_unit",
+                "reason": "accepted"
+            },
+            "source_class": "synthetic_unit",
+            "import_check": {
+                "passed": true,
+                "command": "not_applicable"
+            },
+            "deterministic": {
+                "passed": true,
+                "hashes": [
+                ],
+                "accepted": [
+                ]
+            },
+            "cli_command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_putinar_opf_5bus/certificate.json --strict --json",
+            "exact_verifier_functions_called": [
+                "verify_certificate",
+                "verify_low_rank_psd"
+            ]
+        }
+    ]
+}

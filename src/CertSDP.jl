@@ -37,6 +37,10 @@ export LMIProblem,
 include("kernel/Kernel.jl")
 include("kernel/Debug.jl")
 include("kernel/TrustedKernel.jl")
+include("kernel/TrustedPathAudit.jl")
+include("kernel/DensificationPolicy.jl")
+include("kernel/SOSGramExpansion.jl")
+include("kernel/DAGCheckerRegistry.jl")
 include("kernel/CertificateDAG.jl")
 include("kernel/StrictSchema.jl")
 include("kernel/ExactArithmeticSafety.jl")
@@ -62,11 +66,14 @@ include("algebraic/SignTests.jl")
 include("algebraic/PolynomialSystem.jl")
 include("certify/Results.jl")
 include("adapters/Adapters.jl")
+include("adapters/TSSOSRawImporter.jl")
+include("adapters/NCTSSOSRawImporter.jl")
 include("adapters/TSSOSImporter.jl")
 include("adapters/NCTSSOSImporter.jl")
 include("adapters/UntrustedAdapters.jl")
 include("apps/Apps.jl")
 include("apps/Explain.jl")
+include("apps/BundleVerify.jl")
 include("kernel/GateRegistry.jl")
 include("backends/AlgebraicBackend.jl")
 include("backends/MsolveBackend.jl")
@@ -108,12 +115,20 @@ tssos_artifact_hash(args...; kwargs...) =
     Adapters.tssos_artifact_hash(args...; kwargs...)
 write_tssos_candidate(args...; kwargs...) =
     Adapters.write_tssos_candidate(args...; kwargs...)
+import_raw_tssos_artifact(args...; kwargs...) =
+    TSSOSRawImporter.import_raw_tssos_artifact(args...; kwargs...)
+certify_raw_tssos_artifact(args...; kwargs...) =
+    TSSOSRawImporter.certify_raw_tssos_artifact(args...; kwargs...)
 import_nctssos_artifact(args...; kwargs...) =
     Adapters.import_nctssos_artifact(args...; kwargs...)
 certify_nctssos_artifact(args...; kwargs...) =
     Adapters.certify_nctssos_artifact(args...; kwargs...)
 write_nctssos_candidate(args...; kwargs...) =
     Adapters.write_nctssos_candidate(args...; kwargs...)
+import_raw_nctssos_artifact(args...; kwargs...) =
+    NCTSSOSRawImporter.import_raw_nctssos_artifact(args...; kwargs...)
+certify_raw_nctssos_artifact(args...; kwargs...) =
+    NCTSSOSRawImporter.certify_raw_nctssos_artifact(args...; kwargs...)
 
 """
 package_marker() -> Symbol

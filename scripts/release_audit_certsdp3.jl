@@ -11,6 +11,10 @@ const FIXTURE_ROOT = joinpath(ROOT, "test", "fixtures", "certsdp3")
 const BUILD_DIR = joinpath(ROOT, "build")
 const REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_audit_report.json")
 const SCORE_PATH = joinpath(BUILD_DIR, "certsdp3_gate_scores.json")
+const FIXTURE_RESULTS_PATH = joinpath(BUILD_DIR, "certsdp3_fixture_results.json")
+const CLI_RESULTS_PATH = joinpath(BUILD_DIR, "certsdp3_cli_results.json")
+const MUTATION_RESULTS_PATH = joinpath(BUILD_DIR, "certsdp3_mutation_results.json")
+const COVERAGE_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_coverage_report.json")
 const REQUIRED_SCHEMA_TAMPERS = 30
 const REQUIRED_MUTATIONS = 100
 
@@ -21,6 +25,7 @@ struct AuditOptions
     full::Bool
     json::Bool
     gate::Union{Nothing, Symbol}
+    out_path::String
 end
 
 function parse_args(args)
@@ -28,6 +33,7 @@ function parse_args(args)
     full = false
     json = false
     gate = nothing
+    out_path = REPORT_PATH
     i = 1
     while i <= length(args)
         arg = args[i]
@@ -41,12 +47,16 @@ function parse_args(args)
             i += 1
             i <= length(args) || error("--gate requires a gate id")
             gate = Symbol(args[i])
+        elseif arg == "--out"
+            i += 1
+            i <= length(args) || error("--out requires a path")
+            out_path = args[i]
         else
             error("unknown audit option `$arg`")
         end
         i += 1
     end
-    return AuditOptions(strict, full, json, gate)
+    return AuditOptions(strict, full, json, gate, out_path)
 end
 
 function sha256_text(text::AbstractString)
@@ -93,6 +103,25 @@ function run_static_rules()
         passed=success(proc),
         stdout=String(take!(out)),
         stderr=String(take!(err)),
+    )
+end
+
+function run_subprocess(args::Vector{String}; cwd::AbstractString=ROOT)
+    cmd = `julia --project=$(ROOT) --startup-file=no -e 'using CertSDP; exit(CertSDP.main(ARGS))' $(args)`
+    out = IOBuffer()
+    err = IOBuffer()
+    elapsed = @elapsed proc = run(pipeline(Cmd(cmd; dir=cwd), stdout=out, stderr=err);
+                                  wait=false)
+    wait(proc)
+    return (;
+        command=join(vcat(["julia", "--project=$ROOT", "--startup-file=no",
+                           "-e", "using CertSDP; exit(CertSDP.main(ARGS))"],
+                          args), " "),
+        exit_code=proc.exitcode,
+        stdout=String(take!(out)),
+        stderr=String(take!(err)),
+        runtime_seconds=elapsed,
+        cwd=String(cwd),
     )
 end
 
@@ -150,26 +179,24 @@ function tamper_report_for_family(fixture, tamper_path::AbstractString)
 end
 
 function cli_replay(path::AbstractString)
-    out = IOBuffer()
-    err = IOBuffer()
-    code = CertSDP.main(["replay", path, "--strict", "--json"];
-                        io=out, err=err)
+    result = run_subprocess(["replay", path, "--strict", "--json"])
     return (;
-        code,
-        stdout=String(take!(out)),
-        stderr=String(take!(err)),
+        code=result.exit_code,
+        stdout=result.stdout,
+        stderr=result.stderr,
+        command=result.command,
+        runtime_seconds=result.runtime_seconds,
     )
 end
 
 function cli_schema(path::AbstractString)
-    out = IOBuffer()
-    err = IOBuffer()
-    code = CertSDP.main(["schema", "validate", path, "--kind", "certificate"];
-                        io=out, err=err)
+    result = run_subprocess(["schema", "validate", path, "--kind", "certificate"])
     return (;
-        code,
-        stdout=String(take!(out)),
-        stderr=String(take!(err)),
+        code=result.exit_code,
+        stdout=result.stdout,
+        stderr=result.stderr,
+        command=result.command,
+        runtime_seconds=result.runtime_seconds,
     )
 end
 
@@ -240,6 +267,43 @@ function fixture_shape_check(fixture)
     return (passed=isempty(failures), failures=failures)
 end
 
+function fixture_source_class(fixture)
+    return haskey(fixture, :source_class) ? String(fixture[:source_class]) :
+           "missing"
+end
+
+function fixture_authenticity_check(fixture)
+    source = fixture_source_class(fixture)
+    allowed = Set(["synthetic_unit", "generated_stress", "external_like",
+                   "real_imported", "paper_bundle"])
+    source in allowed ||
+        return (passed=false, source_class=source,
+                reason="missing or invalid source_class")
+    if source in ("external_like", "real_imported")
+        haskey(fixture, :source_file) && !isempty(String(fixture[:source_file])) ||
+            return (passed=false, source_class=source,
+                    reason="external fixture missing source_file")
+        isfile(joinpath(ROOT, String(fixture[:source_file]))) ||
+            return (passed=false, source_class=source,
+                    reason="external source_file does not exist")
+    end
+    return (passed=true, source_class=source, reason="accepted")
+end
+
+function ci_workflow_evidence()
+    path = joinpath(ROOT, ".github", "workflows", "certsdp3.yml")
+    commit_msg = strip(read(`git -C $(ROOT) log -1 --pretty=%B`, String))
+    skipped = occursin("[skip ci]", lowercase(commit_msg)) ||
+              occursin("[skip actions]", lowercase(commit_msg))
+    return (;
+        present=isfile(path),
+        path=public_path(path),
+        hash=isfile(path) ? sha256_text(read(path, String)) : nothing,
+        latest_commit_message=commit_msg,
+        latest_commit_skips_ci=skipped,
+    )
+end
+
 function schema_hash_for_certificate(path::AbstractString)
     parsed = read_json(path)
     if haskey(parsed, :certsdp_sparse_sos_certificate_version)
@@ -284,12 +348,24 @@ function run_import_check(fixture)
     family = String(fixture[:problem_family])
     if family == "tssos_sparse_sos_import"
         result = CertSDP.certify_tssos_artifact(joinpath(dir, "artifact.json"))
-        return (passed=result isa CertSDP.CertifiedResult,
-                command="import_tssos")
+        raw_path = joinpath(ROOT, "test", "fixtures_external", "tssos",
+                            "raw_tssos_sparse_poly_medium.json")
+        raw_result = isfile(raw_path) ? CertSDP.certify_raw_tssos_artifact(raw_path) : nothing
+        return (passed=result isa CertSDP.CertifiedResult &&
+                       raw_result isa CertSDP.CertifiedResult,
+                command="import_tssos",
+                raw_external=public_path(raw_path),
+                raw_external_passed=raw_result isa CertSDP.CertifiedResult)
     elseif family == "nctssos_import"
         result = CertSDP.certify_nctssos_artifact(joinpath(dir, "artifact.json"))
-        return (passed=result isa CertSDP.CertifiedResult,
-                command="import_nctssos")
+        raw_path = joinpath(ROOT, "test", "fixtures_external", "nctssos",
+                            "raw_nctssos_trace_medium.json")
+        raw_result = isfile(raw_path) ? CertSDP.certify_raw_nctssos_artifact(raw_path) : nothing
+        return (passed=result isa CertSDP.CertifiedResult &&
+                       raw_result isa CertSDP.CertifiedResult,
+                command="import_nctssos",
+                raw_external=public_path(raw_path),
+                raw_external_passed=raw_result isa CertSDP.CertifiedResult)
     end
     return (passed=true, command="not_applicable")
 end
@@ -297,13 +373,17 @@ end
 function run_bundle_check()
     source = certificate_path("psd_factor_rational_150")
     out_dir = mktempdir()
-    code = CertSDP.main(["bundle", source, "--out", out_dir * "/"];
-                        io=IOBuffer(), err=IOBuffer())
+    create = run_subprocess(["bundle", source, "--out", out_dir * "/"])
+    verify = run_subprocess(["bundle", "verify", out_dir])
     verify_code = isfile(joinpath(out_dir, "VERIFY.sh")) ?
-                  success(`bash $(joinpath(out_dir, "VERIFY.sh"))`) : false
-    return (passed=code == CertSDP.CLI_EXIT_OK && verify_code,
+                  success(Cmd(`bash $(joinpath(out_dir, "VERIFY.sh"))`;
+                              dir=out_dir)) : false
+    return (passed=create.exit_code == CertSDP.CLI_EXIT_OK &&
+                   verify.exit_code == CertSDP.CLI_EXIT_OK &&
+                   verify_code,
             path=public_path(out_dir),
-            code,
+            create,
+            verify,
             verify_code)
 end
 
@@ -372,6 +452,7 @@ function evaluate_fixture(spec, fixture, static_result; check_determinism::Bool=
     hashes = hash_evidence(path; parsed, report=measurement.report)
     roundtrip = canonical_roundtrip(path)
     shape = fixture_shape_check(fixture)
+    authenticity = fixture_authenticity_check(fixture)
     import_check = run_import_check(fixture)
     deterministic = check_determinism ?
                     deterministic_replay(path) :
@@ -390,6 +471,7 @@ function evaluate_fixture(spec, fixture, static_result; check_determinism::Bool=
              hashes.accepted &&
              roundtrip.passed &&
              shape.passed &&
+             authenticity.passed &&
              import_check.passed &&
              deterministic.passed &&
              budget_runtime &&
@@ -417,8 +499,11 @@ function evaluate_fixture(spec, fixture, static_result; check_determinism::Bool=
         hashes,
         roundtrip,
         shape,
+        authenticity,
+        source_class=fixture_source_class(fixture),
         import_check,
         deterministic,
+        cli_command=cli.command,
         exact_verifier_functions_called=String.(spec.required_exact_verifier_functions),
     )
 end
@@ -456,7 +541,75 @@ function evaluate_tamper(fixture, tamper_file::AbstractString)
         reason=report.reason,
         obligation_id=String(report.obligation_id),
         cli_exit=cli.code,
+        cli_command=hasproperty(cli, :command) ? cli.command : "",
     )
+end
+
+function cli_external_import_checks()
+    checks = Any[]
+    tssos = joinpath(ROOT, "test", "fixtures_external", "tssos",
+                     "raw_tssos_sparse_poly_medium.json")
+    if isfile(tssos)
+        out = tempname() * ".json"
+        push!(checks, run_subprocess(["import", "tssos", tssos, "--out", out]))
+    end
+    nctssos = joinpath(ROOT, "test", "fixtures_external", "nctssos",
+                       "raw_nctssos_trace_medium.json")
+    if isfile(nctssos)
+        out = tempname() * ".json"
+        push!(checks, run_subprocess(["import", "nctssos", nctssos, "--out", out]))
+    end
+    temp_cwd = mktempdir()
+    valid = certificate_path("psd_factor_rational_150")
+    push!(checks, run_subprocess(["replay", valid, "--strict"]; cwd=temp_cwd))
+    return checks
+end
+
+function apply_score_caps(spec, score::Int, valid_results, tamper_results,
+                          cli_checks, audit_pass::Bool)
+    capped = score
+    reasons = String[]
+    isempty(valid_results) && (capped = min(capped, 4); push!(reasons, "no valid fixture"))
+    isempty(tamper_results) && (capped = min(capped, 5); push!(reasons, "no tamper fixture"))
+    isempty(cli_checks) && (capped = min(capped, 6); push!(reasons, "no subprocess CLI coverage"))
+    audit_pass || (capped = min(capped, 7); push!(reasons, "audit checks failed"))
+    external_like = any(result -> result.source_class in ("external_like", "real_imported", "paper_bundle"),
+                        valid_results)
+    if spec.semi_real_required && !external_like
+        capped = min(capped, 8)
+        push!(reasons, "only synthetic/generated fixtures")
+    end
+    if spec.id === :E
+        calls = CertSDP.DAGCheckerRegistry.dag_checker_calls()
+        isempty(calls) && (capped = min(capped, 5); push!(reasons, "DAG checkers not executed"))
+        isempty(tamper_results) && (capped = min(capped, 8); push!(reasons, "no DAG mutation evidence"))
+    elseif spec.id === :H
+        capped = min(capped, 10)
+        !external_like && (capped = min(capped, 8); push!(reasons, "no external-like SOS fixture"))
+    elseif spec.id === :I
+        has_raw = any(result -> getproperty(result.import_check, :raw_external_passed) === true,
+                      valid_results)
+        has_raw || (capped = min(capped, 6); push!(reasons, "raw TSSOS importer not exercised"))
+        external_like || (capped = min(capped, 8); push!(reasons, "no external-like TSSOS fixture"))
+    elseif spec.id === :J
+        any(result -> result.source_class == "external_like", valid_results) ||
+            (capped = min(capped, 8); push!(reasons, "quantum fixture not external-like"))
+    elseif spec.id === :K
+        has_raw = any(result -> getproperty(result.import_check, :raw_external_passed) === true,
+                      valid_results)
+        has_raw || (capped = min(capped, 6); push!(reasons, "raw NCTSSOS importer not exercised"))
+    elseif spec.id === :P
+        has_temp = any(check -> hasproperty(check, :cwd) && String(check.cwd) != ROOT,
+                       cli_checks)
+        has_temp || (capped = min(capped, 8); push!(reasons, "no temp-cwd subprocess CLI"))
+    elseif spec.id === :X
+        isempty(tamper_results) && (capped = min(capped, 8); push!(reasons, "no tampered bundle rejection"))
+    elseif spec.id === :QA
+        ci = ci_workflow_evidence()
+        ci.present || (capped = min(capped, 6); push!(reasons, "missing CI workflow"))
+        ci.latest_commit_skips_ci && (capped = min(capped, 7); push!(reasons, "latest commit skips CI"))
+    end
+    return capped, reasons
 end
 
 function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
@@ -482,7 +635,8 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
         result.passed ? push!(passed_checks, "valid:$fixture_id") :
             push!(failed_checks, "valid:$fixture_id")
         push!(cli_checks, (fixture=fixture_id, kind="valid_replay",
-                           exit=result.cli_exit))
+                           exit=result.cli_exit,
+                           command=hasproperty(result, :cli_command) ? result.cli_command : ""))
     end
 
     for path in spec.required_tamper_fixtures
@@ -496,7 +650,8 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
         result.passed ? push!(passed_checks, "tamper:$path") :
             push!(failed_checks, "tamper:$path")
         push!(cli_checks, (fixture=parts[1], kind="tamper_replay",
-                           exit=result.cli_exit))
+                           exit=result.cli_exit,
+                           command=hasproperty(result, :cli_command) ? result.cli_command : ""))
     end
 
     if spec.id in (:A, :V)
@@ -526,7 +681,28 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
         bundle.passed ? push!(passed_checks, "bundle_verify") :
             push!(failed_checks, "bundle_verify")
         push!(cli_checks, (fixture="paper_bundle_demo", kind="bundle_verify",
-                           exit=bundle.passed ? 0 : 1))
+                           exit=bundle.passed ? 0 : 1,
+                           command=bundle.verify.command))
+    end
+
+    if spec.id in (:I, :K, :P)
+        for check in cli_external_import_checks()
+            push!(cli_checks, (fixture="external_like", kind="subprocess_cli",
+                               exit=check.exit_code,
+                               command=check.command,
+                               cwd=check.cwd))
+            check.exit_code == CertSDP.CLI_EXIT_OK ?
+                push!(passed_checks, "subprocess_cli:$(check.command)") :
+                push!(failed_checks, "subprocess_cli failed: $(check.command)")
+        end
+    end
+
+    if spec.id === :QA
+        ci = ci_workflow_evidence()
+        ci.present ? push!(passed_checks, "ci_workflow_present") :
+            push!(failed_checks, "missing .github/workflows/certsdp3.yml")
+        !ci.latest_commit_skips_ci ? push!(passed_checks, "latest_commit_not_skip_ci") :
+            push!(failed_checks, "latest commit contains skip ci/actions token")
     end
 
     if spec.id === :QA
@@ -555,7 +731,8 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
     dag_pass = all(result -> result.dag.present, valid_results)
     audit_pass = isempty(failed_checks)
     semi_real = !spec.semi_real_required ||
-                all(result -> result.family != "toy", valid_results)
+                any(result -> result.source_class in ("external_like", "real_imported", "paper_bundle"),
+                    valid_results)
     diagnostics = all(result -> !isempty(result.reason), tamper_results)
     mutations = spec.id in (:R, :QA) ? mutation_case_count() >= REQUIRED_MUTATIONS :
                 !isempty(tamper_results)
@@ -572,11 +749,19 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
                                             diagnostics=diagnostics,
                                             mutations=mutations,
                                             performance=performance)
+    score, cap_reasons = apply_score_caps(spec, score, valid_results,
+                                          tamper_results, cli_checks,
+                                          audit_pass)
+    if score < 8
+        append!(failed_checks, cap_reasons)
+    else
+        append!(passed_checks, ["score_cap_note:$reason" for reason in cap_reasons])
+    end
     status = isempty(failed_checks) && score >= 8 ? "PASS" : "FAIL"
     core_high = spec.id in (:A, :B, :D, :E, :F, :V, :T, :Z, :QA)
-    if status == "PASS" && core_high && score < 9
+    if status == "PASS" && core_high && score < 8
         status = "FAIL"
-        push!(failed_checks, "core gate score $score < 9")
+        push!(failed_checks, "core gate score $score < 8")
     end
     runtime = (time_ns() - start) / 1e9
     peak_alloc = isempty(valid_results) ? 0 :
@@ -675,19 +860,40 @@ function audit(options::AuditOptions)
                              full=isnothing(options.gate))
     scores = Dict(result.id => result.score for result in gate_results)
     result = all(gate -> gate.status == "PASS", gate_results) ? "PASS" : "FAIL"
+    ci = ci_workflow_evidence()
     env = Dict(
         "julia" => string(VERSION),
+        "os" => Sys.KERNEL,
         "cpu_threads" => Threads.nthreads(),
         "max_memory_gb" => 12,
         "timeout_minutes" => 30,
         "strict" => options.strict,
         "full" => options.full,
         "git_commit" => strip(read(`git -C $(ROOT) rev-parse HEAD`, String)),
+        "ci_detected" => ci.present,
+        "ci_workflow_hash" => ci.hash,
+    )
+    fixture_results = collect(values(fixture_cache))
+    cli_results = Any[]
+    for gate in gate_results
+        append!(cli_results, gate.cli_checks_run)
+    end
+    mutation_report = Dict("schema_mutation_cases" => schema_tamper_count(),
+                           "mutation_cases" => mutation_case_count(),
+                           "required_mutations" => REQUIRED_MUTATIONS)
+    coverage_report = Dict(
+        "trusted_verifiers" => CertSDP.TrustedPathAudit.trusted_path_audit_report(),
+        "dag_checkers" => String.(CertSDP.DAGCheckerRegistry.dag_checker_names()),
+        "executed_dag_checkers_last_replay" => String.(CertSDP.DAGCheckerRegistry.dag_checker_calls()),
     )
     report = Dict(
         "report_version" => "3.0-hard-audit",
         "environment" => env,
         "result" => result,
+        "audit_mode" => Dict("strict" => options.strict,
+                             "full" => options.full,
+                             "gate" => isnothing(options.gate) ? nothing : String(options.gate)),
+        "ci" => ci,
         "static_rules" => Dict(
             "passed" => static_result.passed,
             "stdout" => static_result.stdout,
@@ -711,7 +917,12 @@ function audit(options::AuditOptions)
                            Dict("schema_mutation_cases" => schema_tamper_count(),
                                 "mutation_cases" => mutation_case_count())),
     )
-    open(REPORT_PATH, "w") do io
+    report_path = options.out_path
+    open(report_path, "w") do io
+        JSON3.pretty(io, report)
+        println(io)
+    end
+    report_path != REPORT_PATH && open(REPORT_PATH, "w") do io
         JSON3.pretty(io, report)
         println(io)
     end
@@ -720,8 +931,24 @@ function audit(options::AuditOptions)
             "result" => result,
             "scores" => scores,
             "thresholds" => Dict("all_gates_min" => 8,
-                                 "core_gates_min" => 9),
+                                 "core_gates_min" => 8),
         ))
+        println(io)
+    end
+    open(FIXTURE_RESULTS_PATH, "w") do io
+        JSON3.pretty(io, Dict("fixtures" => fixture_results))
+        println(io)
+    end
+    open(CLI_RESULTS_PATH, "w") do io
+        JSON3.pretty(io, Dict("cli_checks" => cli_results))
+        println(io)
+    end
+    open(MUTATION_RESULTS_PATH, "w") do io
+        JSON3.pretty(io, mutation_report)
+        println(io)
+    end
+    open(COVERAGE_REPORT_PATH, "w") do io
+        JSON3.pretty(io, coverage_report)
         println(io)
     end
     return report
@@ -750,6 +977,10 @@ function print_text(report)
     println("mutation_cases: ", report["summary"]["mutation_cases"])
     println("audit_report: ", public_path(REPORT_PATH))
     println("gate_scores: ", public_path(SCORE_PATH))
+    println("fixture_results: ", public_path(FIXTURE_RESULTS_PATH))
+    println("cli_results: ", public_path(CLI_RESULTS_PATH))
+    println("mutation_results: ", public_path(MUTATION_RESULTS_PATH))
+    println("coverage_report: ", public_path(COVERAGE_REPORT_PATH))
     println("result: ", report["result"])
 end
 

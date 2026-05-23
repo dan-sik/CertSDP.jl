@@ -3,6 +3,9 @@
     "fixtures": [
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "D",
                 "E",
@@ -11,21 +14,42 @@
                 "R",
                 "U"
             ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 45
+            },
+            "subprocess_cli_commands": [
+                "replay psd_factor_rational_150/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_negative_diagonal.json"
             ],
             "validation_purpose": "Gate D low-rank rational PSD exact identity replay",
+            "memory_budget": {
+                "max_memory_mb": 1536
+            },
             "problem_family": "low_rank_psd",
+            "source_file": "",
             "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
             "max_runtime_seconds": 45,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 1536,
             "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+            "semantic_checks_required": [
+                "strict_schema",
+                "exact_replay",
+                "dag_replay"
+            ],
             "fixture_id": "psd_factor_rational_150",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "D",
                 "L",
@@ -34,21 +58,42 @@
                 "S",
                 "U"
             ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 45
+            },
+            "subprocess_cli_commands": [
+                "replay psd_factor_algebraic_40/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_algebraic_sign.json"
             ],
             "validation_purpose": "Gate D/L algebraic low-rank PSD exact identity and sign replay",
+            "memory_budget": {
+                "max_memory_mb": 1536
+            },
             "problem_family": "algebraic_low_rank_psd",
+            "source_file": "",
             "certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
             "max_runtime_seconds": 45,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 1536,
             "problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
+            "semantic_checks_required": [
+                "strict_schema",
+                "exact_replay",
+                "dag_replay"
+            ],
             "fixture_id": "psd_factor_algebraic_40",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 0
+            },
             "gate_ids_covered": [
                 "B",
                 "D",
@@ -59,22 +104,43 @@
                 "T",
                 "U"
             ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 30
+            },
+            "subprocess_cli_commands": [
+                "replay sparse_chordal_120/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_wrong_separator.json",
                 "tampered_wrong_clique_psd.json"
             ],
             "validation_purpose": "Gate B/D sparse chordal replay and separator tamper rejection",
+            "memory_budget": {
+                "max_memory_mb": 1536
+            },
             "problem_family": "chordal_psd",
+            "source_file": "",
             "certificate_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
             "max_runtime_seconds": 30,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 1536,
             "problem_hash": "sha256:14fb1d284fadfe2d6e3e97f3a13367d0434fce0ff5ac67177ed3950f4527dd46",
+            "semantic_checks_required": [
+                "clique_cover",
+                "separator_consistency",
+                "no_densification"
+            ],
             "fixture_id": "sparse_chordal_120",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 0
+            },
             "gate_ids_covered": [
                 "B",
                 "D",
@@ -84,23 +150,44 @@
                 "T",
                 "U"
             ],
+            "source_class": "generated_stress",
+            "performance_budget": {
+                "max_runtime_seconds": 60
+            },
+            "subprocess_cli_commands": [
+                "replay sparse_chordal_stress_3000/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_separator_entry_changed.json",
                 "tampered_clique_psd_proof_changed.json",
                 "tampered_graph_hash_changed.json"
             ],
             "validation_purpose": "Gate T sparse chordal 3000 stress no-densification replay",
+            "memory_budget": {
+                "max_memory_mb": 2048
+            },
             "problem_family": "chordal_psd_stress",
+            "source_file": "",
             "certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
             "max_runtime_seconds": 60,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 2048,
             "problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+            "semantic_checks_required": [
+                "clique_cover",
+                "separator_consistency",
+                "no_densification"
+            ],
             "fixture_id": "sparse_chordal_stress_3000",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "C",
                 "Q",
@@ -108,23 +195,44 @@
                 "T",
                 "U"
             ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 120
+            },
+            "subprocess_cli_commands": [
+                "replay block_native_algebraic_medium/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_block_3_kernel.json",
                 "tampered_block_5_psd.json",
                 "tampered_root_interval.json"
             ],
             "validation_purpose": "Gate C block-native algebraic field/root replay and inactive PSD obligations without dense aggregate",
+            "memory_budget": {
+                "max_memory_mb": 3072
+            },
             "problem_family": "block_native_algebraic_incidence",
+            "source_file": "",
             "certificate_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a",
             "max_runtime_seconds": 120,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 3072,
             "problem_hash": "sha256:c0e51e5d2a63d4c6f69b16efff32d67aa20de078ecfbf80744b65d5c183f52ba",
+            "semantic_checks_required": [
+                "strict_schema",
+                "exact_replay",
+                "dag_replay"
+            ],
             "fixture_id": "block_native_algebraic_medium",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "G",
                 "Q",
@@ -132,21 +240,42 @@
                 "S",
                 "U"
             ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 30
+            },
+            "subprocess_cli_commands": [
+                "replay primal_dual_portfolio_50/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_gap_value.json"
             ],
             "validation_purpose": "Gate G exact primal-dual objective gap replay",
+            "memory_budget": {
+                "max_memory_mb": 1536
+            },
             "problem_family": "primal_dual_optimality",
+            "source_file": "",
             "certificate_hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0",
             "max_runtime_seconds": 30,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 1536,
             "problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
+            "semantic_checks_required": [
+                "strict_schema",
+                "exact_replay",
+                "dag_replay"
+            ],
             "fixture_id": "primal_dual_portfolio_50",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "G",
                 "Q",
@@ -154,21 +283,42 @@
                 "S",
                 "U"
             ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 30
+            },
+            "subprocess_cli_commands": [
+                "replay farkas_infeasible_lmi_medium/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_multiplier.json"
             ],
             "validation_purpose": "Gate G exact Farkas contradiction replay",
+            "memory_budget": {
+                "max_memory_mb": 1536
+            },
             "problem_family": "farkas_infeasibility",
+            "source_file": "",
             "certificate_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4",
             "max_runtime_seconds": 30,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 1536,
             "problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
+            "semantic_checks_required": [
+                "strict_schema",
+                "exact_replay",
+                "dag_replay"
+            ],
             "fixture_id": "farkas_infeasible_lmi_medium",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "H",
                 "I",
@@ -177,46 +327,88 @@
                 "S",
                 "U"
             ],
+            "source_class": "external_like",
+            "performance_budget": {
+                "max_runtime_seconds": 180
+            },
+            "subprocess_cli_commands": [
+                "replay tssos_sparse_industry_medium/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_clique_basis.json",
                 "tampered_objective_bound.json",
                 "tampered_coefficient_map.json"
             ],
             "validation_purpose": "Gate I imports a TSSOS-style sparse SOS artifact and exact-replays coefficient and PSD obligations",
+            "memory_budget": {
+                "max_memory_mb": 3072
+            },
             "problem_family": "tssos_sparse_sos_import",
+            "source_file": "test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json",
             "certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
             "max_runtime_seconds": 180,
+            "source_notes": "external-like raw frontend artifact is replayed through importer and normal verifier",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 3072,
             "problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+            "semantic_checks_required": [
+                "gram_expansion",
+                "coefficient_identity",
+                "psd_replay"
+            ],
             "fixture_id": "tssos_sparse_industry_medium",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "H",
                 "Q",
                 "R",
                 "S",
                 "U"
+            ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 90
+            },
+            "subprocess_cli_commands": [
+                "replay sparse_sos_control_lyapunov/certificate.json --strict"
             ],
             "tamper_files": [
                 "tampered_polynomial_coefficient.json",
                 "tampered_gram_block.json"
             ],
             "validation_purpose": "Gate H sparse SOS control/Lyapunov-style certificate replay",
+            "memory_budget": {
+                "max_memory_mb": 2048
+            },
             "problem_family": "sparse_sos_certificate",
-            "certificate_hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12",
+            "source_file": "",
+            "certificate_hash": "sha256:a30957053c36465d8521d1b291b86ca03745537f165be463ff6b19b8718d51fb",
             "max_runtime_seconds": 90,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 2048,
-            "problem_hash": "sha256:5d902eafdc30b328a7a07ca40fd6b9422f1e9c96b70a69b843746a0505af7ba7",
+            "problem_hash": "sha256:76942e0424497d25a664634c36cecf8b51604834fdbccfe737be7709c5545bd7",
+            "semantic_checks_required": [
+                "gram_expansion",
+                "coefficient_identity",
+                "psd_replay"
+            ],
             "fixture_id": "sparse_sos_control_lyapunov",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "H",
                 "Q",
@@ -224,28 +416,56 @@
                 "S",
                 "U"
             ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 120
+            },
+            "subprocess_cli_commands": [
+                "replay sparse_putinar_opf_5bus/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_bound.json",
                 "tampered_localizing_coefficient_map.json"
             ],
             "validation_purpose": "Gate H sparse Putinar OPF-style certificate replay",
+            "memory_budget": {
+                "max_memory_mb": 2560
+            },
             "problem_family": "sparse_sos_certificate",
-            "certificate_hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9",
+            "source_file": "",
+            "certificate_hash": "sha256:f08e8eedd7b50dab325f62155e7a81204cdacecd27fdb7b3ecc51f46348c7db4",
             "max_runtime_seconds": 120,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 2560,
-            "problem_hash": "sha256:0df64c755c0005f7bdf20cd17ebe6e1b083b1f11606c2c26bd002560b101b68b",
+            "problem_hash": "sha256:99978fe69182218f540ac6b2665b4ccb34f3d508defa8d2614d5eae19293af61",
+            "semantic_checks_required": [
+                "gram_expansion",
+                "coefficient_identity",
+                "psd_replay"
+            ],
             "fixture_id": "sparse_putinar_opf_5bus",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "J",
                 "Q",
                 "R",
                 "S",
                 "U"
+            ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 60
+            },
+            "subprocess_cli_commands": [
+                "replay quantum_chsh_level2/certificate.json --strict"
             ],
             "tamper_files": [
                 "tampered_relation_removed.json",
@@ -253,17 +473,31 @@
                 "tampered_objective.json"
             ],
             "validation_purpose": "Gate J CHSH-style NPA level-2 exact replay with rewrite witnesses",
+            "memory_budget": {
+                "max_memory_mb": 1536
+            },
             "problem_family": "quantum_bound",
-            "certificate_hash": "sha256:1c9b3609ec9ef1fd6998a2c70ff43408174272938c8076f5e2e384ab675fa0f6",
+            "source_file": "",
+            "certificate_hash": "sha256:3ae71c0c90b7f039028466fa828684019d40a02220389d8662b3795e29f43459",
             "max_runtime_seconds": 60,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 1536,
             "problem_hash": "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa",
+            "semantic_checks_required": [
+                "rewrite_witnesses",
+                "moment_psd",
+                "objective_replay"
+            ],
             "fixture_id": "quantum_chsh_level2",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "J",
                 "Q",
@@ -271,23 +505,44 @@
                 "S",
                 "U"
             ],
+            "source_class": "external_like",
+            "performance_budget": {
+                "max_runtime_seconds": 180
+            },
+            "subprocess_cli_commands": [
+                "replay quantum_i3322_medium/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_commutation_relation.json",
                 "tampered_projection_relation.json",
                 "tampered_psd_proof.json"
             ],
             "validation_purpose": "Gate J I3322-style medium quantum bound replay",
+            "memory_budget": {
+                "max_memory_mb": 3072
+            },
             "problem_family": "quantum_bound",
-            "certificate_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+            "source_file": "test/fixtures_external/nctssos/raw_nctssos_quantum_i3322_medium.json",
+            "certificate_hash": "sha256:bb852479b57d662e0b0a1325df71c994ffcf973b04604856240cfd5b45359561",
             "max_runtime_seconds": 180,
+            "source_notes": "external-like raw frontend artifact is replayed through importer and normal verifier",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 3072,
             "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
+            "semantic_checks_required": [
+                "rewrite_witnesses",
+                "moment_psd",
+                "objective_replay"
+            ],
             "fixture_id": "quantum_i3322_medium",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "K",
                 "J",
@@ -296,21 +551,42 @@
                 "S",
                 "U"
             ],
+            "source_class": "external_like",
+            "performance_budget": {
+                "max_runtime_seconds": 180
+            },
+            "subprocess_cli_commands": [
+                "replay nctssos_trace_medium/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_quotient_relation.json"
             ],
             "validation_purpose": "Gate K imports an NCTSSOS trace artifact and exact-replays quotient, PSD, and objective obligations",
+            "memory_budget": {
+                "max_memory_mb": 3072
+            },
             "problem_family": "nctssos_import",
-            "certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+            "source_file": "test/fixtures_external/nctssos/raw_nctssos_trace_medium.json",
+            "certificate_hash": "sha256:3f0fe8e2af885af6433f1d3b453e9b03a87e058009915b35cf81df616d4674b4",
             "max_runtime_seconds": 180,
+            "source_notes": "external-like raw frontend artifact is replayed through importer and normal verifier",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 3072,
             "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
+            "semantic_checks_required": [
+                "gram_expansion",
+                "coefficient_identity",
+                "psd_replay"
+            ],
             "fixture_id": "nctssos_trace_medium",
             "required_optional_deps": [
             ]
         },
         {
             "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
             "gate_ids_covered": [
                 "W",
                 "Q",
@@ -318,15 +594,33 @@
                 "S",
                 "U"
             ],
+            "source_class": "synthetic_unit",
+            "performance_budget": {
+                "max_runtime_seconds": 120
+            },
+            "subprocess_cli_commands": [
+                "replay symmetric_sos_cyclic_medium/certificate.json --strict"
+            ],
             "tamper_files": [
                 "tampered_group_action.json"
             ],
             "validation_purpose": "Gate W cyclic symmetry orbit and block reconstruction replay",
+            "memory_budget": {
+                "max_memory_mb": 1536
+            },
             "problem_family": "symmetry_reduction",
+            "source_file": "",
             "certificate_hash": "sha256:bbe816faf182967a0a8e453e5a87b05a9cc7890ed7e98449c6d612ecff321b31",
             "max_runtime_seconds": 120,
+            "source_notes": "deterministic exact replay fixture",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "max_memory_mb": 1536,
             "problem_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+            "semantic_checks_required": [
+                "strict_schema",
+                "exact_replay",
+                "dag_replay"
+            ],
             "fixture_id": "symmetric_sos_cyclic_medium",
             "required_optional_deps": [
             ]

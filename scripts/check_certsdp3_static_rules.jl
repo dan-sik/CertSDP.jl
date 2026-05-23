@@ -49,6 +49,10 @@ function scan_trusted_path!(failures)
         "src/kernel/NCQuantumProofs.jl",
         "src/kernel/AlgebraicFields.jl",
         "src/kernel/CanonicalHash.jl",
+        "src/kernel/DAGCheckerRegistry.jl",
+        "src/kernel/SOSGramExpansion.jl",
+        "src/kernel/TrustedPathAudit.jl",
+        "src/kernel/DensificationPolicy.jl",
     ]
     forbidden_numeric = [
         r"\bFloat64\b",
@@ -77,8 +81,13 @@ function scan_trusted_path!(failures)
         lines = split(read(file, String), '\n')
         in_forbidden_key_declaration = false
         for (index, line) in enumerate(lines)
-            occursin("FORBIDDEN_TRUST_KEYS", line) &&
+            (occursin("FORBIDDEN_TRUST_KEYS", line) ||
+             occursin("DEFAULT_FORBIDDEN", line)) &&
                 (in_forbidden_key_declaration = true)
+            if in_forbidden_key_declaration
+                occursin("]", line) && (in_forbidden_key_declaration = false)
+                continue
+            end
             for pattern in forbidden_numeric
                 if occursin(pattern, line) &&
                    !line_has_diagnostic_justification(lines, index)
@@ -103,9 +112,28 @@ function scan_trusted_path!(failures)
             occursin(r"catch[^\\n]*return\s+true", line) &&
                 push!(failures,
                       "catch-return-true pattern in trusted path $file_rel:$index")
-            in_forbidden_key_declaration && occursin("])", line) &&
-                (in_forbidden_key_declaration = false)
         end
+    end
+end
+
+function scan_latest_commit!(failures)
+    message = lowercase(strip(read(`git -C $(ROOT) log -1 --pretty=%B`, String)))
+    if occursin("[skip ci]", message) || occursin("[skip actions]", message)
+        push!(failures, "latest commit message contains CI skip token")
+    end
+end
+
+function scan_ci_workflow!(failures)
+    path = joinpath(ROOT, ".github", "workflows", "certsdp3.yml")
+    isfile(path) || begin
+        push!(failures, "missing .github/workflows/certsdp3.yml")
+        return
+    end
+    text = read(path, String)
+    for token in ["Pkg.test()", "check_certsdp3_static_rules.jl",
+                  "validate_certsdp3.jl",
+                  "release_audit_certsdp3.jl --strict --full"]
+        occursin(token, text) || push!(failures, "certsdp3 workflow missing `$token`")
     end
 end
 
@@ -174,6 +202,8 @@ function main()
     scan_trusted_path!(failures)
     scan_tests!(failures)
     scan_schemas!(failures)
+    scan_latest_commit!(failures)
+    scan_ci_workflow!(failures)
     try
         scan_cli_help!(failures)
     catch err

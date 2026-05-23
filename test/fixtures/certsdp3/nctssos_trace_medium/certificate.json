@@ -7648,7 +7648,7 @@
             {
                 "input_word": [
                     "A1",
-                    "B1"
+                    "B3"
                 ],
                 "steps": [
                     {
@@ -7656,16 +7656,16 @@
                         "rule": "commutation",
                         "before": [
                             "A1",
-                            "B1"
+                            "B3"
                         ],
                         "after": [
-                            "B1",
+                            "B3",
                             "A1"
                         ]
                     }
                 ],
                 "final_word": [
-                    "B1",
+                    "B3",
                     "A1"
                 ],
                 "relation_ids_used": [
@@ -7677,7 +7677,7 @@
                 ]
             }
         ],
-        "certificate_hash": "sha256:5d2bdefc3d97620c550eed1509d3070674ff59de3cc133ce8876e672366990a4"
+        "certificate_hash": "sha256:208933683ef8ba5162585d28f6713ebd8ae53a15928caae77735c7f1fe8b8fa9"
     },
     "objective_terms": [
         {
@@ -7709,12 +7709,22 @@
                 "status": "accepted"
             },
             {
+                "id": "moment_matrix",
+                "kind": "sparse_matrix",
+                "inputs": [
+                    "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00"
+                ],
+                "output_hash": "sha256:18b2764b1f7ba69560debb80f6491e5776bd362d24f8447384fd7832d68452b1",
+                "checker": "canonical_sparse_matrix_hash",
+                "status": "accepted"
+            },
+            {
                 "id": "nc_rewrite_witnesses",
                 "kind": "exact_rewrite",
                 "inputs": [
                     "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00"
                 ],
-                "output_hash": "sha256:7f8e2f5a34058f141fbef6bb82f7d8203eb786f145a9ce3c4cdea4bcf139c914",
+                "output_hash": "sha256:ed51b983220ebe52b373e5b3540a1e7f1d9f2dd6730b14bf3849036725fce007",
                 "checker": "verify_nc_rewrite_witness",
                 "status": "accepted"
             },
@@ -7729,18 +7739,29 @@
                 "status": "accepted"
             },
             {
+                "id": "moment_certificate",
+                "kind": "npa_moment_matrix",
+                "inputs": [
+                    "sha256:ed51b983220ebe52b373e5b3540a1e7f1d9f2dd6730b14bf3849036725fce007",
+                    "sha256:c31b42427fa08e3def0e9baa4e01307d8400174bc4572c3a00a1ae339a0c25c2"
+                ],
+                "output_hash": "sha256:208933683ef8ba5162585d28f6713ebd8ae53a15928caae77735c7f1fe8b8fa9",
+                "checker": "check_npa_moment_entry",
+                "status": "accepted"
+            },
+            {
                 "id": "objective_bound",
                 "kind": "exact_equality",
                 "inputs": [
-                    "sha256:5d2bdefc3d97620c550eed1509d3070674ff59de3cc133ce8876e672366990a4"
+                    "sha256:208933683ef8ba5162585d28f6713ebd8ae53a15928caae77735c7f1fe8b8fa9"
                 ],
                 "output_hash": "sha256:a43d7774448178e47d1d3f0da7a6ed6ca69279ffa6f254feeaf030d7593b8097",
                 "checker": "verify_quantum_bound_certificate",
                 "status": "accepted"
             }
         ],
-        "root_hash": "sha256:9fabc0b59406e459bd7cea102e7798218ec37b407671d41a7e0fdf83daf9d906",
+        "root_hash": "sha256:bd7fcb615f5c43a74bc89372da5cd16b052080f8ae1196ccdc60caec48e4a0cc",
         "schema_version": "3.0"
     },
-    "certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb"
+    "certificate_hash": "sha256:3f0fe8e2af885af6433f1d3b453e9b03a87e058009915b35cf81df616d4674b4"
 }

@@ -1,0 +1,40 @@
+{
+    "cli_checks": [
+        {
+            "fixture": "sparse_sos_control_lyapunov",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_sos_control_lyapunov/certificate.json --strict --json"
+        },
+        {
+            "fixture": "sparse_putinar_opf_5bus",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_putinar_opf_5bus/certificate.json --strict --json"
+        },
+        {
+            "fixture": "tssos_sparse_industry_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "sparse_sos_control_lyapunov",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_sos_control_lyapunov/tampered_gram_block.json --strict --json"
+        },
+        {
+            "fixture": "sparse_putinar_opf_5bus",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_putinar_opf_5bus/tampered_localizing_coefficient_map.json --strict --json"
+        },
+        {
+            "fixture": "tssos_sparse_industry_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/tampered_coefficient_map.json --strict --json"
+        }
+    ]
+}

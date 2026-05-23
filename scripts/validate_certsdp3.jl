@@ -17,6 +17,15 @@ const REQUIRED_INDEX_KEYS = Set(Symbol[
     :required_optional_deps,
     :validation_purpose,
     :gate_ids_covered,
+    :source_class,
+    :generated_by,
+    :source_file,
+    :source_notes,
+    :semantic_checks_required,
+    :subprocess_cli_commands,
+    :performance_budget,
+    :memory_budget,
+    :densification_budget,
 ])
 
 const VALID_GATE_IDS = Set(String.([
