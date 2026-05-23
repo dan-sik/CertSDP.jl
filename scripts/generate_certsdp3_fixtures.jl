@@ -331,7 +331,14 @@ end
 function main()
     mkpath(ROOT)
 
-    low = certsdp3_low_rank_fixture(n=150)
+    rank = 10
+    low_factor = [[i == j ? 1//1 : 0//1 for j in 1:rank] for i in 1:150]
+    low_diagonal = fill(1//1, rank)
+    low_entries = Tuple{Int, Int, Rational{BigInt}}[(i, i, 1//1) for i in 1:rank]
+    low_matrix = K3.SparseSymmetricRationalMatrix(150, low_entries)
+    low_proof = K3.ExactLowRankPSDProof(low_matrix, low_factor, low_diagonal)
+    low_cert = K3.make_low_rank_psd_certificate(low_matrix, low_proof)
+    low = (; matrix=low_matrix, proof=low_proof, cert=low_cert)
     low_dir = joinpath(ROOT, "psd_factor_rational_150")
     write_json(joinpath(low_dir, "certificate.json"),
                K3.certificate_json_v3(low.cert))

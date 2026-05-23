@@ -2720,6 +2720,7 @@ function verify_certificate(cert::V3Certificate; io::Union{Nothing, IO}=nothing)
             report = dag_report
         end
     end
+    report = _with_location(report; certificate_hash=cert.hash)
     _print_report(io, report)
     return report
 end

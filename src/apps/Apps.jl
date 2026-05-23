@@ -20,7 +20,8 @@ function certsdp3_cli_handles(args::AbstractVector{<:AbstractString})
     command = first(args)
     command in ("help", "--help", "-h") && return false
     command in ("version", "--version") && return "--json" in args[2:end]
-    command in ("replay", "diagnose", "bundle", "import") && return true
+    command in ("replay", "bundle", "import") && return true
+    command == "diagnose" && return _diagnose_args_are_v3(args[2:end])
     command == "schema" || return false
     return _schema_args_are_v3(args[2:end])
 end
@@ -364,6 +365,45 @@ function _schema_args_are_v3(args::AbstractVector{String})
     return kind in (:auto, :problem) &&
            haskey(parsed, :certsdp_problem_version) &&
            String(parsed[:certsdp_problem_version]) == Kernel.CERTSDP3_SCHEMA_VERSION
+end
+
+function _diagnose_args_are_v3(args::AbstractVector{String})
+    path = nothing
+    i = 1
+    while i <= length(args)
+        arg = args[i]
+        if arg == "--solution"
+            return false
+        elseif arg in ("--format", "--out")
+            i += 1
+            i <= length(args) || return false
+        elseif startswith(arg, "--")
+            return true
+        elseif isnothing(path)
+            path = arg
+        else
+            return false
+        end
+        i += 1
+    end
+    isnothing(path) && return true
+    text = try
+        read(path, String)
+    catch
+        return true
+    end
+    parsed = try
+        JSON3.read(text)
+    catch
+        return true
+    end
+    return haskey(parsed, :certsdp_certificate_version) ||
+           haskey(parsed, :certsdp_quantum_certificate_version) ||
+           haskey(parsed, :certsdp_sparse_sos_certificate_version) ||
+           haskey(parsed, :certsdp_block_native_certificate_version) ||
+           haskey(parsed, :certsdp_symmetry_certificate_version) ||
+           haskey(parsed, :certsdp_tssos_artifact_version) ||
+           haskey(parsed, :certsdp_nctssos_artifact_version)
 end
 
 function _write_json(path::AbstractString, object)

@@ -10,6 +10,7 @@ for name in names(CertSDP; all=true)
 end
 
 @testset "CertSDP 2.1 Production Gates" begin
+    empty!(CertSDP.PRODUCTION_GATE_CACHE)
     @test run_production_gates_2_1(io=devnull)
     @test length(CertSDP.PRODUCTION_GATE_CACHE) == PRODUCTION_GATE_COUNT
     @test all(values(CertSDP.PRODUCTION_GATE_CACHE))

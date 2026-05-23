@@ -92,10 +92,17 @@ function exists_requirement(path)
     return isfile(joinpath(ROOT, "test", "certsdp3", path))
 end
 
-function audit()
+function audit(; quiet_validation::Bool=false)
     gate_status = Dict{Symbol, String}()
     for (gate, requirements) in GATES
         gate_status[gate] = all(exists_requirement, requirements) ? "PASS" : "FAIL"
+    end
+    validation_exit = main_validate_for_audit(; quiet=quiet_validation)
+    validation_exit == 0 || begin
+        gate_status[:Q_validation_corpus] = "FAIL"
+        gate_status[:S_performance] = "FAIL"
+        gate_status[:R_tamper_tests] = "FAIL"
+        gate_status[:Z_release_audit] = "FAIL"
     end
     qa = audit_qa_evidence()
     gate_status[:R_tamper_tests] = qa.mutation_cases >= MIN_MUTATION_CASES ? gate_status[:R_tamper_tests] : "FAIL"
@@ -133,6 +140,18 @@ function audit()
             mutation_cases=qa.mutation_cases,
             coverage=qa.coverage,
             result)
+end
+
+function main_validate_for_audit(; quiet::Bool=false)
+    try
+        args = ["--max-memory-gb=12", "--timeout-minutes=30"]
+        quiet && push!(args, "--quiet")
+        return validate_certsdp3_main(args)
+    catch err
+        println(stderr, "release audit validation check failed: ",
+                sprint(showerror, err))
+        return 1
+    end
 end
 
 function audit_qa_evidence()
@@ -312,7 +331,7 @@ end
 
 function main(args=ARGS)
     options = parse_args(args)
-    result = audit()
+    result = audit(; quiet_validation=options.json)
     if options.json
         JSON3.pretty(stdout, Dict(
             "result" => result.result,
