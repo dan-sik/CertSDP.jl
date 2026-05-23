@@ -2,23 +2,2367 @@
     "summary": {
         "mutation_cases": 314,
         "schema_mutation_cases": 136,
-        "total_fixtures": 2,
-        "accepted_fixtures": 2,
-        "rejected_tamper_fixtures": 1
+        "total_fixtures": 14,
+        "accepted_fixtures": 14,
+        "rejected_tamper_fixtures": 27
     },
     "gates": {
-        "QA": {
+        "Z": {
             "valid_fixtures_run": [
                 {
                     "id": "psd_factor_rational_150",
-                    "path": "/Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
                     "family": "low_rank_psd",
                     "passed": true,
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.373040708,
-                    "allocated_bytes": 199727272,
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 5.958e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json",
+                "audit_report_generation",
+                "gate_score_generation"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Release audit"
+        },
+        "Q": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "sparse_chordal_stress_3000",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_stress_3000/certificate.json",
+                    "family": "chordal_psd_stress",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "chordal_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 32.773703417,
+                    "allocated_bytes": 1725978816,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:3c4f48a28e9e32ca6d8f0ee1332371cfaded0f822d0757ef8056623e10450017",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+                        "certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:3c4f48a28e9e32ca6d8f0ee1332371cfaded0f822d0757ef8056623e10450017",
+                        "replay_problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+                        "replay_certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "roundtrip_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "primal_dual_portfolio_50",
+                    "path": "test/fixtures/certsdp3/primal_dual_portfolio_50/certificate.json",
+                    "family": "primal_dual_optimality",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_gap",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.367435334,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:e9bf21f67b4edb04d8eefe134946617adc2a4faf03b79a93ba692c808c9809d6",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
+                        "certificate_hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:e9bf21f67b4edb04d8eefe134946617adc2a4faf03b79a93ba692c808c9809d6",
+                        "replay_problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
+                        "replay_certificate_hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0",
+                        "roundtrip_hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "farkas_infeasible_lmi_medium",
+                    "path": "test/fixtures/certsdp3/farkas_infeasible_lmi_medium/certificate.json",
+                    "family": "farkas_infeasibility",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "contradiction",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.179429417,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:c37280809ebd6a2ce62f31778ddc5f2baaca226337df4aebc07135fd292aa8ee",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
+                        "certificate_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:c37280809ebd6a2ce62f31778ddc5f2baaca226337df4aebc07135fd292aa8ee",
+                        "replay_problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
+                        "replay_certificate_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4",
+                        "roundtrip_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "tssos_sparse_industry_medium",
+                    "path": "test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json",
+                    "family": "tssos_sparse_sos_import",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "coefficient_matching",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.274305333,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:00bf0f73810f6de30162c35b7906b3dcbf26e7d1cb2aae71eb9237cc60d93782",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+                        "certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                        "dag_root_hash": "sha256:00bf0f73810f6de30162c35b7906b3dcbf26e7d1cb2aae71eb9237cc60d93782",
+                        "replay_problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+                        "replay_certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "roundtrip_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "import_tssos"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "sparse_putinar_opf_5bus",
+                    "path": "test/fixtures/certsdp3/sparse_putinar_opf_5bus/certificate.json",
+                    "family": "sparse_sos_certificate",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "coefficient_matching",
+                    "reason": "accepted",
+                    "runtime_seconds": 1.344460208,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:39d11e9fbe8ceb890529aada31b95f53b6d687647739fb1189c285335454e684",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:0df64c755c0005f7bdf20cd17ebe6e1b083b1f11606c2c26bd002560b101b68b",
+                        "certificate_hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9",
+                        "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                        "dag_root_hash": "sha256:39d11e9fbe8ceb890529aada31b95f53b6d687647739fb1189c285335454e684",
+                        "replay_problem_hash": "sha256:0df64c755c0005f7bdf20cd17ebe6e1b083b1f11606c2c26bd002560b101b68b",
+                        "replay_certificate_hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9",
+                        "roundtrip_hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "sparse_sos_control_lyapunov",
+                    "path": "test/fixtures/certsdp3/sparse_sos_control_lyapunov/certificate.json",
+                    "family": "sparse_sos_certificate",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "coefficient_matching",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.15245875,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:931820358069c4f3b27b1f6901f1d43857e72bad094e6643bb26940f3e380f8d",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:5d902eafdc30b328a7a07ca40fd6b9422f1e9c96b70a69b843746a0505af7ba7",
+                        "certificate_hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12",
+                        "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                        "dag_root_hash": "sha256:931820358069c4f3b27b1f6901f1d43857e72bad094e6643bb26940f3e380f8d",
+                        "replay_problem_hash": "sha256:5d902eafdc30b328a7a07ca40fd6b9422f1e9c96b70a69b843746a0505af7ba7",
+                        "replay_certificate_hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12",
+                        "roundtrip_hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "quantum_i3322_medium",
+                    "path": "test/fixtures/certsdp3/quantum_i3322_medium/certificate.json",
+                    "family": "quantum_bound",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_bound",
+                    "reason": "accepted",
+                    "runtime_seconds": 1.120260792,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:e32716c62505d5f176be33a06b022bfbdd4cea0ada9e5f8680831177f504cfc1",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
+                        "certificate_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
+                        "dag_root_hash": "sha256:e32716c62505d5f176be33a06b022bfbdd4cea0ada9e5f8680831177f504cfc1",
+                        "replay_problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
+                        "replay_certificate_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "roundtrip_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "nctssos_trace_medium",
+                    "path": "test/fixtures/certsdp3/nctssos_trace_medium/certificate.json",
+                    "family": "nctssos_import",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_bound",
+                    "reason": "accepted",
+                    "runtime_seconds": 1.459074667,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:9fabc0b59406e459bd7cea102e7798218ec37b407671d41a7e0fdf83daf9d906",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
+                        "certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
+                        "dag_root_hash": "sha256:9fabc0b59406e459bd7cea102e7798218ec37b407671d41a7e0fdf83daf9d906",
+                        "replay_problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
+                        "replay_certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "roundtrip_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "import_nctssos"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "psd_factor_algebraic_40",
+                    "path": "test/fixtures/certsdp3/psd_factor_algebraic_40/certificate.json",
+                    "family": "algebraic_low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.591119792,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:f8a41a132a8f4d7b54853a5f5f0f11b292b461a3101ed59df3e054fd5992036a",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
+                        "certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:f8a41a132a8f4d7b54853a5f5f0f11b292b461a3101ed59df3e054fd5992036a",
+                        "replay_problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
+                        "replay_certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "roundtrip_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 1725978816,
+            "densification_count": 0,
+            "runtime_seconds": 6.958e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "valid:sparse_chordal_stress_3000",
+                "valid:primal_dual_portfolio_50",
+                "valid:farkas_infeasible_lmi_medium",
+                "valid:tssos_sparse_industry_medium",
+                "valid:sparse_putinar_opf_5bus",
+                "valid:sparse_sos_control_lyapunov",
+                "valid:quantum_i3322_medium",
+                "valid:nctssos_trace_medium",
+                "valid:psd_factor_algebraic_40",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_chordal_stress_3000",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "primal_dual_portfolio_50",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "farkas_infeasible_lmi_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "tssos_sparse_industry_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_putinar_opf_5bus",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_sos_control_lyapunov",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "quantum_i3322_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "nctssos_trace_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_algebraic_40",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Validation corpus"
+        },
+        "W": {
+            "valid_fixtures_run": [
+                {
+                    "id": "symmetric_sos_cyclic_medium",
+                    "path": "test/fixtures/certsdp3/symmetric_sos_cyclic_medium/certificate.json",
+                    "family": "symmetry_reduction",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "block_reconstruction",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.353165875,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:869c975e8e09206a33d7b7e5ca5930263a8e510f74dbdcf6ec3cf6b2e0c63df1",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "certificate_hash": "sha256:bbe816faf182967a0a8e453e5a87b05a9cc7890ed7e98449c6d612ecff321b31",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:869c975e8e09206a33d7b7e5ca5930263a8e510f74dbdcf6ec3cf6b2e0c63df1",
+                        "replay_problem_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "replay_certificate_hash": "sha256:bbe816faf182967a0a8e453e5a87b05a9cc7890ed7e98449c6d612ecff321b31",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:bbe816faf182967a0a8e453e5a87b05a9cc7890ed7e98449c6d612ecff321b31",
+                        "roundtrip_hash": "sha256:bbe816faf182967a0a8e453e5a87b05a9cc7890ed7e98449c6d612ecff321b31"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 3.458e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_block_diagonalization_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "symmetric_sos_cyclic_medium",
+                    "path": "test/fixtures/certsdp3/symmetric_sos_cyclic_medium/tampered_group_action.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.group.action_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:symmetric_sos_cyclic_medium",
+                "tamper:symmetric_sos_cyclic_medium/tampered_group_action.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "symmetric_sos_cyclic_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "symmetric_sos_cyclic_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Symmetry reduction"
+        },
+        "T": {
+            "valid_fixtures_run": [
+                {
+                    "id": "sparse_chordal_stress_3000",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_stress_3000/certificate.json",
+                    "family": "chordal_psd_stress",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "chordal_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 32.773703417,
+                    "allocated_bytes": 1725978816,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:3c4f48a28e9e32ca6d8f0ee1332371cfaded0f822d0757ef8056623e10450017",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+                        "certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:3c4f48a28e9e32ca6d8f0ee1332371cfaded0f822d0757ef8056623e10450017",
+                        "replay_problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+                        "replay_certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "roundtrip_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 1725978816,
+            "densification_count": 0,
+            "runtime_seconds": 2.25e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_chordal_psd"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "sparse_chordal_stress_3000",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_stress_3000/tampered_separator_entry_changed.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.chordal_proof.proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:sparse_chordal_stress_3000",
+                "tamper:sparse_chordal_stress_3000/tampered_separator_entry_changed.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "sparse_chordal_stress_3000",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_chordal_stress_3000",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "No silent densification"
+        },
+        "C": {
+            "valid_fixtures_run": [
+                {
+                    "id": "block_native_algebraic_medium",
+                    "path": "test/fixtures/certsdp3/block_native_algebraic_medium/certificate.json",
+                    "family": "block_native_algebraic_incidence",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "incidence_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.7615045,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:95e3bd9c4d1539c59aa32cc447a1fc6fc93de2634983d0b4c0637b3aabebb9b9",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:c0e51e5d2a63d4c6f69b16efff32d67aa20de078ecfbf80744b65d5c183f52ba",
+                        "certificate_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:95e3bd9c4d1539c59aa32cc447a1fc6fc93de2634983d0b4c0637b3aabebb9b9",
+                        "replay_problem_hash": "sha256:c0e51e5d2a63d4c6f69b16efff32d67aa20de078ecfbf80744b65d5c183f52ba",
+                        "replay_certificate_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a",
+                        "roundtrip_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 1.6333e-5,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_block_native_algebraic_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "block_native_algebraic_medium",
+                    "path": "test/fixtures/certsdp3/block_native_algebraic_medium/tampered_block_3_kernel.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.certificate_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:block_native_algebraic_medium",
+                "tamper:block_native_algebraic_medium/tampered_block_3_kernel.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "block_native_algebraic_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "block_native_algebraic_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Block-native algebraic"
+        },
+        "P": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 6.375e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "CLI product surface"
+        },
+        "V": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 3.167e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_low_rank_psd"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json",
+                "static_rules",
+                "trusted_exact_path"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Exact arithmetic safety"
+        },
+        "L": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_algebraic_40",
+                    "path": "test/fixtures/certsdp3/psd_factor_algebraic_40/certificate.json",
+                    "family": "algebraic_low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.591119792,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:f8a41a132a8f4d7b54853a5f5f0f11b292b461a3101ed59df3e054fd5992036a",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
+                        "certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:f8a41a132a8f4d7b54853a5f5f0f11b292b461a3101ed59df3e054fd5992036a",
+                        "replay_problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
+                        "replay_certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "roundtrip_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 5.0e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_algebraic_low_rank_psd"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_algebraic_40",
+                    "path": "test/fixtures/certsdp3/psd_factor_algebraic_40/tampered_algebraic_sign.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.diagonal[1].element_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_algebraic_40",
+                "tamper:psd_factor_algebraic_40/tampered_algebraic_sign.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_algebraic_40",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_algebraic_40",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Number field/algebraic layer"
+        },
+        "O": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 5.875e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Diagnostics/explain"
+        },
+        "B": {
+            "valid_fixtures_run": [
+                {
+                    "id": "sparse_chordal_120",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_120/certificate.json",
+                    "family": "chordal_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "chordal_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.063243125,
+                    "allocated_bytes": 40051920,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:100b1ff11a9dc3b0f2244eb91b1be4ce02b6f994a1ff4bfb6a2877ff1d10274d",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:14fb1d284fadfe2d6e3e97f3a13367d0434fce0ff5ac67177ed3950f4527dd46",
+                        "certificate_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:100b1ff11a9dc3b0f2244eb91b1be4ce02b6f994a1ff4bfb6a2877ff1d10274d",
+                        "replay_problem_hash": "sha256:14fb1d284fadfe2d6e3e97f3a13367d0434fce0ff5ac67177ed3950f4527dd46",
+                        "replay_certificate_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "roundtrip_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "sparse_chordal_stress_3000",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_stress_3000/certificate.json",
+                    "family": "chordal_psd_stress",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "chordal_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 32.773703417,
+                    "allocated_bytes": 1725978816,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:3c4f48a28e9e32ca6d8f0ee1332371cfaded0f822d0757ef8056623e10450017",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+                        "certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:3c4f48a28e9e32ca6d8f0ee1332371cfaded0f822d0757ef8056623e10450017",
+                        "replay_problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+                        "replay_certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "roundtrip_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 1725978816,
+            "densification_count": 0,
+            "runtime_seconds": 4.7416e-5,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_chordal_psd"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "sparse_chordal_120",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_120/tampered_wrong_separator.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.chordal_proof.proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                },
+                {
+                    "fixture_id": "sparse_chordal_stress_3000",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_stress_3000/tampered_separator_entry_changed.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.chordal_proof.proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:sparse_chordal_120",
+                "valid:sparse_chordal_stress_3000",
+                "tamper:sparse_chordal_120/tampered_wrong_separator.json",
+                "tamper:sparse_chordal_stress_3000/tampered_separator_entry_changed.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "sparse_chordal_120",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_chordal_stress_3000",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_chordal_120",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                },
+                {
+                    "fixture": "sparse_chordal_stress_3000",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Sparse/block/chordal IR"
+        },
+        "M": {
+            "valid_fixtures_run": [
+                {
+                    "id": "block_native_algebraic_medium",
+                    "path": "test/fixtures/certsdp3/block_native_algebraic_medium/certificate.json",
+                    "family": "block_native_algebraic_incidence",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "incidence_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.7615045,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:95e3bd9c4d1539c59aa32cc447a1fc6fc93de2634983d0b4c0637b3aabebb9b9",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:c0e51e5d2a63d4c6f69b16efff32d67aa20de078ecfbf80744b65d5c183f52ba",
+                        "certificate_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:95e3bd9c4d1539c59aa32cc447a1fc6fc93de2634983d0b4c0637b3aabebb9b9",
+                        "replay_problem_hash": "sha256:c0e51e5d2a63d4c6f69b16efff32d67aa20de078ecfbf80744b65d5c183f52ba",
+                        "replay_certificate_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a",
+                        "roundtrip_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 9.125e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_block_native_algebraic_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "block_native_algebraic_medium",
+                    "path": "test/fixtures/certsdp3/block_native_algebraic_medium/tampered_block_3_kernel.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.certificate_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:block_native_algebraic_medium",
+                "tamper:block_native_algebraic_medium/tampered_block_3_kernel.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "block_native_algebraic_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "block_native_algebraic_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Algebraic candidate backend"
+        },
+        "N": {
+            "valid_fixtures_run": [
+                {
+                    "id": "tssos_sparse_industry_medium",
+                    "path": "test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json",
+                    "family": "tssos_sparse_sos_import",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "coefficient_matching",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.274305333,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:00bf0f73810f6de30162c35b7906b3dcbf26e7d1cb2aae71eb9237cc60d93782",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+                        "certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                        "dag_root_hash": "sha256:00bf0f73810f6de30162c35b7906b3dcbf26e7d1cb2aae71eb9237cc60d93782",
+                        "replay_problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+                        "replay_certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "roundtrip_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "import_tssos"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "nctssos_trace_medium",
+                    "path": "test/fixtures/certsdp3/nctssos_trace_medium/certificate.json",
+                    "family": "nctssos_import",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_bound",
+                    "reason": "accepted",
+                    "runtime_seconds": 1.459074667,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:9fabc0b59406e459bd7cea102e7798218ec37b407671d41a7e0fdf83daf9d906",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
+                        "certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
+                        "dag_root_hash": "sha256:9fabc0b59406e459bd7cea102e7798218ec37b407671d41a7e0fdf83daf9d906",
+                        "replay_problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
+                        "replay_certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "roundtrip_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "import_nctssos"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 5.666e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_sparse_sos_certificate",
+                "verify_quantum_bound_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "tssos_sparse_industry_medium",
+                    "path": "test/fixtures/certsdp3/tssos_sparse_industry_medium/tampered_clique_basis.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "candidate_replay",
+                    "reason": "ArgumentError: root.artifact_hash mismatch: supplied sha256:76e2d4728e43be839c3643d256098a7b5c3bcd349076b34865186a6b97315685 computed sha256:52fb2ff7cd52972d560f5c5637c5fdf205eb3abc7caf544aac74e19baea27ef1",
+                    "obligation_id": "tssos_artifact",
+                    "cli_exit": 1
+                },
+                {
+                    "fixture_id": "nctssos_trace_medium",
+                    "path": "test/fixtures/certsdp3/nctssos_trace_medium/tampered_quotient_relation.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "candidate_replay",
+                    "reason": "ArgumentError: root.artifact_hash mismatch: supplied sha256:9edf3b5fc3699cce8b0d2d93bf8e02dd6f1bc03040da9ccd9acec070eef0949b computed sha256:3eafcb230ee25e371b5f4544b574ea4138e077fcab50b47a8873875f20a26a29",
+                    "obligation_id": "nctssos_artifact",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:tssos_sparse_industry_medium",
+                "valid:nctssos_trace_medium",
+                "tamper:tssos_sparse_industry_medium/tampered_clique_basis.json",
+                "tamper:nctssos_trace_medium/tampered_quotient_relation.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "tssos_sparse_industry_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "nctssos_trace_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "tssos_sparse_industry_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                },
+                {
+                    "fixture": "nctssos_trace_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Untrusted adapters"
+        },
+        "H": {
+            "valid_fixtures_run": [
+                {
+                    "id": "sparse_sos_control_lyapunov",
+                    "path": "test/fixtures/certsdp3/sparse_sos_control_lyapunov/certificate.json",
+                    "family": "sparse_sos_certificate",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "coefficient_matching",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.15245875,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:931820358069c4f3b27b1f6901f1d43857e72bad094e6643bb26940f3e380f8d",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:5d902eafdc30b328a7a07ca40fd6b9422f1e9c96b70a69b843746a0505af7ba7",
+                        "certificate_hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12",
+                        "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                        "dag_root_hash": "sha256:931820358069c4f3b27b1f6901f1d43857e72bad094e6643bb26940f3e380f8d",
+                        "replay_problem_hash": "sha256:5d902eafdc30b328a7a07ca40fd6b9422f1e9c96b70a69b843746a0505af7ba7",
+                        "replay_certificate_hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12",
+                        "roundtrip_hash": "sha256:70427adace4c33966d7dacf18d1a2bbefcf7530981724195b3c2eeacd7862b12"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "sparse_putinar_opf_5bus",
+                    "path": "test/fixtures/certsdp3/sparse_putinar_opf_5bus/certificate.json",
+                    "family": "sparse_sos_certificate",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "coefficient_matching",
+                    "reason": "accepted",
+                    "runtime_seconds": 1.344460208,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:39d11e9fbe8ceb890529aada31b95f53b6d687647739fb1189c285335454e684",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:0df64c755c0005f7bdf20cd17ebe6e1b083b1f11606c2c26bd002560b101b68b",
+                        "certificate_hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9",
+                        "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                        "dag_root_hash": "sha256:39d11e9fbe8ceb890529aada31b95f53b6d687647739fb1189c285335454e684",
+                        "replay_problem_hash": "sha256:0df64c755c0005f7bdf20cd17ebe6e1b083b1f11606c2c26bd002560b101b68b",
+                        "replay_certificate_hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9",
+                        "roundtrip_hash": "sha256:da4ca852f5caa0f1ec56e76249e89e196e0ceb826baade4d5b1a6bcd77f465b9"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 1.1375e-5,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_sparse_sos_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "sparse_sos_control_lyapunov",
+                    "path": "test/fixtures/certsdp3/sparse_sos_control_lyapunov/tampered_gram_block.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.sos_blocks[1].psd_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                },
+                {
+                    "fixture_id": "sparse_putinar_opf_5bus",
+                    "path": "test/fixtures/certsdp3/sparse_putinar_opf_5bus/tampered_localizing_coefficient_map.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.certificate_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:sparse_sos_control_lyapunov",
+                "valid:sparse_putinar_opf_5bus",
+                "tamper:sparse_sos_control_lyapunov/tampered_gram_block.json",
+                "tamper:sparse_putinar_opf_5bus/tampered_localizing_coefficient_map.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "sparse_sos_control_lyapunov",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_putinar_opf_5bus",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_sos_control_lyapunov",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                },
+                {
+                    "fixture": "sparse_putinar_opf_5bus",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Sparse SOS/Putinar"
+        },
+        "A": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 0.02252025,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_certificate",
+                "verify_low_rank_psd"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json",
+                "static_rules",
+                "trusted_exact_path"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Trusted verification boundary"
+        },
+        "QA": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -72,13 +2416,13 @@
                 },
                 {
                     "id": "quantum_i3322_medium",
-                    "path": "/Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_i3322_medium/certificate.json",
+                    "path": "test/fixtures/certsdp3/quantum_i3322_medium/certificate.json",
                     "family": "quantum_bound",
                     "passed": true,
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 1.918687125,
+                    "runtime_seconds": 1.120260792,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -132,9 +2476,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 199727272,
+            "peak_memory_if_available_bytes": 103977416,
             "densification_count": 0,
-            "runtime_seconds": 0.684502,
+            "runtime_seconds": 0.540184666,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "parse_certificate_json_v3",
@@ -152,7 +2496,7 @@
             "tamper_fixtures_run": [
                 {
                     "fixture_id": "quantum_i3322_medium",
-                    "path": "/Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_i3322_medium/tampered_psd_proof.json",
+                    "path": "test/fixtures/certsdp3/quantum_i3322_medium/tampered_psd_proof.json",
                     "passed": true,
                     "accepted": false,
                     "stage": "parse",
@@ -192,14 +2536,1747 @@
             ],
             "score": 10,
             "title": "QA/determinism/coverage"
+        },
+        "X": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 7.4204975,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json",
+                "bundle_verify"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                },
+                {
+                    "fixture": "paper_bundle_demo",
+                    "kind": "bundle_verify",
+                    "exit": 0
+                }
+            ],
+            "score": 10,
+            "title": "Paper bundle"
+        },
+        "D": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "psd_factor_algebraic_40",
+                    "path": "test/fixtures/certsdp3/psd_factor_algebraic_40/certificate.json",
+                    "family": "algebraic_low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.591119792,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:f8a41a132a8f4d7b54853a5f5f0f11b292b461a3101ed59df3e054fd5992036a",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
+                        "certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:f8a41a132a8f4d7b54853a5f5f0f11b292b461a3101ed59df3e054fd5992036a",
+                        "replay_problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
+                        "replay_certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
+                        "roundtrip_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "sparse_chordal_120",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_120/certificate.json",
+                    "family": "chordal_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "chordal_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.063243125,
+                    "allocated_bytes": 40051920,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:100b1ff11a9dc3b0f2244eb91b1be4ce02b6f994a1ff4bfb6a2877ff1d10274d",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:14fb1d284fadfe2d6e3e97f3a13367d0434fce0ff5ac67177ed3950f4527dd46",
+                        "certificate_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:100b1ff11a9dc3b0f2244eb91b1be4ce02b6f994a1ff4bfb6a2877ff1d10274d",
+                        "replay_problem_hash": "sha256:14fb1d284fadfe2d6e3e97f3a13367d0434fce0ff5ac67177ed3950f4527dd46",
+                        "replay_certificate_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "roundtrip_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 1.2792e-5,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_low_rank_psd",
+                "verify_algebraic_low_rank_psd",
+                "verify_chordal_psd"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                },
+                {
+                    "fixture_id": "psd_factor_algebraic_40",
+                    "path": "test/fixtures/certsdp3/psd_factor_algebraic_40/tampered_algebraic_sign.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.diagonal[1].element_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                },
+                {
+                    "fixture_id": "sparse_chordal_120",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_120/tampered_wrong_clique_psd.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.chordal_proof.clique_proofs[1].matrix.hash mismatch: expected sha256:0000000000000000000000000000000000000000000000000000000000000000, computed sha256:ae4c1b66de815f90c9918cd23c44d09f2c7bb2a54c83de67f483885f65a43765",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "valid:psd_factor_algebraic_40",
+                "valid:sparse_chordal_120",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json",
+                "tamper:psd_factor_algebraic_40/tampered_algebraic_sign.json",
+                "tamper:sparse_chordal_120/tampered_wrong_clique_psd.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_algebraic_40",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_chordal_120",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                },
+                {
+                    "fixture": "psd_factor_algebraic_40",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                },
+                {
+                    "fixture": "sparse_chordal_120",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Large PSD proof engine"
+        },
+        "G": {
+            "valid_fixtures_run": [
+                {
+                    "id": "primal_dual_portfolio_50",
+                    "path": "test/fixtures/certsdp3/primal_dual_portfolio_50/certificate.json",
+                    "family": "primal_dual_optimality",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_gap",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.367435334,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:e9bf21f67b4edb04d8eefe134946617adc2a4faf03b79a93ba692c808c9809d6",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
+                        "certificate_hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:e9bf21f67b4edb04d8eefe134946617adc2a4faf03b79a93ba692c808c9809d6",
+                        "replay_problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
+                        "replay_certificate_hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0",
+                        "roundtrip_hash": "sha256:768aa4c439707384193232acd30c1db875e597fbc61a80fea4d5f7630b2de6d0"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "farkas_infeasible_lmi_medium",
+                    "path": "test/fixtures/certsdp3/farkas_infeasible_lmi_medium/certificate.json",
+                    "family": "farkas_infeasibility",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "contradiction",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.179429417,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:c37280809ebd6a2ce62f31778ddc5f2baaca226337df4aebc07135fd292aa8ee",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
+                        "certificate_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:c37280809ebd6a2ce62f31778ddc5f2baaca226337df4aebc07135fd292aa8ee",
+                        "replay_problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
+                        "replay_certificate_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4",
+                        "roundtrip_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 1.8542e-5,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_primal_dual_optimality",
+                "verify_farkas_infeasibility"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "primal_dual_portfolio_50",
+                    "path": "test/fixtures/certsdp3/primal_dual_portfolio_50/tampered_gap_value.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "objective_gap",
+                    "reason": "declared objective gap does not equal primal-dual difference",
+                    "obligation_id": "exact_gap",
+                    "cli_exit": 1
+                },
+                {
+                    "fixture_id": "farkas_infeasible_lmi_medium",
+                    "path": "test/fixtures/certsdp3/farkas_infeasible_lmi_medium/tampered_multiplier.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "farkas_identity",
+                    "reason": "Farkas multiplier identity does not replay exactly",
+                    "obligation_id": "dual_multiplier_identity",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:primal_dual_portfolio_50",
+                "valid:farkas_infeasible_lmi_medium",
+                "tamper:primal_dual_portfolio_50/tampered_gap_value.json",
+                "tamper:farkas_infeasible_lmi_medium/tampered_multiplier.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "primal_dual_portfolio_50",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "farkas_infeasible_lmi_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "primal_dual_portfolio_50",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                },
+                {
+                    "fixture": "farkas_infeasible_lmi_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Primal-dual/Farkas"
+        },
+        "E": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "quantum_i3322_medium",
+                    "path": "test/fixtures/certsdp3/quantum_i3322_medium/certificate.json",
+                    "family": "quantum_bound",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_bound",
+                    "reason": "accepted",
+                    "runtime_seconds": 1.120260792,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:e32716c62505d5f176be33a06b022bfbdd4cea0ada9e5f8680831177f504cfc1",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
+                        "certificate_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
+                        "dag_root_hash": "sha256:e32716c62505d5f176be33a06b022bfbdd4cea0ada9e5f8680831177f504cfc1",
+                        "replay_problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
+                        "replay_certificate_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "roundtrip_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 9.375e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_proof_dag"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "valid:quantum_i3322_medium",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "quantum_i3322_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "CertificateDAG mandatory"
+        },
+        "Y": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 0.00010725,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Backward compatibility/migration"
+        },
+        "I": {
+            "valid_fixtures_run": [
+                {
+                    "id": "tssos_sparse_industry_medium",
+                    "path": "test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json",
+                    "family": "tssos_sparse_sos_import",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "coefficient_matching",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.274305333,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:00bf0f73810f6de30162c35b7906b3dcbf26e7d1cb2aae71eb9237cc60d93782",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+                        "certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "schema_hash": "sha256:64a820ca37e82381cd0d4d88d7aa1564495a441be27dbb7eb624e1f3855479ec",
+                        "dag_root_hash": "sha256:00bf0f73810f6de30162c35b7906b3dcbf26e7d1cb2aae71eb9237cc60d93782",
+                        "replay_problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
+                        "replay_certificate_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956",
+                        "roundtrip_hash": "sha256:44c9fe875bd91f0587a6308aecb0cb7bac1d6e2da0ba4e722839ef478862e956"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "import_tssos"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 8.042e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_sparse_sos_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "tssos_sparse_industry_medium",
+                    "path": "test/fixtures/certsdp3/tssos_sparse_industry_medium/tampered_coefficient_map.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "candidate_replay",
+                    "reason": "ArgumentError: root.artifact_hash mismatch: supplied sha256:76e2d4728e43be839c3643d256098a7b5c3bcd349076b34865186a6b97315685 computed sha256:99b1a6d2ca4c33e54ecedce8626025cbe6e91c2026e5128a1e0e6d4f13415d36",
+                    "obligation_id": "tssos_artifact",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:tssos_sparse_industry_medium",
+                "tamper:tssos_sparse_industry_medium/tampered_coefficient_map.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "tssos_sparse_industry_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "tssos_sparse_industry_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "TSSOS importer"
+        },
+        "J": {
+            "valid_fixtures_run": [
+                {
+                    "id": "quantum_chsh_level2",
+                    "path": "test/fixtures/certsdp3/quantum_chsh_level2/certificate.json",
+                    "family": "quantum_bound",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_bound",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.012276458,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:d5d86575b49d25e3deffd274dac7734c6f570c00cb795d08eff73c6f2eac04f2",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa",
+                        "certificate_hash": "sha256:1c9b3609ec9ef1fd6998a2c70ff43408174272938c8076f5e2e384ab675fa0f6",
+                        "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
+                        "dag_root_hash": "sha256:d5d86575b49d25e3deffd274dac7734c6f570c00cb795d08eff73c6f2eac04f2",
+                        "replay_problem_hash": "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa",
+                        "replay_certificate_hash": "sha256:1c9b3609ec9ef1fd6998a2c70ff43408174272938c8076f5e2e384ab675fa0f6",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:1c9b3609ec9ef1fd6998a2c70ff43408174272938c8076f5e2e384ab675fa0f6",
+                        "roundtrip_hash": "sha256:1c9b3609ec9ef1fd6998a2c70ff43408174272938c8076f5e2e384ab675fa0f6"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "quantum_i3322_medium",
+                    "path": "test/fixtures/certsdp3/quantum_i3322_medium/certificate.json",
+                    "family": "quantum_bound",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_bound",
+                    "reason": "accepted",
+                    "runtime_seconds": 1.120260792,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:e32716c62505d5f176be33a06b022bfbdd4cea0ada9e5f8680831177f504cfc1",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
+                        "certificate_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
+                        "dag_root_hash": "sha256:e32716c62505d5f176be33a06b022bfbdd4cea0ada9e5f8680831177f504cfc1",
+                        "replay_problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
+                        "replay_certificate_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07",
+                        "roundtrip_hash": "sha256:c442c709df0697d9156a060e78e901334c188cd7475c6d2d4a349e0618b8be07"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 9.541e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_quantum_bound_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "quantum_i3322_medium",
+                    "path": "test/fixtures/certsdp3/quantum_i3322_medium/tampered_commutation_relation.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.problem.problem_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:quantum_chsh_level2",
+                "valid:quantum_i3322_medium",
+                "tamper:quantum_i3322_medium/tampered_commutation_relation.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "quantum_chsh_level2",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "quantum_i3322_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "quantum_i3322_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "NC/Quantum/NPA"
+        },
+        "S": {
+            "valid_fixtures_run": [
+                {
+                    "id": "sparse_chordal_stress_3000",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_stress_3000/certificate.json",
+                    "family": "chordal_psd_stress",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "chordal_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 32.773703417,
+                    "allocated_bytes": 1725978816,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:3c4f48a28e9e32ca6d8f0ee1332371cfaded0f822d0757ef8056623e10450017",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+                        "certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:3c4f48a28e9e32ca6d8f0ee1332371cfaded0f822d0757ef8056623e10450017",
+                        "replay_problem_hash": "sha256:9e8f17c07a6e53685c166e7a74f5e4d1e28348a25819b0842259bff6b2e1ef8e",
+                        "replay_certificate_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f",
+                        "roundtrip_hash": "sha256:ec833f9f3e147a7c4d114862e2b040de02ca2b9b507e3091071e28b248ba885f"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 1725978816,
+            "densification_count": 0,
+            "runtime_seconds": 3.791e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_chordal_psd"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "sparse_chordal_stress_3000",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_stress_3000/tampered_graph_hash_changed.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.chordal_proof.structure.graph_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:sparse_chordal_stress_3000",
+                "tamper:sparse_chordal_stress_3000/tampered_graph_hash_changed.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "sparse_chordal_stress_3000",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_chordal_stress_3000",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Performance budgets"
+        },
+        "U": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                },
+                {
+                    "id": "sparse_chordal_120",
+                    "path": "test/fixtures/certsdp3/sparse_chordal_120/certificate.json",
+                    "family": "chordal_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "chordal_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.063243125,
+                    "allocated_bytes": 40051920,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:100b1ff11a9dc3b0f2244eb91b1be4ce02b6f994a1ff4bfb6a2877ff1d10274d",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:14fb1d284fadfe2d6e3e97f3a13367d0434fce0ff5ac67177ed3950f4527dd46",
+                        "certificate_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:100b1ff11a9dc3b0f2244eb91b1be4ce02b6f994a1ff4bfb6a2877ff1d10274d",
+                        "replay_problem_hash": "sha256:14fb1d284fadfe2d6e3e97f3a13367d0434fce0ff5ac67177ed3950f4527dd46",
+                        "replay_certificate_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333",
+                        "roundtrip_hash": "sha256:f682458586dec143de24600bfbd144c79ccfc3d0fe69531ce3727229a2ea5333"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 3.625e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "parse_certificate_json_v3"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "valid:sparse_chordal_120",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "sparse_chordal_120",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Hash stability/canonicalization"
+        },
+        "K": {
+            "valid_fixtures_run": [
+                {
+                    "id": "nctssos_trace_medium",
+                    "path": "test/fixtures/certsdp3/nctssos_trace_medium/certificate.json",
+                    "family": "nctssos_import",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "objective_bound",
+                    "reason": "accepted",
+                    "runtime_seconds": 1.459074667,
+                    "allocated_bytes": 0,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:9fabc0b59406e459bd7cea102e7798218ec37b407671d41a7e0fdf83daf9d906",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
+                        "certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
+                        "dag_root_hash": "sha256:9fabc0b59406e459bd7cea102e7798218ec37b407671d41a7e0fdf83daf9d906",
+                        "replay_problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
+                        "replay_certificate_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb",
+                        "roundtrip_hash": "sha256:44b28dfd787035be06ec48adcd6407acd76bfc956b868d33432f11b448e399eb"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "import_nctssos"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 0,
+            "densification_count": 0,
+            "runtime_seconds": 4.709e-6,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_quantum_bound_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "nctssos_trace_medium",
+                    "path": "test/fixtures/certsdp3/nctssos_trace_medium/tampered_quotient_relation.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "candidate_replay",
+                    "reason": "ArgumentError: root.artifact_hash mismatch: supplied sha256:9edf3b5fc3699cce8b0d2d93bf8e02dd6f1bc03040da9ccd9acec070eef0949b computed sha256:3eafcb230ee25e371b5f4544b574ea4138e077fcab50b47a8873875f20a26a29",
+                    "obligation_id": "nctssos_artifact",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:nctssos_trace_medium",
+                "tamper:nctssos_trace_medium/tampered_quotient_relation.json"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "nctssos_trace_medium",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "nctssos_trace_medium",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "NCTSSOS importer"
+        },
+        "R": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 0.0003995,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "verify_certificate"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json",
+                "mutation_count:314"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Tamper/negative testing"
+        },
+        "F": {
+            "valid_fixtures_run": [
+                {
+                    "id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+                    "family": "low_rank_psd",
+                    "passed": true,
+                    "accepted": true,
+                    "stage": "identity_replay",
+                    "reason": "accepted",
+                    "runtime_seconds": 0.021636583,
+                    "allocated_bytes": 103977416,
+                    "budget_runtime": true,
+                    "budget_memory": true,
+                    "densification_count": 0,
+                    "no_densification": true,
+                    "cli_exit": 0,
+                    "schema_api": {
+                        "passed": true,
+                        "reason": "accepted"
+                    },
+                    "schema_cli_exit": 0,
+                    "dag": {
+                        "present": true,
+                        "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "accepted": true,
+                        "reason": "accepted"
+                    },
+                    "hashes": {
+                        "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
+                        "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+                        "replay_problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+                        "replay_certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "accepted": true
+                    },
+                    "roundtrip": {
+                        "passed": true,
+                        "hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+                        "roundtrip_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1"
+                    },
+                    "shape": {
+                        "passed": true,
+                        "failures": [
+                        ]
+                    },
+                    "import_check": {
+                        "passed": true,
+                        "command": "not_applicable"
+                    },
+                    "deterministic": {
+                        "passed": true,
+                        "hashes": [
+                        ],
+                        "accepted": [
+                        ]
+                    },
+                    "exact_verifier_functions_called": [
+                        "verify_certificate",
+                        "verify_low_rank_psd"
+                    ]
+                }
+            ],
+            "peak_memory_if_available_bytes": 103977416,
+            "densification_count": 0,
+            "runtime_seconds": 0.00474425,
+            "status": "PASS",
+            "exact_verifier_functions_called": [
+                "parse_certificate_json_v3"
+            ],
+            "tamper_fixtures_run": [
+                {
+                    "fixture_id": "psd_factor_rational_150",
+                    "path": "test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json",
+                    "passed": true,
+                    "accepted": false,
+                    "stage": "parse",
+                    "reason": "ArgumentError: root.proof.low_rank_proof.identity_proof_hash mismatch",
+                    "obligation_id": "schema",
+                    "cli_exit": 1
+                }
+            ],
+            "failed_checks": [
+            ],
+            "passed_checks": [
+                "required_tests",
+                "required_fixtures",
+                "valid:psd_factor_rational_150",
+                "tamper:psd_factor_rational_150/tampered_negative_diagonal.json",
+                "schema_mutation_count:136"
+            ],
+            "cli_checks_run": [
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "valid_replay",
+                    "exit": 0
+                },
+                {
+                    "fixture": "psd_factor_rational_150",
+                    "kind": "tamper_replay",
+                    "exit": 1
+                }
+            ],
+            "score": 10,
+            "title": "Strict semantic schema"
         }
     },
     "environment": {
-        "git_commit": "8d6cece917c1855e44083154246ec8b7941bcfdf",
+        "git_commit": "169729fee07ba67fe4b47744599eccb86fedd449",
         "julia": "1.12.6",
-        "strict": false,
+        "strict": true,
         "max_memory_gb": 12,
-        "full": false,
+        "full": true,
         "cpu_threads": 1,
         "timeout_minutes": 30
     },

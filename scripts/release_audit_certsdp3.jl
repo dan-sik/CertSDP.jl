@@ -53,6 +53,10 @@ function sha256_text(text::AbstractString)
     return "sha256:" * bytes2hex(sha256(codeunits(text)))
 end
 
+function public_path(path::AbstractString)
+    return relpath(path, ROOT)
+end
+
 function read_json(path)
     return JSON3.read(read(path, String))
 end
@@ -298,7 +302,7 @@ function run_bundle_check()
     verify_code = isfile(joinpath(out_dir, "VERIFY.sh")) ?
                   success(`bash $(joinpath(out_dir, "VERIFY.sh"))`) : false
     return (passed=code == CertSDP.CLI_EXIT_OK && verify_code,
-            path=out_dir,
+            path=public_path(out_dir),
             code,
             verify_code)
 end
@@ -394,7 +398,7 @@ function evaluate_fixture(spec, fixture, static_result; check_determinism::Bool=
              static_result.passed
     return (;
         id,
-        path,
+        path=public_path(path),
         family,
         passed,
         accepted=measurement.accepted,
@@ -445,7 +449,7 @@ function evaluate_tamper(fixture, tamper_file::AbstractString)
              report.obligation_id !== :unknown
     return (;
         fixture_id=id,
-        path,
+        path=public_path(path),
         passed,
         accepted=report.accepted,
         stage=String(report.stage),
@@ -744,8 +748,8 @@ function print_text(report)
     println("rejected_tamper_fixtures: ", report["summary"][:rejected_tamper_fixtures])
     println("schema_mutation_cases: ", report["summary"]["schema_mutation_cases"])
     println("mutation_cases: ", report["summary"]["mutation_cases"])
-    println("audit_report: ", REPORT_PATH)
-    println("gate_scores: ", SCORE_PATH)
+    println("audit_report: ", public_path(REPORT_PATH))
+    println("gate_scores: ", public_path(SCORE_PATH))
     println("result: ", report["result"])
 end
 

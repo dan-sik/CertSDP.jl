@@ -17,6 +17,7 @@ struct ReplayMeasurement
 end
 
 function measure_replay(path::AbstractString)
+    warm_report = Kernel.replay_file(String(path); strict=true)
     report_ref = Ref{Kernel.DiagnosticReport}()
     allocated_ref = Ref{Int64}(0)
     elapsed = @elapsed begin
@@ -24,6 +25,21 @@ function measure_replay(path::AbstractString)
             report_ref[] = Kernel.replay_file(String(path); strict=true)
         end
         allocated_ref[] = Int64(allocated)
+    end
+    if warm_report.accepted != report_ref[].accepted
+        report_ref[] = Kernel.DiagnosticReport(false,
+                                               :QA,
+                                               :performance,
+                                               :determinism,
+                                               "warm replay and measured replay disagreed",
+                                               :measure_replay,
+                                               report_ref[].problem_hash,
+                                               report_ref[].certificate_hash,
+                                               nothing,
+                                               nothing,
+                                               nothing,
+                                               String(path),
+                                               Dict{Symbol, Any}())
     end
     return ReplayMeasurement(String(path), report_ref[].accepted, elapsed,
                              allocated_ref[], report_ref[])
