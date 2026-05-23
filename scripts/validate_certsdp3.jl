@@ -655,6 +655,7 @@ function parse_options(args)
     timeout_minutes = 30.0
     root = normpath(joinpath(@__DIR__, "..", "test", "fixtures", "certsdp3"))
     quiet = false
+    single_path = nothing
     for arg in args
         if startswith(arg, "--max-memory-gb=")
             max_memory_gb = parse(Float64, split(arg, "=", limit=2)[2])
@@ -664,15 +665,47 @@ function parse_options(args)
             root = split(arg, "=", limit=2)[2]
         elseif arg == "--quiet"
             quiet = true
+        elseif !startswith(arg, "--") && isnothing(single_path)
+            single_path = arg
         else
             error("unknown option `$arg`")
         end
     end
-    return (; max_memory_gb, timeout_minutes, root, quiet)
+    return (; max_memory_gb, timeout_minutes, root, quiet, single_path)
 end
 
 function validate_certsdp3_main(args=ARGS)
     options = parse_options(args)
+    if !isnothing(options.single_path)
+        path = normpath(options.single_path)
+        isfile(path) || error("validation path does not exist: $path")
+        measurement = CertSDP.Perf.measure_replay(path)
+        failures = String[]
+        measurement.accepted || push!(failures, "certificate rejected: $path")
+        CertSDP.Perf.memory_budget_check(measurement;
+                                         max_memory_mb=options.max_memory_gb * 1024) ||
+            push!(failures, "memory budget exceeded for $path")
+        measurement.elapsed_seconds <= options.timeout_minutes * 60 ||
+            push!(failures, "runtime budget exceeded for $path")
+        if !options.quiet
+            println("CERTSDP3_VALIDATION")
+            println("path: ", path)
+            println("accepted: ", measurement.accepted)
+            println("runtime_seconds: ", round(measurement.elapsed_seconds; digits=3))
+            println("peak_memory_mb: ", round(measurement.allocated_bytes / 1024^2; digits=3))
+        end
+        isempty(failures) && begin
+            options.quiet || println("result: PASS")
+            return 0
+        end
+        options.quiet || begin
+            println("result: FAIL")
+            for failure in failures
+                println("failure: ", failure)
+            end
+        end
+        return 1
+    end
     index_path = joinpath(options.root, "index.json")
     isfile(index_path) || error("missing fixture index: $index_path")
     index = JSON3.read(read(index_path, String))

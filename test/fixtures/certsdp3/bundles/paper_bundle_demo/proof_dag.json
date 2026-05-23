@@ -1,0 +1,26 @@
+{
+    "claim_type": "low_rank_psd",
+    "nodes": [
+        {
+            "id": "matrix_hash",
+            "kind": "hash",
+            "inputs": [
+            ],
+            "output_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+            "checker": "canonical_sparse_matrix_hash",
+            "status": "accepted"
+        },
+        {
+            "id": "low_rank_identity",
+            "kind": "exact_identity",
+            "inputs": [
+                "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328"
+            ],
+            "output_hash": "sha256:65b67912b8d31ae479c03a3db1b9dac06171e0eed075936c9b8fb69b75d97d4a",
+            "checker": "verify_low_rank_psd",
+            "status": "accepted"
+        }
+    ],
+    "root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+    "schema_version": "3.0"
+}

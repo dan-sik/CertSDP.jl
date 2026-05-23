@@ -1,0 +1,17 @@
+{
+    "certsdp_report_version": "3.0",
+    "accepted": true,
+    "gate": "D",
+    "family": "psd_factor",
+    "stage": "identity_replay",
+    "reason": "accepted",
+    "obligation_id": "matrix_identity",
+    "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+    "certificate_hash": "sha256:f65fabb0bc2a182d148adb1a396603a39a3b6a1c0947f8da69a06cae8c3d03d1",
+    "block_id": null,
+    "clique_id": null,
+    "separator_id": null,
+    "artifact_path": "test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
+    "details": {
+    }
+}

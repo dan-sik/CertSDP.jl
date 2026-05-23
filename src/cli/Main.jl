@@ -25,7 +25,15 @@ function main(args=ARGS; io::IO=stdout, err::IO=stderr)
         _print_cli_usage(io)
         return CLI_EXIT_OK
     elseif command in ("version", "--version")
-        println(io, "CertSDP.jl ", package_version())
+        if "--json" in rest
+            JSON3.pretty(io, Dict("name" => "CertSDP",
+                                  "certsdp3" => true,
+                                  "schema_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+                                  "version" => string(package_version())))
+            println(io)
+        else
+            println(io, "CertSDP.jl ", package_version())
+        end
         return CLI_EXIT_OK
     elseif command == "verify"
         return _cli_verify(rest; io, err)
@@ -274,6 +282,20 @@ function _print_exact_artifact_explanation(cert::ExactCertificateArtifact; io::I
 end
 
 function _cli_bundle(args; io::IO, err::IO)
+    if !isempty(args) && args[1] == "verify"
+        length(args) == 2 || begin
+            println(err, "[FAIL] bundle verify expects a bundle directory")
+            return CLI_EXIT_USAGE
+        end
+        result = _certsdp3_verify_paper_bundle(args[2])
+        if result.passed
+            println(io, "[OK] bundle verified: ", args[2])
+            return CLI_EXIT_OK
+        end
+        println(err, "[FAIL] bundle rejected: ", result.reason)
+        return CLI_EXIT_REJECTED
+    end
+
     parsed = try
         _parse_bundle_args(args)
     catch parse_error
@@ -358,8 +380,34 @@ julia --project="$project_root" --startup-file=no -e 'using CertSDP; exit(CertSD
           "cff-version: 1.2.0\nmessage: Cite the CertSDP proof-carrying certificate artifact.\ntitle: CertSDP 3.0 Certificate Bundle\n")
     write(joinpath(out_dir, "theorem_statement.txt"),
           "claim_type: $(cert.certificate_type)\ncertificate_id: $(cert.certificate_id)\nproblem_hash: $(cert.problem_hash)\n")
+    write(joinpath(out_dir, "README.md"),
+          "# CertSDP 3.0 Bundle\n\nRun `bash VERIFY.sh` or `certsdp bundle verify .` offline to replay this certificate.\n")
+    schema_hash = isfile(joinpath(schema_dir, "certsdp_certificate_v3.schema.json")) ?
+                  "sha256:" * bytes2hex(sha256(read(joinpath(schema_dir, "certsdp_certificate_v3.schema.json")))) :
+                  "sha256:" * repeat("0", 64)
+    manifest = Dict(
+        "certsdp_bundle_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+        "certificate_hash" => cert.certificate_id,
+        "problem_hash" => cert.problem_hash,
+        "schema_hash" => schema_hash,
+        "dag_root_hash" => cert.dag.root_hash,
+        "verify_script" => "VERIFY.sh",
+    )
+    write(joinpath(out_dir, "CERTSDP_BUNDLE.json"), JSON3.write(manifest))
+    write(joinpath(out_dir, "schema.json"),
+          JSON3.write(Dict("schema_hash" => schema_hash,
+                           "certificate_schema" => "schema/certsdp_certificate_v3.schema.json")))
+    audit_expected = Dict(
+        "accepted" => true,
+        "certificate_hash" => cert.certificate_id,
+        "problem_hash" => cert.problem_hash,
+        "dag_root_hash" => cert.dag.root_hash,
+    )
+    write(joinpath(out_dir, "audit_expected.json"), JSON3.write(audit_expected))
     hashes = String[]
-    for file in ["certificate.json", "problem.json", "proof_dag.json",
+    for file in ["CERTSDP_BUNDLE.json", "certificate.json", "problem.json",
+                 "schema.json", "audit_expected.json", "README.md",
+                 "proof_dag.json",
                  "replay_report.json", "replay_report.html",
                  "VERIFY.sh", "CITATION.cff", "theorem_statement.txt"]
         path = joinpath(out_dir, file)
@@ -368,6 +416,47 @@ julia --project="$project_root" --startup-file=no -e 'using CertSDP; exit(CertSD
     end
     write(joinpath(out_dir, "hashes.txt"), join(hashes, "\n") * "\n")
     return out_dir
+end
+
+function _certsdp3_verify_paper_bundle(dir::AbstractString)
+    required = ["CERTSDP_BUNDLE.json", "certificate.json", "problem.json",
+                "schema.json", "VERIFY.sh", "audit_expected.json",
+                "proof_dag.json", "replay_report.json"]
+    for file in required
+        isfile(joinpath(dir, file)) ||
+            return (passed=false, reason="missing bundle file $file")
+    end
+    manifest = JSON3.read(read(joinpath(dir, "CERTSDP_BUNDLE.json"), String))
+    expected = JSON3.read(read(joinpath(dir, "audit_expected.json"), String))
+    cert_path = joinpath(dir, "certificate.json")
+    cert = try
+        Kernel.parse_certificate_json_v3(read(cert_path, String); strict=true)
+    catch err
+        return (passed=false, reason="certificate parse failed: $(sprint(showerror, err))")
+    end
+    report = Kernel.replay_file(cert_path; strict=true, io=nothing)
+    report.accepted ||
+        return (passed=false, reason="certificate replay rejected: $(report.reason)")
+    String(manifest[:certificate_hash]) == cert.certificate_id ||
+        return (passed=false, reason="manifest certificate_hash mismatch")
+    String(manifest[:problem_hash]) == cert.problem_hash ||
+        return (passed=false, reason="manifest problem_hash mismatch")
+    String(manifest[:dag_root_hash]) == cert.dag.root_hash ||
+        return (passed=false, reason="manifest dag_root_hash mismatch")
+    String(expected[:certificate_hash]) == cert.certificate_id ||
+        return (passed=false, reason="audit_expected certificate_hash mismatch")
+    String(expected[:dag_root_hash]) == cert.dag.root_hash ||
+        return (passed=false, reason="audit_expected dag_root_hash mismatch")
+    schema_path = joinpath(dir, "schema", "certsdp_certificate_v3.schema.json")
+    if isfile(schema_path)
+        schema_hash = "sha256:" * bytes2hex(sha256(read(schema_path)))
+        String(manifest[:schema_hash]) == schema_hash ||
+            return (passed=false, reason="schema_hash mismatch")
+    end
+    proof_dag = JSON3.read(read(joinpath(dir, "proof_dag.json"), String))
+    String(proof_dag[:root_hash]) == cert.dag.root_hash ||
+        return (passed=false, reason="proof_dag root hash mismatch")
+    return (passed=true, reason="accepted")
 end
 
 function _cli_replay(args; io::IO, err::IO)
@@ -2980,7 +3069,7 @@ end
 
 function _print_bundle_usage(io::IO)
     return println(io,
-                   "  certsdp bundle cert.json --out artifact.zip [--problem problem.json] [--approx approx.json] [--report report.txt] [--logs backend_artifacts/] [--redact|--no-redact]")
+                   "  certsdp bundle cert.json --out artifact.zip [--problem problem.json] [--approx approx.json] [--report report.txt] [--logs backend_artifacts/] [--redact|--no-redact]\n  certsdp bundle verify bundle/")
 end
 
 function _print_replay_usage(io::IO)
@@ -3028,5 +3117,6 @@ function _print_verify_usage(io::IO)
 end
 
 function _print_inspect_usage(io::IO)
-    return println(io, "  certsdp inspect cert.json")
+    println(io, "  certsdp inspect cert.json")
+    return println(io, "  certsdp version --json")
 end

@@ -1,0 +1,8 @@
+{
+    "dag_root_hash": "sha256:8a2dedad8c2e06f0853ca673f94bd74a3b6fc80a195def75fb432a354ee8c74b",
+    "certsdp_bundle_version": "3.0",
+    "certificate_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+    "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+    "verify_script": "VERIFY.sh",
+    "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb"
+}

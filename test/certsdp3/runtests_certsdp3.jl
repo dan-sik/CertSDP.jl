@@ -54,4 +54,6 @@ end
     include("sdpa_sparse_adapter.jl")
     include("symmetry_reduction.jl")
     include("mutation_corpus.jl")
+    include("test_release_audit.jl")
+    include("test_qa_determinism.jl")
 end

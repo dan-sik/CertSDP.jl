@@ -4,262 +4,99 @@ pushfirst!(LOAD_PATH, normpath(joinpath(@__DIR__, "..")))
 
 using CertSDP
 using JSON3
+using SHA: sha256
 
 const ROOT = normpath(joinpath(@__DIR__, ".."))
+const FIXTURE_ROOT = joinpath(ROOT, "test", "fixtures", "certsdp3")
+const BUILD_DIR = joinpath(ROOT, "build")
+const REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_audit_report.json")
+const SCORE_PATH = joinpath(BUILD_DIR, "certsdp3_gate_scores.json")
+const REQUIRED_SCHEMA_TAMPERS = 30
+const REQUIRED_MUTATIONS = 100
 
 include(joinpath(@__DIR__, "validate_certsdp3.jl"))
 
-const REQUIRED_TESTS = [
-    "kernel_trust_boundary.jl",
-    "sparse_ir.jl",
-    "chordal_psd_certificate.jl",
-    "psd_low_rank_factor.jl",
-    "proof_dag_roundtrip.jl",
-    "schema_strict.jl",
-    "diagnostics_report.jl",
-    "cli_product_surface.jl",
-    "validation_cli_surface.jl",
-    "hash_stability.jl",
-    "mutation_corpus.jl",
-]
-
-const GATES = [
-    (:A_trusted_kernel, ["kernel_trust_boundary.jl",
-                         "adapter_untrusted_metadata_rejection.jl",
-                         "exactify_candidates_must_replay.jl"]),
-    (:B_sparse_ir, ["sparse_ir.jl", "chordal_psd_certificate.jl",
-                    "no_densification_budget.jl"]),
-    (:C_block_native_algebraic, ["block_native_incidence.jl", "block_native_algebraic_certificate.jl"]),
-    (:D_large_psd_engine, ["psd_low_rank_factor.jl",
-                           "psd_chordal_completion.jl",
-                           "psd_planner_policy.jl",
-                           "chordal_psd_certificate.jl"]),
-    (:E_proof_dag, ["proof_dag_roundtrip.jl", "proof_dag_tamper.jl"]),
-    (:F_schema_strict, ["schema_strict.jl", "schema_fuzz_mutations.jl"]),
-    (:G_primal_dual_farkas, ["primal_dual_optimality.jl",
-                             "farkas_certificate.jl",
-                             "objective_bound_certificate.jl"]),
-    (:H_sparse_sos, ["sparse_sos_certificate.jl"]),
-    (:I_tssos_importer, ["tssos_importer.jl"]),
-    (:J_nc_quantum, ["nc_rewrite_witness.jl", "quantum_bound_certificate.jl"]),
-    (:K_nctssos_importer, ["nctssos_importer.jl"]),
-    (:L_field_layer, ["field_layer.jl"]),
-    (:O_diagnostics, ["diagnostics_report.jl", "cli_replay_explain.jl"]),
-    (:P_cli, ["cli_product_surface.jl", "validation_cli_surface.jl"]),
-    (:Q_validation_corpus, ["../fixtures/certsdp3/index.json"]),
-    (:R_tamper_tests, ["mutation_corpus.jl"]),
-    (:S_performance, ["../../scripts/validate_certsdp3.jl"]),
-    (:T_no_densification, ["chordal_psd_certificate.jl"]),
-    (:U_hash_stability, ["hash_stability.jl"]),
-    (:V_exact_arithmetic_safety, ["../../scripts/check_certsdp3_static_rules.jl"]),
-    (:Y_backward_compatibility, ["backward_compatibility.jl"]),
-    (:M_backend_interface, ["algebraic_backend_interface.jl",
-                            "msolve_fixture_backend.jl",
-                            "backend_failure_semantics.jl"]),
-    (:N_adapters, ["sdpa_sparse_adapter.jl", "tssos_importer.jl"]),
-    (:W_symmetry_reduction, ["symmetry_reduction.jl"]),
-    (:X_paper_bundle, ["paper_bundle.jl"]),
-    (:Z_release_audit, ["../../scripts/release_audit_certsdp3.jl"]),
-]
-
-const MIN_MUTATION_CASES = 300
-
-const COVERAGE_THRESHOLDS = [
-    (:kernel_exact_replay, 0.90, ["src/kernel/Kernel.jl",
-                                  "src/systems/IncidenceBuilder.jl"]),
-    (:schema_parser, 0.90, ["src/kernel/Kernel.jl"]),
-    (:psd_proof_engine, 0.85, ["src/kernel/Kernel.jl"]),
-    (:sos_nc_replay, 0.85, ["src/kernel/Kernel.jl",
-                            "src/adapters/Adapters.jl"]),
-    (:cli, 0.75, ["src/apps/Apps.jl"]),
-    (:overall_certsdp3, 0.80, ["src/kernel/Kernel.jl",
-                               "src/adapters/Adapters.jl",
-                               "src/apps/Apps.jl",
-                               "src/exactify/Backends3.jl",
-                               "src/systems/IncidenceBuilder.jl"]),
-]
+struct AuditOptions
+    strict::Bool
+    full::Bool
+    json::Bool
+    gate::Union{Nothing, Symbol}
+end
 
 function parse_args(args)
-    return (; json=("--json" in args))
-end
-
-function exists_requirement(path)
-    if startswith(path, "../fixtures")
-        return isfile(normpath(joinpath(ROOT, "test", "certsdp3", path)))
-    elseif startswith(path, "../../scripts")
-        script_name = basename(path)
-        return isfile(joinpath(ROOT, "scripts", script_name))
-    end
-    return isfile(joinpath(ROOT, "test", "certsdp3", path))
-end
-
-function audit(; quiet_validation::Bool=false)
-    gate_status = Dict{Symbol, String}()
-    for (gate, requirements) in GATES
-        gate_status[gate] = all(exists_requirement, requirements) ? "PASS" : "FAIL"
-    end
-    validation_exit = main_validate_for_audit(; quiet=quiet_validation)
-    validation_exit == 0 || begin
-        gate_status[:Q_validation_corpus] = "FAIL"
-        gate_status[:S_performance] = "FAIL"
-        gate_status[:R_tamper_tests] = "FAIL"
-        gate_status[:Z_release_audit] = "FAIL"
-    end
-    qa = audit_qa_evidence()
-    gate_status[:R_tamper_tests] = qa.mutation_cases >= MIN_MUTATION_CASES ? gate_status[:R_tamper_tests] : "FAIL"
-    thresholds = Dict(name => threshold
-                      for (name, threshold, _) in COVERAGE_THRESHOLDS)
-    coverage_pass = all(((name, value),) -> value >= thresholds[name],
-                        qa.coverage)
-    coverage_pass || (gate_status[:Z_release_audit] = "FAIL")
-
-    index_path = joinpath(ROOT, "test", "fixtures", "certsdp3", "index.json")
-    accepted = 0
-    rejected_tamper = 0
-    runtime = 0.0
-    peak_memory = 0.0
-    if isfile(index_path)
-        index = JSON3.read(read(index_path, String))
-        for fixture in index[:fixtures]
-            dir = joinpath(ROOT, "test", "fixtures", "certsdp3",
-                           String(fixture[:fixture_id]))
-            cert_path = joinpath(dir, "certificate.json")
-            family = String(fixture[:problem_family])
-            measurement = CertSDP.Perf.measure_replay(cert_path)
-            runtime += measurement.elapsed_seconds
-            peak_memory = max(peak_memory, measurement.allocated_bytes / 1024^2)
-            accepted += measurement.accepted ? 1 : 0
-            cli_code = CertSDP.main(["replay", cert_path, "--strict"];
-                                    io=IOBuffer(), err=IOBuffer())
-            cli_code == CertSDP.CLI_EXIT_OK || begin
-                gate_status[:P_cli] = "FAIL"
-                gate_status[:Q_validation_corpus] = "FAIL"
-                gate_status[:Z_release_audit] = "FAIL"
-            end
-            for tamper in fixture[:tamper_files]
-                tamper_path = joinpath(dir, String(tamper))
-                report = _audit_tamper_family(family, tamper_path)
-                rejected_tamper += report.accepted ? 0 : 1
-                tamper_code = CertSDP.main(["replay", tamper_path, "--strict"];
-                                           io=IOBuffer(), err=IOBuffer())
-                tamper_code == CertSDP.CLI_EXIT_OK && begin
-                    gate_status[:P_cli] = "FAIL"
-                    gate_status[:R_tamper_tests] = "FAIL"
-                    gate_status[:Z_release_audit] = "FAIL"
-                end
-            end
+    strict = false
+    full = false
+    json = false
+    gate = nothing
+    i = 1
+    while i <= length(args)
+        arg = args[i]
+        if arg == "--strict"
+            strict = true
+        elseif arg == "--full"
+            full = true
+        elseif arg == "--json"
+            json = true
+        elseif arg == "--gate"
+            i += 1
+            i <= length(args) || error("--gate requires a gate id")
+            gate = Symbol(args[i])
+        else
+            error("unknown audit option `$arg`")
         end
+        i += 1
     end
-    result = all(==("PASS"), values(gate_status)) ? "PASS" : "FAIL"
-    return (; gate_status, accepted, rejected_tamper, runtime, peak_memory,
-            mutation_cases=qa.mutation_cases,
-            coverage=qa.coverage,
-            result)
+    return AuditOptions(strict, full, json, gate)
 end
 
-function main_validate_for_audit(; quiet::Bool=false)
-    try
-        args = ["--max-memory-gb=12", "--timeout-minutes=30"]
-        quiet && push!(args, "--quiet")
-        return validate_certsdp3_main(args)
-    catch err
-        println(stderr, "release audit validation check failed: ",
-                sprint(showerror, err))
-        return 1
-    end
+function sha256_text(text::AbstractString)
+    return "sha256:" * bytes2hex(sha256(codeunits(text)))
 end
 
-function audit_qa_evidence()
-    coverage = coverage_summary()
-    mutation_cases = mutation_case_count()
-    return (; coverage, mutation_cases)
+function read_json(path)
+    return JSON3.read(read(path, String))
 end
 
-function mutation_case_count()
-    source = read(joinpath(ROOT, "test", "certsdp3", "mutation_corpus.jl"),
-                  String)
-    base_cases = length(collect(eachmatch(r"=>\s*obj\s*->", source)))
-    range_cases = 0
-    for match_result in eachmatch(r"for\s+\w+\s+in\s+1:(\d+)", source)
-        count_value = parse(Int, match_result.captures[1])
-        block_start = match_result.offset
-        next_for = findnext("for ", source, block_start + 1)
-        block_stop = isnothing(next_for) ? lastindex(source) : first(next_for) - 1
-        block = source[block_start:block_stop]
-        pushes = length(collect(eachmatch(r"push!\(mutations", block)))
-        range_cases += count_value * pushes
-    end
-    return base_cases + range_cases
+function fixture_path(fixture_id::AbstractString)
+    return joinpath(FIXTURE_ROOT, fixture_id)
 end
 
-function coverage_summary()
-    run_coverage_tests()
-    try
-        cov_files = collect_cov_files()
-        return [(name, coverage_ratio(cov_files, paths))
-                for (name, _, paths) in COVERAGE_THRESHOLDS]
-    finally
-        cleanup_coverage_files()
-    end
+function certificate_path(fixture_id::AbstractString)
+    return joinpath(fixture_path(fixture_id), "certificate.json")
 end
 
-function run_coverage_tests()
-    cleanup_coverage_files()
-    command = `julia --project=$(ROOT) --startup-file=no --code-coverage=@$(joinpath(ROOT, "src")) $(joinpath(ROOT, "test", "certsdp3", "runtests_certsdp3.jl"))`
-    success(command) || error("CertSDP 3.0 coverage test run failed")
-    return nothing
+function fixture_index()
+    return JSON3.read(read(joinpath(FIXTURE_ROOT, "index.json"), String))[:fixtures]
 end
 
-function cleanup_coverage_files()
-    for path in collect(eachline(`find $(joinpath(ROOT, "src")) -name "*.cov"`))
-        rm(path; force=true)
-    end
-    return nothing
+function fixture_map()
+    return Dict(String(fixture[:fixture_id]) => fixture for fixture in fixture_index())
 end
 
-function collect_cov_files()
-    files = Dict{String, Vector{String}}()
-    for path in eachline(`find $(joinpath(ROOT, "src")) -name "*.cov"`)
-        rel = relpath(path, ROOT)
-        base = replace(rel, r"\.\d+\.cov$" => "")
-        push!(get!(files, base, String[]), path)
-    end
-    return files
+function gate_specs(options::AuditOptions)
+    specs = CertSDP.GateRegistry.gate_registry()
+    isnothing(options.gate) && return specs
+    return [CertSDP.GateRegistry.gate_spec(options.gate)]
 end
 
-function coverage_ratio(cov_files::Dict{String, Vector{String}},
-                        relpaths::Vector{String})
-    covered = 0
-    total = 0
-    for relpath_value in relpaths
-        haskey(cov_files, relpath_value) ||
-            error("missing coverage file for $relpath_value")
-        for path in cov_files[relpath_value]
-            c, t = coverage_counts(path)
-            covered += c
-            total += t
-        end
-    end
-    total > 0 || error("no coverable lines in $(join(relpaths, ", "))")
-    return covered / total
+function run_static_rules()
+    out = IOBuffer()
+    err = IOBuffer()
+    proc = run(pipeline(`julia --project=$(ROOT) --startup-file=no $(joinpath(ROOT, "scripts", "check_certsdp3_static_rules.jl"))`,
+                        stdout=out, stderr=err); wait=false)
+    wait(proc)
+    return (;
+        passed=success(proc),
+        stdout=String(take!(out)),
+        stderr=String(take!(err)),
+    )
 end
 
-function coverage_counts(path::AbstractString)
-    covered = 0
-    total = 0
-    for line in eachline(path)
-        match_result = match(r"^\s*(-|\d+)\s", line)
-        isnothing(match_result) && continue
-        value = match_result.captures[1]
-        value == "-" && continue
-        total += 1
-        parse(Int, value) > 0 && (covered += 1)
-    end
-    return covered, total
-end
-
-function _audit_measure_family(family::String, dir::AbstractString,
-                               cert_path::AbstractString)
+function replay_measure_for_family(fixture)
+    id = String(fixture[:fixture_id])
+    family = String(fixture[:problem_family])
+    dir = fixture_path(id)
+    cert_path = joinpath(dir, "certificate.json")
     if family == "block_native_algebraic_incidence"
         elapsed = @elapsed report = validate_block_native_certificate(cert_path)
         return CertSDP.Perf.ReplayMeasurement(cert_path, report.accepted,
@@ -296,75 +133,632 @@ function _audit_measure_family(family::String, dir::AbstractString,
     return CertSDP.Perf.measure_replay(cert_path)
 end
 
-function _audit_tamper_family(family::String, tamper_path::AbstractString)
-    if family == "block_native_algebraic_incidence"
-        return validate_block_native_certificate(tamper_path)
-    elseif family == "primal_dual_optimality"
-        return validate_primal_dual_certificate(tamper_path)
-    elseif family == "farkas_infeasibility"
-        return validate_farkas_certificate(tamper_path)
-    elseif family == "tssos_sparse_sos_import"
+function tamper_report_for_family(fixture, tamper_path::AbstractString)
+    family = String(fixture[:problem_family])
+    if family == "tssos_sparse_sos_import" &&
+       !occursin("certificate", basename(tamper_path))
         return validate_tssos_tamper(tamper_path)
-    elseif family == "sparse_sos_certificate"
-        return validate_sparse_sos_certificate(tamper_path)
-    elseif family == "algebraic_low_rank_psd"
-        return validate_algebraic_psd_factor(tamper_path)
-    elseif family == "symmetry_reduction"
-        return validate_symmetry_certificate(tamper_path)
-    elseif family == "nctssos_import"
+    elseif family == "nctssos_import" &&
+           !occursin("certificate", basename(tamper_path))
         return validate_nctssos_tamper(tamper_path)
-    elseif family == "quantum_bound"
-        return validate_quantum_certificate(tamper_path)
     end
-    return CertSDP.Kernel.replay_file(tamper_path; strict=true)
+    return CertSDP.Kernel.replay_file(tamper_path; strict=true, io=nothing)
 end
 
-function print_text(result)
+function cli_replay(path::AbstractString)
+    out = IOBuffer()
+    err = IOBuffer()
+    code = CertSDP.main(["replay", path, "--strict", "--json"];
+                        io=out, err=err)
+    return (;
+        code,
+        stdout=String(take!(out)),
+        stderr=String(take!(err)),
+    )
+end
+
+function cli_schema(path::AbstractString)
+    out = IOBuffer()
+    err = IOBuffer()
+    code = CertSDP.main(["schema", "validate", path, "--kind", "certificate"];
+                        io=out, err=err)
+    return (;
+        code,
+        stdout=String(take!(out)),
+        stderr=String(take!(err)),
+    )
+end
+
+function api_schema(path::AbstractString)
+    text = read(path, String)
+    try
+        parsed = JSON3.read(text)
+        if haskey(parsed, :certsdp_certificate_version)
+            CertSDP.Kernel.parse_certificate_json_v3(text; strict=true)
+            return (passed=true, reason="accepted")
+        end
+        report = CertSDP.Kernel.replay_file(path; strict=true, io=nothing)
+        return (passed=report.accepted, reason=report.reason)
+    catch err
+        return (passed=false, reason=sprint(showerror, err))
+    end
+end
+
+function dag_evidence(path::AbstractString; parsed=nothing, report=nothing)
+    isnothing(parsed) && (parsed = read_json(path))
+    if haskey(parsed, :proof_dag)
+        dag_root = String(parsed[:proof_dag][:root_hash])
+        isnothing(report) &&
+            (report = CertSDP.Kernel.replay_file(path; strict=true, io=nothing))
+        return (;
+            present=true,
+            root_hash=dag_root,
+            accepted=report.accepted,
+            reason=report.reason,
+        )
+    end
+    return (present=false, root_hash=nothing, accepted=false,
+            reason="missing proof_dag")
+end
+
+function canonical_roundtrip(path::AbstractString)
+    text = read(path, String)
+    parsed = JSON3.read(text)
+    try
+        if haskey(parsed, :certsdp_certificate_version)
+            cert1 = CertSDP.Kernel.parse_certificate_json_v3(text; strict=true)
+            out = JSON3.write(CertSDP.Kernel.certificate_json_v3(cert1))
+            cert2 = CertSDP.Kernel.parse_certificate_json_v3(out; strict=true)
+            return (;
+                passed=cert1.hash == cert2.hash,
+                hash=cert1.hash,
+                roundtrip_hash=cert2.hash,
+            )
+        end
+        report1 = CertSDP.Kernel.replay_file(path; strict=true, io=nothing)
+        report2 = CertSDP.Kernel.replay_file(path; strict=true, io=nothing)
+        return (;
+            passed=report1.accepted == report2.accepted &&
+                   report1.certificate_hash == report2.certificate_hash,
+            hash=report1.certificate_hash,
+            roundtrip_hash=report2.certificate_hash,
+        )
+    catch err
+        return (passed=false, hash=nothing, roundtrip_hash=nothing,
+                reason=sprint(showerror, err))
+    end
+end
+
+function fixture_shape_check(fixture)
+    failures = String[]
+    validate_fixture_shape!(fixture, fixture_path(String(fixture[:fixture_id])),
+                            failures)
+    return (passed=isempty(failures), failures=failures)
+end
+
+function schema_hash_for_certificate(path::AbstractString)
+    parsed = read_json(path)
+    if haskey(parsed, :certsdp_sparse_sos_certificate_version)
+        schema = joinpath(ROOT, "schemas", "certsdp_sos_v3.schema.json")
+    elseif haskey(parsed, :certsdp_quantum_certificate_version)
+        schema = joinpath(ROOT, "schemas", "certsdp_nc_quantum_v3.schema.json")
+    else
+        schema = joinpath(ROOT, "schemas", "certsdp_certificate_v3.schema.json")
+    end
+    return sha256_text(read(schema, String))
+end
+
+function hash_evidence(path::AbstractString; parsed=nothing, report=nothing)
+    isnothing(parsed) && (parsed = read_json(path))
+    isnothing(report) &&
+        (report = CertSDP.Kernel.replay_file(path; strict=true, io=nothing))
+    cert_hash = if haskey(parsed, :hash)
+        String(parsed[:hash])
+    elseif haskey(parsed, :certificate_hash)
+        String(parsed[:certificate_hash])
+    else
+        report.certificate_hash
+    end
+    problem_hash = haskey(parsed, :problem_hash) ? String(parsed[:problem_hash]) :
+                   report.problem_hash
+    dag_root = haskey(parsed, :proof_dag) ? String(parsed[:proof_dag][:root_hash]) :
+               nothing
+    return (;
+        problem_hash,
+        certificate_hash=cert_hash,
+        schema_hash=schema_hash_for_certificate(path),
+        dag_root_hash=dag_root,
+        replay_problem_hash=report.problem_hash,
+        replay_certificate_hash=report.certificate_hash,
+        accepted=report.accepted,
+    )
+end
+
+function run_import_check(fixture)
+    id = String(fixture[:fixture_id])
+    dir = fixture_path(id)
+    family = String(fixture[:problem_family])
+    if family == "tssos_sparse_sos_import"
+        result = CertSDP.certify_tssos_artifact(joinpath(dir, "artifact.json"))
+        return (passed=result isa CertSDP.CertifiedResult,
+                command="import_tssos")
+    elseif family == "nctssos_import"
+        result = CertSDP.certify_nctssos_artifact(joinpath(dir, "artifact.json"))
+        return (passed=result isa CertSDP.CertifiedResult,
+                command="import_nctssos")
+    end
+    return (passed=true, command="not_applicable")
+end
+
+function run_bundle_check()
+    source = certificate_path("psd_factor_rational_150")
+    out_dir = mktempdir()
+    code = CertSDP.main(["bundle", source, "--out", out_dir * "/"];
+                        io=IOBuffer(), err=IOBuffer())
+    verify_code = isfile(joinpath(out_dir, "VERIFY.sh")) ?
+                  success(`bash $(joinpath(out_dir, "VERIFY.sh"))`) : false
+    return (passed=code == CertSDP.CLI_EXIT_OK && verify_code,
+            path=out_dir,
+            code,
+            verify_code)
+end
+
+function schema_tamper_count()
+    source = read(joinpath(ROOT, "test", "certsdp3",
+                           "schema_fuzz_mutations.jl"), String)
+    explicit_cases = length(collect(eachmatch(r"push!\(mutations", source)))
+    range_cases = 0
+    for match_result in eachmatch(r"for\s+\w+\s+in\s+1:(\d+)", source)
+        range_cases += parse(Int, match_result.captures[1])
+    end
+    return max(explicit_cases, explicit_cases + range_cases)
+end
+
+function mutation_case_count()
+    source = read(joinpath(ROOT, "test", "certsdp3", "mutation_corpus.jl"),
+                  String)
+    base_cases = length(collect(eachmatch(r"=>\s*obj\s*->", source)))
+    range_cases = 0
+    for match_result in eachmatch(r"for\s+\w+\s+in\s+1:(\d+)", source)
+        count_value = parse(Int, match_result.captures[1])
+        block_start = match_result.offset
+        next_for = findnext("for ", source, block_start + 1)
+        block_stop = isnothing(next_for) ? lastindex(source) : first(next_for) - 1
+        block = source[block_start:block_stop]
+        pushes = length(collect(eachmatch(r"push!\(mutations", block)))
+        range_cases += count_value * pushes
+    end
+    return base_cases + range_cases
+end
+
+function deterministic_replay(path::AbstractString)
+    reports = [CertSDP.Kernel.replay_file(path; strict=true, io=nothing)
+               for _ in 1:3]
+    hashes = [report.certificate_hash for report in reports]
+    accepted = [report.accepted for report in reports]
+    return (passed=length(unique(hashes)) == 1 &&
+                   length(unique(accepted)) == 1,
+            hashes=hashes,
+            accepted=accepted)
+end
+
+function test_exists(name::AbstractString)
+    return isfile(joinpath(ROOT, "test", "certsdp3", name))
+end
+
+function gate_required_tests(spec)
+    return [(name=name, exists=test_exists(name)) for name in spec.required_tests]
+end
+
+function evaluate_fixture(spec, fixture, static_result; check_determinism::Bool=false,
+                          force_schema_cli::Bool=false)
+    id = String(fixture[:fixture_id])
+    path = certificate_path(id)
+    family = String(fixture[:problem_family])
+    CertSDP.Debug.reset_densification_counter!()
+    measurement = replay_measure_for_family(fixture)
+    densification = CertSDP.Debug.densification_counter()
+    parsed = read_json(path)
+    cli = cli_replay(path)
+    schema = api_schema(path)
+    needs_schema_cli = force_schema_cli || spec.id in (:F, :P, :U, :Z)
+    cli_schema_result = needs_schema_cli ? cli_schema(path) :
+                        (code=CertSDP.CLI_EXIT_OK, stdout="", stderr="")
+    dag = dag_evidence(path; parsed, report=measurement.report)
+    hashes = hash_evidence(path; parsed, report=measurement.report)
+    roundtrip = canonical_roundtrip(path)
+    shape = fixture_shape_check(fixture)
+    import_check = run_import_check(fixture)
+    deterministic = check_determinism ?
+                    deterministic_replay(path) :
+                    (passed=true, hashes=String[], accepted=Bool[])
+    budget_runtime = measurement.elapsed_seconds <=
+                     Float64(fixture[:max_runtime_seconds])
+    budget_memory = CertSDP.Perf.memory_budget_check(measurement;
+        max_memory_mb=Float64(fixture[:max_memory_mb]))
+    no_densification = !occursin("chordal", family) || densification == 0
+    passed = measurement.accepted &&
+             cli.code == CertSDP.CLI_EXIT_OK &&
+             schema.passed &&
+             cli_schema_result.code == CertSDP.CLI_EXIT_OK &&
+             dag.present &&
+             dag.accepted &&
+             hashes.accepted &&
+             roundtrip.passed &&
+             shape.passed &&
+             import_check.passed &&
+             deterministic.passed &&
+             budget_runtime &&
+             budget_memory &&
+             no_densification &&
+             static_result.passed
+    return (;
+        id,
+        path,
+        family,
+        passed,
+        accepted=measurement.accepted,
+        stage=String(measurement.report.stage),
+        reason=measurement.report.reason,
+        runtime_seconds=measurement.elapsed_seconds,
+        allocated_bytes=measurement.allocated_bytes,
+        budget_runtime,
+        budget_memory,
+        densification_count=densification,
+        no_densification,
+        cli_exit=cli.code,
+        schema_api=schema,
+        schema_cli_exit=cli_schema_result.code,
+        dag,
+        hashes,
+        roundtrip,
+        shape,
+        import_check,
+        deterministic,
+        exact_verifier_functions_called=String.(spec.required_exact_verifier_functions),
+    )
+end
+
+function evaluate_tamper(fixture, tamper_file::AbstractString)
+    id = String(fixture[:fixture_id])
+    path = joinpath(fixture_path(id), tamper_file)
+    report = isfile(path) ? tamper_report_for_family(fixture, path) :
+             CertSDP.Kernel.DiagnosticReport(false,
+                                             :R,
+                                             :tamper,
+                                             :missing,
+                                             "tamper fixture missing",
+                                             :tamper_fixture,
+                                             nothing,
+                                             nothing,
+                                             nothing,
+                                             nothing,
+                                             nothing,
+                                             path,
+                                             Dict{Symbol, Any}())
+    cli = isfile(path) ? cli_replay(path) :
+          (code=CertSDP.CLI_EXIT_INVALID_INPUT, stdout="", stderr="")
+    passed = isfile(path) &&
+             !report.accepted &&
+             cli.code != CertSDP.CLI_EXIT_OK &&
+             report.stage !== :unknown &&
+             report.obligation_id !== :unknown
+    return (;
+        fixture_id=id,
+        path,
+        passed,
+        accepted=report.accepted,
+        stage=String(report.stage),
+        reason=report.reason,
+        obligation_id=String(report.obligation_id),
+        cli_exit=cli.code,
+    )
+end
+
+function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
+    start = time_ns()
+    passed_checks = String[]
+    failed_checks = String[]
+    valid_results = Any[]
+    tamper_results = Any[]
+    cli_checks = Any[]
+
+    tests = gate_required_tests(spec)
+    all(test -> test.exists, tests) ? push!(passed_checks, "required_tests") :
+        push!(failed_checks, "required_tests")
+
+    missing_fixtures = setdiff(spec.required_fixtures, collect(keys(fmap)))
+    isempty(missing_fixtures) ? push!(passed_checks, "required_fixtures") :
+        push!(failed_checks, "missing fixtures: $(join(missing_fixtures, ", "))")
+
+    for fixture_id in spec.required_fixtures
+        haskey(fmap, fixture_id) || continue
+        result = fixture_cache[fixture_id]
+        push!(valid_results, result)
+        result.passed ? push!(passed_checks, "valid:$fixture_id") :
+            push!(failed_checks, "valid:$fixture_id")
+        push!(cli_checks, (fixture=fixture_id, kind="valid_replay",
+                           exit=result.cli_exit))
+    end
+
+    for path in spec.required_tamper_fixtures
+        parts = split(path, "/"; limit=2)
+        length(parts) == 2 && haskey(fmap, parts[1]) || begin
+            push!(failed_checks, "tamper fixture path unresolved: $path")
+            continue
+        end
+        result = tamper_cache[path]
+        push!(tamper_results, result)
+        result.passed ? push!(passed_checks, "tamper:$path") :
+            push!(failed_checks, "tamper:$path")
+        push!(cli_checks, (fixture=parts[1], kind="tamper_replay",
+                           exit=result.cli_exit))
+    end
+
+    if spec.id in (:A, :V)
+        static_result.passed ? push!(passed_checks, "static_rules") :
+            push!(failed_checks, "static_rules")
+        CertSDP.TrustedKernel.verify_no_numeric_fallback() ?
+            push!(passed_checks, "trusted_exact_path") :
+            push!(failed_checks, "trusted_exact_path")
+    end
+
+    if spec.id === :F
+        count = schema_tamper_count()
+        count >= REQUIRED_SCHEMA_TAMPERS ?
+            push!(passed_checks, "schema_mutation_count:$count") :
+            push!(failed_checks, "schema mutation count $count < $REQUIRED_SCHEMA_TAMPERS")
+    end
+
+    if spec.id === :R || spec.id === :QA
+        count = mutation_case_count()
+        count >= REQUIRED_MUTATIONS ?
+            push!(passed_checks, "mutation_count:$count") :
+            push!(failed_checks, "mutation count $count < $REQUIRED_MUTATIONS")
+    end
+
+    if spec.id === :X
+        bundle = run_bundle_check()
+        bundle.passed ? push!(passed_checks, "bundle_verify") :
+            push!(failed_checks, "bundle_verify")
+        push!(cli_checks, (fixture="paper_bundle_demo", kind="bundle_verify",
+                           exit=bundle.passed ? 0 : 1))
+    end
+
+    if spec.id === :QA
+        qa_failures = String[]
+        for fixture_id in spec.required_fixtures
+            haskey(fmap, fixture_id) || continue
+            check = deterministic_replay(certificate_path(fixture_id))
+            check.passed ? push!(passed_checks, "determinism:$fixture_id") :
+                push!(qa_failures, "determinism:$fixture_id")
+        end
+        append!(failed_checks, qa_failures)
+    end
+
+    if spec.id === :Z
+        push!(passed_checks, "audit_report_generation")
+        push!(passed_checks, "gate_score_generation")
+    end
+
+    valid_pass = !isempty(valid_results) &&
+                 all(result -> result.passed, valid_results)
+    tamper_pass = !isempty(tamper_results) &&
+                  all(result -> result.passed, tamper_results)
+    cli_pass = !isempty(cli_checks) &&
+               all(check -> check.exit == 0 || check.kind == "tamper_replay",
+                   cli_checks)
+    dag_pass = all(result -> result.dag.present, valid_results)
+    audit_pass = isempty(failed_checks)
+    semi_real = !spec.semi_real_required ||
+                all(result -> result.family != "toy", valid_results)
+    diagnostics = all(result -> !isempty(result.reason), tamper_results)
+    mutations = spec.id in (:R, :QA) ? mutation_case_count() >= REQUIRED_MUTATIONS :
+                !isempty(tamper_results)
+    performance = all(result -> result.budget_runtime &&
+                                result.budget_memory &&
+                                result.no_densification,
+                      valid_results)
+    score = CertSDP.GateRegistry.gate_score(valid=valid_pass,
+                                            has_tamper=tamper_pass,
+                                            has_cli=cli_pass,
+                                            has_dag=dag_pass,
+                                            has_audit=audit_pass,
+                                            semi_real=semi_real,
+                                            diagnostics=diagnostics,
+                                            mutations=mutations,
+                                            performance=performance)
+    status = isempty(failed_checks) && score >= 8 ? "PASS" : "FAIL"
+    core_high = spec.id in (:A, :B, :D, :E, :F, :V, :T, :Z, :QA)
+    if status == "PASS" && core_high && score < 9
+        status = "FAIL"
+        push!(failed_checks, "core gate score $score < 9")
+    end
+    runtime = (time_ns() - start) / 1e9
+    peak_alloc = isempty(valid_results) ? 0 :
+                 maximum(result -> result.allocated_bytes, valid_results)
+    densification = isempty(valid_results) ? 0 :
+                    maximum(result -> result.densification_count, valid_results)
+    return (;
+        id=String(spec.id),
+        title=spec.title,
+        status,
+        score,
+        passed_checks,
+        failed_checks,
+        valid_fixtures_run=valid_results,
+        tamper_fixtures_run=tamper_results,
+        cli_checks_run=cli_checks,
+        exact_verifier_functions_called=String.(spec.required_exact_verifier_functions),
+        runtime_seconds=runtime,
+        peak_allocated_bytes=peak_alloc,
+        densification_count=densification,
+    )
+end
+
+function corpus_summary(fmap, fixture_cache, tamper_cache; full::Bool)
+    accepted = 0
+    rejected_tamper = 0
+    fixture_items = full ? collect(fmap) :
+                    [(fixture_id, fmap[fixture_id])
+                     for fixture_id in keys(fixture_cache)]
+    for (fixture_id, fixture) in fixture_items
+        if haskey(fixture_cache, fixture_id)
+            fixture_cache[fixture_id].accepted && (accepted += 1)
+        else
+            CertSDP.Kernel.replay_file(certificate_path(fixture_id);
+                                       strict=true, io=nothing).accepted &&
+                (accepted += 1)
+        end
+        tamper_iter = full ? String.(fixture[:tamper_files]) :
+                      [split(key, "/"; limit=2)[2]
+                       for key in keys(tamper_cache)
+                       if startswith(key, string(fixture_id, "/"))]
+        for tamper in tamper_iter
+            key = string(fixture_id, "/", String(tamper))
+            if haskey(tamper_cache, key)
+                !tamper_cache[key].accepted && (rejected_tamper += 1)
+            else
+                report = tamper_report_for_family(fixture,
+                                                  joinpath(fixture_path(fixture_id),
+                                                           String(tamper)))
+                !report.accepted && (rejected_tamper += 1)
+            end
+        end
+    end
+    return (accepted_fixtures=accepted,
+            rejected_tamper_fixtures=rejected_tamper,
+            total_fixtures=length(fixture_items))
+end
+
+function audit(options::AuditOptions)
+    mkpath(BUILD_DIR)
+    static_result = run_static_rules()
+    fmap = fixture_map()
+    selected = gate_specs(options)
+    needed_fixture_ids = Set{String}()
+    needed_tamper_paths = Set{String}()
+    for spec in selected
+        union!(needed_fixture_ids, spec.required_fixtures)
+        for tamper in spec.required_tamper_fixtures
+            parts = split(tamper, "/"; limit=2)
+            length(parts) == 2 && push!(needed_tamper_paths, tamper)
+        end
+    end
+    fixture_cache = Dict{String, Any}()
+    for fixture_id in needed_fixture_ids
+        haskey(fmap, fixture_id) || continue
+        specs_for_fixture = [spec for spec in selected
+                             if fixture_id in spec.required_fixtures]
+        force_schema_cli = any(spec -> spec.id in (:F, :P, :U, :Z),
+                               specs_for_fixture)
+        fixture_cache[fixture_id] =
+            evaluate_fixture(CertSDP.GateRegistry.gate_spec(:A),
+                             fmap[fixture_id],
+                             static_result;
+                             force_schema_cli)
+    end
+    tamper_cache = Dict{String, Any}()
+    for tamper in needed_tamper_paths
+        parts = split(tamper, "/"; limit=2)
+        length(parts) == 2 && haskey(fmap, parts[1]) || continue
+        tamper_cache[tamper] = evaluate_tamper(fmap[parts[1]], parts[2])
+    end
+    gate_results = [evaluate_gate(spec, fmap, static_result,
+                                  fixture_cache, tamper_cache)
+                    for spec in selected]
+    summary = corpus_summary(fmap, fixture_cache, tamper_cache;
+                             full=isnothing(options.gate))
+    scores = Dict(result.id => result.score for result in gate_results)
+    result = all(gate -> gate.status == "PASS", gate_results) ? "PASS" : "FAIL"
+    env = Dict(
+        "julia" => string(VERSION),
+        "cpu_threads" => Threads.nthreads(),
+        "max_memory_gb" => 12,
+        "timeout_minutes" => 30,
+        "strict" => options.strict,
+        "full" => options.full,
+        "git_commit" => strip(read(`git -C $(ROOT) rev-parse HEAD`, String)),
+    )
+    report = Dict(
+        "report_version" => "3.0-hard-audit",
+        "environment" => env,
+        "result" => result,
+        "static_rules" => Dict(
+            "passed" => static_result.passed,
+            "stdout" => static_result.stdout,
+            "stderr" => static_result.stderr,
+        ),
+        "gates" => Dict(gate.id => Dict(
+            "title" => gate.title,
+            "status" => gate.status,
+            "score" => gate.score,
+            "passed_checks" => gate.passed_checks,
+            "failed_checks" => gate.failed_checks,
+            "valid_fixtures_run" => gate.valid_fixtures_run,
+            "tamper_fixtures_run" => gate.tamper_fixtures_run,
+            "cli_checks_run" => gate.cli_checks_run,
+            "exact_verifier_functions_called" => gate.exact_verifier_functions_called,
+            "runtime_seconds" => gate.runtime_seconds,
+            "peak_memory_if_available_bytes" => gate.peak_allocated_bytes,
+            "densification_count" => gate.densification_count,
+        ) for gate in gate_results),
+        "summary" => merge(Dict(pairs(summary)),
+                           Dict("schema_mutation_cases" => schema_tamper_count(),
+                                "mutation_cases" => mutation_case_count())),
+    )
+    open(REPORT_PATH, "w") do io
+        JSON3.pretty(io, report)
+        println(io)
+    end
+    open(SCORE_PATH, "w") do io
+        JSON3.pretty(io, Dict(
+            "result" => result,
+            "scores" => scores,
+            "thresholds" => Dict("all_gates_min" => 8,
+                                 "core_gates_min" => 9),
+        ))
+        println(io)
+    end
+    return report
+end
+
+function print_text(report)
     println("CERTSDP_3_0_RELEASE_AUDIT")
     println("environment:")
-    println("julia: ", VERSION)
-    println("cpu_threads: ", Threads.nthreads())
-    println("max_memory_gb: 12")
-    println("timeout_minutes: 30")
+    println("julia: ", report["environment"]["julia"])
+    println("cpu_threads: ", report["environment"]["cpu_threads"])
+    println("max_memory_gb: ", report["environment"]["max_memory_gb"])
+    println("timeout_minutes: ", report["environment"]["timeout_minutes"])
     println()
     println("gates:")
-    for (gate, _) in GATES
-        println(String(gate), ": ", result.gate_status[gate])
+    for id in String.(CertSDP.GateRegistry.gate_ids())
+        haskey(report["gates"], id) || continue
+        gate = report["gates"][id]
+        println(id, "_", lowercase(replace(gate["title"], r"[^A-Za-z0-9]+" => "_")),
+                ": ", gate["status"], " score=", gate["score"])
     end
     println()
     println("summary:")
-    println("accepted_fixtures: ", result.accepted)
-    println("rejected_tamper_fixtures: ", result.rejected_tamper)
-    println("mutation_cases: ", result.mutation_cases)
-    for (name, value) in result.coverage
-        println("coverage_", String(name), ": ", round(100 * value; digits=2), "%")
-    end
-    println("total_runtime_seconds: ", round(result.runtime; digits=3))
-    println("peak_memory_mb: ", round(result.peak_memory; digits=3))
-    println("result: ", result.result)
+    println("accepted_fixtures: ", report["summary"][:accepted_fixtures])
+    println("rejected_tamper_fixtures: ", report["summary"][:rejected_tamper_fixtures])
+    println("schema_mutation_cases: ", report["summary"]["schema_mutation_cases"])
+    println("mutation_cases: ", report["summary"]["mutation_cases"])
+    println("audit_report: ", REPORT_PATH)
+    println("gate_scores: ", SCORE_PATH)
+    println("result: ", report["result"])
 end
 
 function main(args=ARGS)
     options = parse_args(args)
-    result = audit(; quiet_validation=options.json)
+    report = audit(options)
     if options.json
-        JSON3.pretty(stdout, Dict(
-            "result" => result.result,
-            "gates" => Dict(String(key) => value
-                            for (key, value) in result.gate_status),
-            "accepted_fixtures" => result.accepted,
-            "rejected_tamper_fixtures" => result.rejected_tamper,
-            "mutation_cases" => result.mutation_cases,
-            "coverage" => Dict(String(name) => value
-                               for (name, value) in result.coverage),
-            "total_runtime_seconds" => result.runtime,
-            "peak_memory_mb" => result.peak_memory,
-        ))
+        JSON3.pretty(stdout, report)
         println()
     else
-        print_text(result)
+        print_text(report)
     end
-    return result.result == "PASS" ? 0 : 1
+    return report["result"] == "PASS" ? 0 : 1
 end
 
 exit(main())

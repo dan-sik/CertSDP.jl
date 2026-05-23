@@ -1,0 +1,10 @@
+{
+    "scores": {
+        "QA": 10
+    },
+    "thresholds": {
+        "core_gates_min": 9,
+        "all_gates_min": 8
+    },
+    "result": "PASS"
+}

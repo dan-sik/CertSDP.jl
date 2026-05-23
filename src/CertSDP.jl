@@ -28,6 +28,17 @@ export LMIProblem,
        field_element_string,
        parse_field_element,
        verify_field_element,
+       TrustedKernel,
+       GateRegistry,
+       CertificateDAG3,
+       StrictSchema,
+       ExactArithmeticSafety,
+       SparseBlockChordal,
+       PSDProofs,
+       SOSProofs,
+       NCQuantumProofs,
+       AlgebraicFields,
+       CanonicalHash,
        export_sos_decomposition,
        sos_decomposition_text,
        sos_decomposition_latex,
@@ -36,6 +47,16 @@ export LMIProblem,
 
 include("kernel/Kernel.jl")
 include("kernel/Debug.jl")
+include("kernel/TrustedKernel.jl")
+include("kernel/CertificateDAG.jl")
+include("kernel/StrictSchema.jl")
+include("kernel/ExactArithmeticSafety.jl")
+include("kernel/SparseBlockChordal.jl")
+include("kernel/PSDProofs.jl")
+include("kernel/SOSProofs.jl")
+include("kernel/NCQuantumProofs.jl")
+include("kernel/AlgebraicFields.jl")
+include("kernel/CanonicalHash.jl")
 include("exactify/Backends3.jl")
 include("schemas/Schemas.jl")
 include("reports/Reports.jl")
@@ -52,7 +73,12 @@ include("algebraic/SignTests.jl")
 include("algebraic/PolynomialSystem.jl")
 include("certify/Results.jl")
 include("adapters/Adapters.jl")
+include("adapters/TSSOSImporter.jl")
+include("adapters/NCTSSOSImporter.jl")
+include("adapters/UntrustedAdapters.jl")
 include("apps/Apps.jl")
+include("apps/Explain.jl")
+include("kernel/GateRegistry.jl")
 include("backends/AlgebraicBackend.jl")
 include("backends/MsolveBackend.jl")
 include("systems/IncidenceBuilder.jl")
@@ -79,6 +105,7 @@ include("compiler/PerfectGateReconstruction.jl")
 include("tooling/ReplayTools.jl")
 include("tooling/PaperArtifacts.jl")
 include("cli/Main.jl")
+(@main)
 
 const SparseSOSCertificateCandidate = Adapters.SparseSOSCertificateCandidate
 const QuantumCertificateCandidate = Adapters.QuantumCertificateCandidate
