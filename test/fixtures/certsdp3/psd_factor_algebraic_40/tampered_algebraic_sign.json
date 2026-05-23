@@ -1,6 +1,6 @@
 {
-    "certificate_hash": "sha256:7f13325157e368a3c0abc0d30c21ca99d15105514b1641dfdaa69c80af677e25",
     "identity_proof_hash": "sha256:7f13325157e368a3c0abc0d30c21ca99d15105514b1641dfdaa69c80af677e25",
+    "certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
     "field": {
         "isolating_interval": [
             "1",
@@ -12898,6 +12898,43 @@
             }
         ]
     ],
+    "proof_dag": {
+        "claim_type": "algebraic_low_rank_psd",
+        "nodes": [
+            {
+                "inputs": [
+                ],
+                "kind": "hash",
+                "status": "accepted",
+                "id": "matrix_hash",
+                "checker": "canonical_sparse_matrix_hash",
+                "output_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213"
+            },
+            {
+                "inputs": [
+                    "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213"
+                ],
+                "kind": "field_certificate",
+                "status": "accepted",
+                "id": "algebraic_field",
+                "checker": "verify_field_element",
+                "output_hash": "sha256:b1f622382ca7ba274bc0e73dd71c1b0a78566c347b8377eb5554e8a8acc4b70e"
+            },
+            {
+                "inputs": [
+                    "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
+                    "sha256:b1f622382ca7ba274bc0e73dd71c1b0a78566c347b8377eb5554e8a8acc4b70e"
+                ],
+                "kind": "exact_identity",
+                "status": "accepted",
+                "id": "algebraic_low_rank_identity",
+                "checker": "verify_algebraic_low_rank_psd",
+                "output_hash": "sha256:7f13325157e368a3c0abc0d30c21ca99d15105514b1641dfdaa69c80af677e25"
+            }
+        ],
+        "root_hash": "sha256:f8a41a132a8f4d7b54853a5f5f0f11b292b461a3101ed59df3e054fd5992036a",
+        "schema_version": "3.0"
+    },
     "diagonal": [
         {
             "element_hash": "sha256:26c28be3b17e1b7267173bc14d9b6b76239f1afa868c042c9e9d9fb7e5b21b5c",

@@ -112,6 +112,12 @@
     @test tampered_report.block_id == :block_3
 
     json = K3.block_native_algebraic_certificate_json(cert)
+    @test haskey(json, :proof_dag)
+    @test K3.verify_proof_dag(K3.block_native_algebraic_certificate_dag(cert)).accepted
     parsed = K3.parse_block_native_algebraic_certificate_json(JSON3.write(json))
     @test parsed.certificate_hash == cert.certificate_hash
+
+    dag_tampered = Dict(Symbol(k) => v for (k, v) in pairs(certsdp3_mutable_json(json)))
+    dag_tampered[:proof_dag][:nodes][1][:checker] = "metadata_claim"
+    @test_throws ArgumentError K3.parse_block_native_algebraic_certificate_json(JSON3.write(dag_tampered))
 end

@@ -708,64 +708,18 @@ function validate_certsdp3_main(args=ARGS)
         validate_fixture_shape!(fixture, dir, failures)
         CertSDP.Debug.reset_densification_counter!()
         family = String(fixture[:problem_family])
-        if family == "block_native_algebraic_incidence"
-            elapsed = @elapsed report = validate_block_native_certificate(cert_path)
-            measurement = CertSDP.Perf.ReplayMeasurement(cert_path,
-                                                         report.accepted,
-                                                         elapsed,
-                                                         0,
-                                                         report)
-        elseif family == "primal_dual_optimality"
-            elapsed = @elapsed report = validate_primal_dual_certificate(cert_path)
-            measurement = CertSDP.Perf.ReplayMeasurement(cert_path,
-                                                         report.accepted,
-                                                         elapsed,
-                                                         0,
-                                                         report)
-        elseif family == "farkas_infeasibility"
-            elapsed = @elapsed report = validate_farkas_certificate(cert_path)
-            measurement = CertSDP.Perf.ReplayMeasurement(cert_path,
-                                                         report.accepted,
-                                                         elapsed,
-                                                         0,
-                                                         report)
-        elseif family == "tssos_sparse_sos_import"
-            measurement = validate_tssos_artifact(dir)
-        elseif family == "sparse_sos_certificate"
-            elapsed = @elapsed report = validate_sparse_sos_certificate(cert_path)
-            measurement = CertSDP.Perf.ReplayMeasurement(cert_path,
-                                                         report.accepted,
-                                                         elapsed,
-                                                         0,
-                                                         report)
-        elseif family == "algebraic_low_rank_psd"
-            elapsed = @elapsed report = validate_algebraic_psd_factor(cert_path)
-            measurement = CertSDP.Perf.ReplayMeasurement(cert_path,
-                                                         report.accepted,
-                                                         elapsed,
-                                                         0,
-                                                         report)
-        elseif family == "symmetry_reduction"
-            elapsed = @elapsed report = validate_symmetry_certificate(cert_path)
-            measurement = CertSDP.Perf.ReplayMeasurement(cert_path,
-                                                         report.accepted,
-                                                         elapsed,
-                                                         0,
-                                                         report)
-        elseif family == "nctssos_import"
-            measurement = validate_nctssos_artifact(dir)
-        elseif family == "quantum_bound"
-            elapsed = @elapsed report = validate_quantum_certificate(cert_path)
-            measurement = CertSDP.Perf.ReplayMeasurement(cert_path,
-                                                         report.accepted,
-                                                         elapsed,
-                                                         0,
-                                                         report)
-        else
-            measurement = CertSDP.Perf.measure_replay(cert_path)
-        end
+        measurement = CertSDP.Perf.measure_replay(cert_path)
         push!(measurements, measurement)
         measurement.accepted || push!(failures, "accepted fixture rejected: $cert_path")
+        if family == "tssos_sparse_sos_import"
+            importer_measurement = validate_tssos_artifact(dir)
+            importer_measurement.accepted ||
+                push!(failures, "TSSOS artifact importer rejected fixture: $dir")
+        elseif family == "nctssos_import"
+            importer_measurement = validate_nctssos_artifact(dir)
+            importer_measurement.accepted ||
+                push!(failures, "NCTSSOS artifact importer rejected fixture: $dir")
+        end
         check_report_hashes!(fixture, measurement, failures)
         limit_mb = Float64(fixture[:max_memory_mb])
         CertSDP.Perf.memory_budget_check(measurement; max_memory_mb=limit_mb) ||
@@ -807,24 +761,12 @@ function validate_certsdp3_main(args=ARGS)
             tamper_path = joinpath(dir, String(tamper))
             isfile(tamper_path) ||
                 push!(failures, "tamper fixture missing: $tamper_path")
-            report = if family == "block_native_algebraic_incidence"
-                validate_block_native_certificate(tamper_path)
-            elseif family == "primal_dual_optimality"
-                validate_primal_dual_certificate(tamper_path)
-            elseif family == "farkas_infeasibility"
-                validate_farkas_certificate(tamper_path)
-            elseif family == "tssos_sparse_sos_import"
+            report = if family == "tssos_sparse_sos_import" &&
+                        !occursin("certificate", basename(tamper_path))
                 validate_tssos_tamper(tamper_path)
-            elseif family == "sparse_sos_certificate"
-                validate_sparse_sos_certificate(tamper_path)
-            elseif family == "algebraic_low_rank_psd"
-                validate_algebraic_psd_factor(tamper_path)
-            elseif family == "symmetry_reduction"
-                validate_symmetry_certificate(tamper_path)
-            elseif family == "nctssos_import"
+            elseif family == "nctssos_import" &&
+                   !occursin("certificate", basename(tamper_path))
                 validate_nctssos_tamper(tamper_path)
-            elseif family == "quantum_bound"
-                validate_quantum_certificate(tamper_path)
             else
                 CertSDP.Kernel.replay_file(tamper_path; strict=true)
             end

@@ -1,5 +1,6 @@
 {
-    "certificate_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4",
+    "certsdp_farkas_certificate_version": "3.0",
+    "problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
     "multiplier_identity_lhs": [
         "0",
         "0",
@@ -12,7 +13,18 @@
         "0",
         "0"
     ],
-    "problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
+    "multiplier_identity_rhs": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+    ],
     "cone_proofs": [
         {
             "field": "QQ",
@@ -484,19 +496,33 @@
             "identity_proof_hash": "sha256:76d41701c5ae4ff07e842251add4aed8e92c4fd0052488d08a3e6b1fb6f0dc72"
         }
     ],
-    "certsdp_farkas_certificate_version": "3.0",
-    "contradiction_rhs": "-1",
     "contradiction_lhs": "0",
-    "multiplier_identity_rhs": [
-        "0",
-        "0",
-        "0",
-        "0",
-        "0",
-        "0",
-        "0",
-        "0",
-        "0",
-        "0"
-    ]
+    "contradiction_rhs": "-1",
+    "proof_dag": {
+        "claim_type": "farkas_infeasibility",
+        "nodes": [
+            {
+                "id": "farkas_identity",
+                "kind": "exact_equality",
+                "inputs": [
+                ],
+                "output_hash": "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea",
+                "checker": "verify_farkas_identity",
+                "status": "accepted"
+            },
+            {
+                "id": "farkas_contradiction",
+                "kind": "exact_order",
+                "inputs": [
+                    "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea"
+                ],
+                "output_hash": "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87",
+                "checker": "verify_farkas_contradiction",
+                "status": "accepted"
+            }
+        ],
+        "root_hash": "sha256:c37280809ebd6a2ce62f31778ddc5f2baaca226337df4aebc07135fd292aa8ee",
+        "schema_version": "3.0"
+    },
+    "certificate_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4"
 }

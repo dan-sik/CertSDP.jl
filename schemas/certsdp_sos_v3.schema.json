@@ -1,12 +1,173 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://certsdp.local/schemas/certsdp_sos_v3.schema.json",
-  "title": "CertSDP SOS v3",
+  "title": "CertSDP Sparse SOS Certificate v3",
   "type": "object",
   "additionalProperties": false,
-  "required": ["certsdp_sos_version", "status"],
+  "required": [
+    "certsdp_sparse_sos_certificate_version",
+    "problem",
+    "sos_blocks",
+    "putinar",
+    "proof_dag",
+    "certificate_hash"
+  ],
   "properties": {
-    "certsdp_sos_version": { "const": "3.0" },
-    "status": { "enum": ["reserved_for_sparse_sos_gate_h"] }
+    "certsdp_sparse_sos_certificate_version": { "const": "3.0" },
+    "problem": { "$ref": "#/$defs/sparse_sos_problem" },
+    "sos_blocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/sos_block" }
+    },
+    "putinar": {
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/putinar_certificate" }
+      ]
+    },
+    "proof_dag": { "$ref": "certsdp_certificate_v3.schema.json#/$defs/proof_dag" },
+    "certificate_hash": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "rational": {
+      "type": "string",
+      "pattern": "^-?[0-9]+(/[1-9][0-9]*)?$"
+    },
+    "polynomial_term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exponents", "coefficient"],
+      "properties": {
+        "exponents": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 }
+        },
+        "coefficient": { "$ref": "#/$defs/rational" }
+      }
+    },
+    "sparse_matrix": {
+      "$ref": "certsdp_sparse_lmi_v3.schema.json#/$defs/sparse_matrix"
+    },
+    "low_rank_psd_proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "matrix_hash",
+        "factor",
+        "diagonal",
+        "identity_proof_hash"
+      ],
+      "properties": {
+        "field": { "const": "QQ" },
+        "matrix_hash": { "$ref": "#/$defs/sha256" },
+        "factor": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/rational" }
+          }
+        },
+        "diagonal": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rational" }
+        },
+        "identity_proof_hash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sos_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "clique_id",
+        "basis_exponents",
+        "gram_matrix",
+        "psd_proof",
+        "coefficient_terms"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "clique_id": { "type": "string" },
+        "basis_exponents": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "gram_matrix": { "$ref": "#/$defs/sparse_matrix" },
+        "psd_proof": { "$ref": "#/$defs/low_rank_psd_proof" },
+        "coefficient_terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/polynomial_term" }
+        }
+      }
+    },
+    "localizing_matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "clique_id", "constraint_terms", "sos_block"],
+      "properties": {
+        "id": { "type": "string" },
+        "clique_id": { "type": "string" },
+        "constraint_terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/polynomial_term" }
+        },
+        "sos_block": { "$ref": "#/$defs/sos_block" }
+      }
+    },
+    "putinar_certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["localizing_blocks", "bound", "identity_hash"],
+      "properties": {
+        "localizing_blocks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/localizing_matrix" }
+        },
+        "bound": { "$ref": "#/$defs/rational" },
+        "identity_hash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sparse_sos_problem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variables",
+        "target_terms",
+        "cliques",
+        "lower_bound",
+        "problem_hash"
+      ],
+      "properties": {
+        "variables": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "target_terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/polynomial_term" }
+        },
+        "cliques": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          }
+        },
+        "lower_bound": { "$ref": "#/$defs/rational" },
+        "problem_hash": { "$ref": "#/$defs/sha256" }
+      }
+    }
   }
 }

@@ -49,8 +49,26 @@ function main()
         "certsdp_report_v3.schema.json",
     ]
     for schema in required_schemas
-        isfile(joinpath(ROOT, "schemas", schema)) ||
+        schema_path = joinpath(ROOT, "schemas", schema)
+        isfile(schema_path) ||
             push!(failures, "missing schema $schema")
+        isfile(schema_path) || continue
+        schema_text = read(schema_path, String)
+        occursin("reserved_for", schema_text) &&
+            push!(failures, "schema $schema still contains reserved_for placeholder")
+    end
+
+    certificate_schema = joinpath(ROOT, "schemas",
+                                  "certsdp_certificate_v3.schema.json")
+    if isfile(certificate_schema)
+        text = read(certificate_schema, String)
+        for family in ["block_native_algebraic", "primal_dual_optimality",
+                       "farkas_infeasibility", "sparse_sos",
+                       "quantum_bound", "symmetry_reduction"]
+            occursin(family, text) ||
+                push!(failures,
+                      "certificate schema missing family branch $family")
+        end
     end
 
     println("CERTSDP3_STATIC_RULES")

@@ -39,7 +39,7 @@
             ],
             "validation_purpose": "Gate D/L algebraic low-rank PSD exact identity and sign replay",
             "problem_family": "algebraic_low_rank_psd",
-            "certificate_hash": "sha256:7f13325157e368a3c0abc0d30c21ca99d15105514b1641dfdaa69c80af677e25",
+            "certificate_hash": "sha256:b5135d08561d43c19c35c857e9b0551ab5e581ba148a7ec7ec6452cc4a477447",
             "max_runtime_seconds": 45,
             "max_memory_mb": 1536,
             "problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",

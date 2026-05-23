@@ -75,7 +75,15 @@ export CERTSDP3_SCHEMA_VERSION,
        block_native_active_block_proof_json,
        block_native_inactive_psd_proof_json,
        block_native_algebraic_certificate_json,
+       block_native_algebraic_certificate_dag,
+       block_native_algebraic_certificate_dag_json,
        parse_block_native_algebraic_certificate_json,
+       primal_dual_optimality_certificate_json,
+       parse_primal_dual_optimality_certificate_json,
+       farkas_infeasibility_certificate_json,
+       parse_farkas_infeasibility_certificate_json,
+       algebraic_low_rank_psd_certificate_json,
+       parse_algebraic_low_rank_psd_certificate_json,
        sparse_affine_lmi_json,
        sparse_sos_certificate_json,
        parse_sparse_sos_certificate_json,
@@ -837,6 +845,7 @@ function block_native_algebraic_certificate_json(cert::BlockNativeAlgebraicCerti
                              for (_, proof) in active_pairs],
         inactive_psd_proofs=[block_native_inactive_psd_proof_json(proof)
                              for (_, proof) in inactive_pairs],
+        proof_dag=block_native_algebraic_certificate_dag_json(cert),
         certificate_hash=cert.certificate_hash,
     )
 end
@@ -854,6 +863,37 @@ function block_native_algebraic_certificate_hash(cert::BlockNativeAlgebraicCerti
     )
     return _sha256_payload(payload)
 end
+
+function block_native_algebraic_certificate_dag(cert::BlockNativeAlgebraicCertificate)
+    active_hash = _sha256_payload([proof.proof_hash
+                                   for (_, proof) in sort(collect(cert.active_block_proofs);
+                                                          by=first)])
+    inactive_hash = _sha256_payload([proof.proof_hash
+                                     for (_, proof) in sort(collect(cert.inactive_psd_proofs);
+                                                            by=first)])
+    nodes = ProofNode[
+        ProofNode(:block_native_incidence, :hash, String[],
+                  cert.incidence.system_hash,
+                  :block_native_incidence_system_hash, :accepted),
+        ProofNode(:active_block_replay, :exact_algebraic_replay,
+                  [cert.incidence.system_hash], active_hash,
+                  :verify_block_native_active_blocks, :accepted),
+        ProofNode(:inactive_psd_replay, :psd_margin,
+                  [cert.incidence.system_hash], inactive_hash,
+                  :verify_block_native_inactive_blocks, :accepted),
+        ProofNode(:block_native_certificate, :exact_replay,
+                  [active_hash, inactive_hash], cert.certificate_hash,
+                  :verify_block_native_algebraic_certificate, :accepted),
+    ]
+    dag0 = CertificateDAG(:block_native_algebraic, nodes, "",
+                          CERTSDP3_SCHEMA_VERSION)
+    return CertificateDAG(:block_native_algebraic, nodes,
+                          certificate_dag_hash_without_root(dag0),
+                          CERTSDP3_SCHEMA_VERSION)
+end
+
+block_native_algebraic_certificate_dag_json(cert::BlockNativeAlgebraicCertificate) =
+    certificate_dag_json(block_native_algebraic_certificate_dag(cert))
 
 function primal_dual_optimality_hash(cert::PrimalDualOptimalityCertificate)
     payload = (;
@@ -1238,6 +1278,32 @@ function primal_feasibility_json(cert::PrimalFeasibilityCertificate)
     )
 end
 
+function primal_dual_optimality_certificate_json(cert::PrimalDualOptimalityCertificate)
+    return (;
+        certsdp_primal_dual_certificate_version=CERTSDP3_SCHEMA_VERSION,
+        problem_hash=cert.problem_hash,
+        primal=primal_feasibility_json(cert.primal),
+        dual=dual_feasibility_json(cert.dual),
+        gap=rational_string(cert.gap),
+        proof_dag=certificate_dag_json(cert.dag),
+        certificate_hash=cert.certificate_hash,
+    )
+end
+
+function farkas_infeasibility_certificate_json(cert::FarkasInfeasibilityCertificate)
+    return (;
+        certsdp_farkas_certificate_version=CERTSDP3_SCHEMA_VERSION,
+        problem_hash=cert.problem_hash,
+        multiplier_identity_lhs=rational_string.(cert.multiplier_identity_lhs),
+        multiplier_identity_rhs=rational_string.(cert.multiplier_identity_rhs),
+        cone_proofs=[low_rank_proof_json(proof) for proof in cert.cone_proofs],
+        contradiction_lhs=rational_string(cert.contradiction_lhs),
+        contradiction_rhs=rational_string(cert.contradiction_rhs),
+        proof_dag=certificate_dag_json(cert.dag),
+        certificate_hash=cert.certificate_hash,
+    )
+end
+
 function dual_feasibility_json(cert::DualFeasibilityCertificate)
     return (;
         problem_hash=cert.problem_hash,
@@ -1268,6 +1334,53 @@ function algebraic_low_rank_identity_hash(proof::ExactAlgebraicLowRankPSDProof)
         diagonal=[algebraic_element_json(value) for value in proof.diagonal],
     )
     return _sha256_payload(payload)
+end
+
+function algebraic_low_rank_psd_certificate_hash(matrix::SparseSymmetricRationalMatrix,
+                                                 proof::ExactAlgebraicLowRankPSDProof,
+                                                 dag::CertificateDAG)
+    payload = (;
+        certsdp_algebraic_psd_factor_version=CERTSDP3_SCHEMA_VERSION,
+        matrix=sparse_matrix_json(matrix),
+        field=algebraic_field_certificate_json(proof.field),
+        factor=[[algebraic_element_json(value) for value in row]
+                for row in proof.factor],
+        diagonal=[algebraic_element_json(value) for value in proof.diagonal],
+        identity_proof_hash=proof.identity_proof_hash,
+        proof_dag=certificate_dag_json(dag),
+    )
+    return _sha256_payload(payload)
+end
+
+function algebraic_low_rank_psd_certificate_json(matrix::SparseSymmetricRationalMatrix,
+                                                 proof::ExactAlgebraicLowRankPSDProof)
+    nodes = ProofNode[
+        ProofNode(:matrix_hash, :hash, String[], matrix.hash,
+                  :canonical_sparse_matrix_hash, :accepted),
+        ProofNode(:algebraic_field, :field_certificate, [matrix.hash],
+                  proof.field.field_hash, :verify_field_element, :accepted),
+        ProofNode(:algebraic_low_rank_identity, :exact_identity,
+                  [matrix.hash, proof.field.field_hash],
+                  proof.identity_proof_hash,
+                  :verify_algebraic_low_rank_psd, :accepted),
+    ]
+    dag0 = CertificateDAG(:algebraic_low_rank_psd, nodes, "",
+                          CERTSDP3_SCHEMA_VERSION)
+    dag = CertificateDAG(:algebraic_low_rank_psd, nodes,
+                         certificate_dag_hash_without_root(dag0),
+                         CERTSDP3_SCHEMA_VERSION)
+    hash = algebraic_low_rank_psd_certificate_hash(matrix, proof, dag)
+    return (;
+        certsdp_algebraic_psd_factor_version=CERTSDP3_SCHEMA_VERSION,
+        matrix=sparse_matrix_json(matrix),
+        field=algebraic_field_certificate_json(proof.field),
+        factor=[[algebraic_element_json(value) for value in row]
+                for row in proof.factor],
+        diagonal=[algebraic_element_json(value) for value in proof.diagonal],
+        identity_proof_hash=proof.identity_proof_hash,
+        proof_dag=certificate_dag_json(dag),
+        certificate_hash=hash,
+    )
 end
 
 function entries_dict(matrix::SparseSymmetricRationalMatrix)
@@ -1701,6 +1814,8 @@ function verify_block_native_algebraic_certificate(cert::BlockNativeAlgebraicCer
                 inactive_report.accepted || return inactive_report
             end
         end
+        dag_report = verify_proof_dag(block_native_algebraic_certificate_dag(cert))
+        dag_report.accepted || return dag_report
         return _accept(:C, :block_native_algebraic, :incidence_replay,
                        :block_native_incidence;
                        problem_hash=cert.problem_hash,
@@ -2727,20 +2842,84 @@ end
 
 function replay_file(path::AbstractString; strict::Bool=true,
                      io::Union{Nothing, IO}=nothing)
-    cert = try
-        parse_certificate_json_v3(read(path, String); strict)
+    text = read(path, String)
+    parsed = try
+        _read_json_document(text, "CertSDP replay artifact")
     catch err
         report = _reject(:F, :schema, :parse, :schema,
                          sprint(showerror, err); artifact_path=path)
         _print_report(io, report)
         return report
     end
-    report = verify_certificate(cert; io)
-    return _with_location(report; artifact_path=path)
+    report = _replay_parsed_certificate_text(text, parsed; strict,
+                                             artifact_path=path)
+    _print_report(io, report)
+    return report
 end
 
 function diagnose_file(path::AbstractString; strict::Bool=true)
     return replay_file(path; strict, io=nothing)
+end
+
+function _replay_parsed_certificate_text(text::AbstractString, parsed;
+                                         strict::Bool=true,
+                                         artifact_path::Union{Nothing, AbstractString}=nothing)
+    try
+        _require_object(parsed, "root")
+        if haskey(parsed, :certsdp_certificate_version)
+            cert = parse_certificate_json_v3(text; strict)
+            report = verify_certificate(cert; io=nothing)
+            return _with_location(report; artifact_path)
+        elseif haskey(parsed, :certsdp_algebraic_psd_factor_version)
+            matrix, proof, dag, certificate_hash =
+                parse_algebraic_low_rank_psd_certificate_json(text)
+            report = verify_algebraic_low_rank_psd(matrix, proof)
+            report.accepted && (report = verify_proof_dag(dag))
+            if report.accepted
+                expected_hash = algebraic_low_rank_psd_certificate_hash(matrix,
+                                                                        proof,
+                                                                        dag)
+                certificate_hash == expected_hash ||
+                    return _reject(:D, :psd_factor_algebraic, :hash,
+                                   :certificate_hash,
+                                   "algebraic PSD certificate hash mismatch";
+                                   problem_hash=matrix.hash,
+                                   certificate_hash,
+                                   artifact_path)
+            end
+            return _with_location(report; certificate_hash, artifact_path)
+        elseif haskey(parsed, :certsdp_block_native_certificate_version)
+            cert = parse_block_native_algebraic_certificate_json(text)
+            return _with_location(verify_block_native_algebraic_certificate(cert);
+                                  artifact_path)
+        elseif haskey(parsed, :certsdp_primal_dual_certificate_version)
+            cert = parse_primal_dual_optimality_certificate_json(text)
+            return _with_location(verify_primal_dual_optimality(cert);
+                                  artifact_path)
+        elseif haskey(parsed, :certsdp_farkas_certificate_version)
+            cert = parse_farkas_infeasibility_certificate_json(text)
+            return _with_location(verify_farkas_infeasibility(cert);
+                                  artifact_path)
+        elseif haskey(parsed, :certsdp_sparse_sos_certificate_version)
+            cert = parse_sparse_sos_certificate_json(text)
+            return _with_location(verify_sparse_sos_certificate(cert);
+                                  artifact_path)
+        elseif haskey(parsed, :certsdp_quantum_certificate_version)
+            cert = parse_quantum_bound_certificate_json(text)
+            return _with_location(verify_quantum_bound_certificate(cert);
+                                  artifact_path)
+        elseif haskey(parsed, :certsdp_symmetry_certificate_version)
+            cert = parse_block_diagonalization_certificate_json(text)
+            return _with_location(verify_block_diagonalization_certificate(cert);
+                                  artifact_path)
+        end
+        return _reject(:F, :schema, :parse, :schema,
+                       "unsupported CertSDP replay artifact schema";
+                       artifact_path)
+    catch err
+        return _reject(:F, :schema, :parse, :schema,
+                       sprint(showerror, err); artifact_path)
+    end
 end
 
 function diagnostic_report_json(report::DiagnosticReport)
@@ -2962,6 +3141,33 @@ function _parse_low_rank_proof_object(object,
     return proof
 end
 
+function _parse_low_rank_proof_object_without_matrix(object;
+                                                     strict::Bool=true,
+                                                     path::AbstractString="low_rank_proof")
+    strict && _strict_validate_top_object(object,
+                                          Set(Symbol[:field, :matrix_hash, :factor,
+                                                     :diagonal,
+                                                     :identity_proof_hash]),
+                                          path)
+    factor_value = _require_key(object, :factor, path)
+    diagonal_value = _require_key(object, :diagonal, path)
+    factor = _parse_rational_row_matrix(factor_value, "$path.factor")
+    _require_array(diagonal_value, "$path.diagonal")
+    diagonal = [_parse_rational_string(value, "$path.diagonal[$i]")
+                for (i, value) in enumerate(diagonal_value)]
+    proof = ExactLowRankPSDProof(Symbol(_require_string(object, :field,
+                                                        "$path.field")),
+                                 _require_string(object, :matrix_hash,
+                                                 "$path.matrix_hash"),
+                                 factor,
+                                 diagonal,
+                                 _require_string(object, :identity_proof_hash,
+                                                 "$path.identity_proof_hash"))
+    proof.identity_proof_hash == low_rank_identity_hash(proof) ||
+        throw(ArgumentError("$path.identity_proof_hash mismatch"))
+    return proof
+end
+
 function _parse_chordal_proof_object(object,
                                      matrix::SparseSymmetricRationalMatrix;
                                      strict::Bool=true)
@@ -3153,6 +3359,7 @@ function parse_block_native_algebraic_certificate_json(json_text::AbstractString
                                            :incidence,
                                            :active_block_proofs,
                                            :inactive_psd_proofs,
+                                           :proof_dag,
                                            :certificate_hash]),
                                 "root")
     _reject_forbidden_trust_claims(parsed, "root")
@@ -3194,7 +3401,150 @@ function parse_block_native_algebraic_certificate_json(json_text::AbstractString
                                                            "root.certificate_hash"))
     cert.certificate_hash == block_native_algebraic_certificate_hash(cert) ||
         throw(ArgumentError("root.certificate_hash mismatch"))
+    dag = _parse_certificate_dag(_require_key(parsed, :proof_dag, "root");
+                                 strict=true)
+    expected_dag = block_native_algebraic_certificate_dag(cert)
+    dag.root_hash == expected_dag.root_hash ||
+        throw(ArgumentError("root.proof_dag does not match block-native replay obligations"))
     return cert
+end
+
+function parse_primal_dual_optimality_certificate_json(json_text::AbstractString)
+    parsed = _read_json_document(json_text, "CertSDP primal-dual certificate")
+    _strict_validate_top_object(parsed,
+                                Set(Symbol[:certsdp_primal_dual_certificate_version,
+                                           :problem_hash, :primal, :dual, :gap,
+                                           :proof_dag, :certificate_hash]),
+                                "root")
+    _reject_forbidden_trust_claims(parsed, "root")
+    _require_value(parsed, :certsdp_primal_dual_certificate_version,
+                   CERTSDP3_SCHEMA_VERSION,
+                   "root.certsdp_primal_dual_certificate_version")
+    problem_hash = _require_string(parsed, :problem_hash, "root.problem_hash")
+    primal = _parse_primal_feasibility_object(_require_key(parsed, :primal,
+                                                           "root"),
+                                              "root.primal")
+    dual = _parse_dual_feasibility_object(_require_key(parsed, :dual, "root"),
+                                          "root.dual")
+    problem_hash == primal.problem_hash == dual.problem_hash ||
+        throw(ArgumentError("root.problem_hash does not match primal/dual problem hash"))
+    dag = _parse_certificate_dag(_require_key(parsed, :proof_dag, "root");
+                                 strict=true)
+    cert = PrimalDualOptimalityCertificate(problem_hash,
+                                           primal,
+                                           dual,
+                                           _parse_rational_string(_require_key(parsed,
+                                                                               :gap,
+                                                                               "root"),
+                                                                  "root.gap"),
+                                           _require_string(parsed,
+                                                           :certificate_hash,
+                                                           "root.certificate_hash"),
+                                           dag)
+    cert.certificate_hash == primal_dual_optimality_hash(cert) ||
+        throw(ArgumentError("root.certificate_hash mismatch"))
+    return cert
+end
+
+function parse_farkas_infeasibility_certificate_json(json_text::AbstractString)
+    parsed = _read_json_document(json_text, "CertSDP Farkas certificate")
+    _strict_validate_top_object(parsed,
+                                Set(Symbol[:certsdp_farkas_certificate_version,
+                                           :problem_hash,
+                                           :multiplier_identity_lhs,
+                                           :multiplier_identity_rhs,
+                                           :cone_proofs,
+                                           :contradiction_lhs,
+                                           :contradiction_rhs,
+                                           :proof_dag,
+                                           :certificate_hash]),
+                                "root")
+    _reject_forbidden_trust_claims(parsed, "root")
+    _require_value(parsed, :certsdp_farkas_certificate_version,
+                   CERTSDP3_SCHEMA_VERSION,
+                   "root.certsdp_farkas_certificate_version")
+    problem_hash = _require_string(parsed, :problem_hash, "root.problem_hash")
+    cone_proofs = ExactLowRankPSDProof[]
+    for (i, proof_object) in enumerate(_require_key(parsed, :cone_proofs, "root"))
+        push!(cone_proofs, _parse_low_rank_proof_object_without_matrix(proof_object;
+                                                                       strict=true,
+                                                                       path="root.cone_proofs[$i]"))
+    end
+    lhs = [_parse_rational_string(value, "root.multiplier_identity_lhs[$i]")
+           for (i, value) in enumerate(_require_key(parsed,
+                                                    :multiplier_identity_lhs,
+                                                    "root"))]
+    rhs = [_parse_rational_string(value, "root.multiplier_identity_rhs[$i]")
+           for (i, value) in enumerate(_require_key(parsed,
+                                                    :multiplier_identity_rhs,
+                                                    "root"))]
+    dag = _parse_certificate_dag(_require_key(parsed, :proof_dag, "root");
+                                 strict=true)
+    cert = FarkasInfeasibilityCertificate(problem_hash,
+                                          lhs,
+                                          rhs,
+                                          cone_proofs,
+                                          _parse_rational_string(_require_key(parsed,
+                                                                              :contradiction_lhs,
+                                                                              "root"),
+                                                                 "root.contradiction_lhs"),
+                                          _parse_rational_string(_require_key(parsed,
+                                                                              :contradiction_rhs,
+                                                                              "root"),
+                                                                 "root.contradiction_rhs"),
+                                          _require_string(parsed,
+                                                          :certificate_hash,
+                                                          "root.certificate_hash"),
+                                          dag)
+    cert.certificate_hash == farkas_infeasibility_hash(cert) ||
+        throw(ArgumentError("root.certificate_hash mismatch"))
+    return cert
+end
+
+function parse_algebraic_low_rank_psd_certificate_json(json_text::AbstractString)
+    parsed = _read_json_document(json_text, "CertSDP algebraic PSD certificate")
+    _strict_validate_top_object(parsed,
+                                Set(Symbol[:certsdp_algebraic_psd_factor_version,
+                                           :matrix, :field, :factor, :diagonal,
+                                           :identity_proof_hash, :proof_dag,
+                                           :certificate_hash]),
+                                "root")
+    _reject_forbidden_trust_claims(parsed, "root")
+    _require_value(parsed, :certsdp_algebraic_psd_factor_version,
+                   CERTSDP3_SCHEMA_VERSION,
+                   "root.certsdp_algebraic_psd_factor_version")
+    matrix = parse_sparse_matrix_object(_require_key(parsed, :matrix, "root");
+                                        strict=true,
+                                        path="root.matrix")
+    field = _parse_algebraic_field_certificate_object(_require_key(parsed,
+                                                                   :field,
+                                                                   "root"),
+                                                      "root.field")
+    factor_rows = _require_key(parsed, :factor, "root")
+    _require_array(factor_rows, "root.factor")
+    factor = Vector{AlgebraicElement}[]
+    for (i, row) in enumerate(factor_rows)
+        _require_array(row, "root.factor[$i]")
+        push!(factor, [_parse_algebraic_element_object(value, field,
+                                                       "root.factor[$i][$j]")
+                       for (j, value) in enumerate(row)])
+    end
+    diagonal = [_parse_algebraic_element_object(value, field,
+                                               "root.diagonal[$i]")
+                for (i, value) in enumerate(_require_key(parsed, :diagonal,
+                                                         "root"))]
+    proof = ExactAlgebraicLowRankPSDProof(matrix, field, factor, diagonal)
+    supplied_identity = _require_string(parsed, :identity_proof_hash,
+                                        "root.identity_proof_hash")
+    supplied_identity == proof.identity_proof_hash ||
+        throw(ArgumentError("root.identity_proof_hash mismatch"))
+    dag = _parse_certificate_dag(_require_key(parsed, :proof_dag, "root");
+                                 strict=true)
+    supplied_hash = _require_string(parsed, :certificate_hash,
+                                    "root.certificate_hash")
+    supplied_hash == algebraic_low_rank_psd_certificate_hash(matrix, proof, dag) ||
+        throw(ArgumentError("root.certificate_hash mismatch"))
+    return matrix, proof, dag, supplied_hash
 end
 
 function parse_sparse_sos_certificate_json(json_text::AbstractString)
@@ -3594,6 +3944,98 @@ function _parse_block_native_inactive_psd_proof(object, path::AbstractString)
     supplied == proof.proof_hash ||
         throw(ArgumentError("$path.proof_hash mismatch"))
     return proof
+end
+
+function _parse_primal_feasibility_object(object, path::AbstractString)
+    _strict_validate_top_object(object,
+                                Set(Symbol[:problem_hash,
+                                           :affine_lhs,
+                                           :affine_rhs,
+                                           :cone_matrices,
+                                           :cone_proofs,
+                                           :objective_value]),
+                                path)
+    matrices_value = _require_key(object, :cone_matrices, path)
+    proofs_value = _require_key(object, :cone_proofs, path)
+    _require_array(matrices_value, "$path.cone_matrices")
+    _require_array(proofs_value, "$path.cone_proofs")
+    length(matrices_value) == length(proofs_value) ||
+        throw(ArgumentError("$path cone matrix/proof count mismatch"))
+    matrices = SparseSymmetricRationalMatrix[
+        parse_sparse_matrix_object(matrix_object; strict=true,
+                                   path="$path.cone_matrices[$i]")
+        for (i, matrix_object) in enumerate(matrices_value)
+    ]
+    proofs = ExactLowRankPSDProof[
+        _parse_low_rank_proof_object(proof_object, matrices[i];
+                                     strict=true,
+                                     path="$path.cone_proofs[$i]")
+        for (i, proof_object) in enumerate(proofs_value)
+    ]
+    return PrimalFeasibilityCertificate(_require_string(object, :problem_hash,
+                                                        "$path.problem_hash"),
+                                        [_parse_rational_string(value,
+                                                                "$path.affine_lhs[$i]")
+                                         for (i, value) in enumerate(_require_key(object,
+                                                                                 :affine_lhs,
+                                                                                 path))],
+                                        [_parse_rational_string(value,
+                                                                "$path.affine_rhs[$i]")
+                                         for (i, value) in enumerate(_require_key(object,
+                                                                                 :affine_rhs,
+                                                                                 path))],
+                                        matrices,
+                                        proofs,
+                                        _parse_rational_string(_require_key(object,
+                                                                            :objective_value,
+                                                                            path),
+                                                               "$path.objective_value"))
+end
+
+function _parse_dual_feasibility_object(object, path::AbstractString)
+    _strict_validate_top_object(object,
+                                Set(Symbol[:problem_hash,
+                                           :affine_lhs,
+                                           :affine_rhs,
+                                           :cone_matrices,
+                                           :cone_proofs,
+                                           :objective_value]),
+                                path)
+    matrices_value = _require_key(object, :cone_matrices, path)
+    proofs_value = _require_key(object, :cone_proofs, path)
+    _require_array(matrices_value, "$path.cone_matrices")
+    _require_array(proofs_value, "$path.cone_proofs")
+    length(matrices_value) == length(proofs_value) ||
+        throw(ArgumentError("$path cone matrix/proof count mismatch"))
+    matrices = SparseSymmetricRationalMatrix[
+        parse_sparse_matrix_object(matrix_object; strict=true,
+                                   path="$path.cone_matrices[$i]")
+        for (i, matrix_object) in enumerate(matrices_value)
+    ]
+    proofs = ExactLowRankPSDProof[
+        _parse_low_rank_proof_object(proof_object, matrices[i];
+                                     strict=true,
+                                     path="$path.cone_proofs[$i]")
+        for (i, proof_object) in enumerate(proofs_value)
+    ]
+    return DualFeasibilityCertificate(_require_string(object, :problem_hash,
+                                                      "$path.problem_hash"),
+                                      [_parse_rational_string(value,
+                                                              "$path.affine_lhs[$i]")
+                                       for (i, value) in enumerate(_require_key(object,
+                                                                               :affine_lhs,
+                                                                               path))],
+                                      [_parse_rational_string(value,
+                                                              "$path.affine_rhs[$i]")
+                                       for (i, value) in enumerate(_require_key(object,
+                                                                               :affine_rhs,
+                                                                               path))],
+                                      matrices,
+                                      proofs,
+                                      _parse_rational_string(_require_key(object,
+                                                                          :objective_value,
+                                                                          path),
+                                                             "$path.objective_value"))
 end
 
 function _parse_algebraic_field_certificate_object(object, path::AbstractString)

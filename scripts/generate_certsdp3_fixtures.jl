@@ -360,25 +360,9 @@ function main()
                                                  alg_factor,
                                                  fill(alg_diag, 40))
     write_json(joinpath(alg_dir, "certificate.json"),
-               Dict("certsdp_algebraic_psd_factor_version" => "3.0",
-                    "matrix" => K3.sparse_matrix_json(alg_matrix),
-                    "field" => K3.algebraic_field_certificate_json(alg_field),
-                    "factor" => [[K3.algebraic_element_json(value) for value in row]
-                                  for row in alg_proof.factor],
-                    "diagonal" => [K3.algebraic_element_json(value)
-                                    for value in alg_proof.diagonal],
-                    "identity_proof_hash" => alg_proof.identity_proof_hash,
-                    "certificate_hash" => alg_proof.identity_proof_hash))
-    alg_tamper = certsdp3_mutable_json(Dict(
-        "certsdp_algebraic_psd_factor_version" => "3.0",
-        "matrix" => K3.sparse_matrix_json(alg_matrix),
-        "field" => K3.algebraic_field_certificate_json(alg_field),
-        "factor" => [[K3.algebraic_element_json(value) for value in row]
-                      for row in alg_proof.factor],
-        "diagonal" => [K3.algebraic_element_json(value)
-                       for value in alg_proof.diagonal],
-        "identity_proof_hash" => alg_proof.identity_proof_hash,
-        "certificate_hash" => alg_proof.identity_proof_hash))
+               K3.algebraic_low_rank_psd_certificate_json(alg_matrix, alg_proof))
+    alg_tamper = certsdp3_mutable_json(K3.algebraic_low_rank_psd_certificate_json(alg_matrix,
+                                                                                  alg_proof))
     alg_tamper[:diagonal][1][:coefficients] = ["-1", "0"]
     write_json(joinpath(alg_dir, "tampered_algebraic_sign.json"), alg_tamper)
 
@@ -499,22 +483,12 @@ function main()
                                                          pd_primal,
                                                          pd_dual)
     write_json(joinpath(pd_dir, "certificate.json"),
-               Dict("certsdp_primal_dual_certificate_version" => "3.0",
-                    "problem_hash" => pd_cert.problem_hash,
-                    "primal" => K3.primal_feasibility_json(pd_cert.primal),
-                    "dual" => K3.dual_feasibility_json(pd_cert.dual),
-                    "gap" => K3.rational_string(pd_cert.gap),
-                    "certificate_hash" => pd_cert.certificate_hash))
+               K3.primal_dual_optimality_certificate_json(pd_cert))
     pd_bad_cert = K3.make_primal_dual_optimality_certificate(pd_matrix.hash,
                                                              pd_primal,
                                                              pd_dual;
                                                              gap=1//1)
-    pd_tamper = Dict("certsdp_primal_dual_certificate_version" => "3.0",
-                     "problem_hash" => pd_cert.problem_hash,
-                     "primal" => K3.primal_feasibility_json(pd_cert.primal),
-                     "dual" => K3.dual_feasibility_json(pd_cert.dual),
-                     "gap" => "1",
-                     "certificate_hash" => pd_bad_cert.certificate_hash)
+    pd_tamper = certsdp3_mutable_json(K3.primal_dual_optimality_certificate_json(pd_bad_cert))
     write_json(joinpath(pd_dir, "tampered_gap_value.json"), pd_tamper)
 
     farkas_dir = joinpath(ROOT, "farkas_infeasible_lmi_medium")
@@ -528,28 +502,14 @@ function main()
                                                        0//1,
                                                        -1//1)
     write_json(joinpath(farkas_dir, "certificate.json"),
-               Dict("certsdp_farkas_certificate_version" => "3.0",
-                    "problem_hash" => fk_cert.problem_hash,
-                    "multiplier_identity_lhs" => K3.rational_string.(fk_cert.multiplier_identity_lhs),
-                    "multiplier_identity_rhs" => K3.rational_string.(fk_cert.multiplier_identity_rhs),
-                    "cone_proofs" => [K3.low_rank_proof_json(proof) for proof in fk_cert.cone_proofs],
-                    "contradiction_lhs" => K3.rational_string(fk_cert.contradiction_lhs),
-                    "contradiction_rhs" => K3.rational_string(fk_cert.contradiction_rhs),
-                    "certificate_hash" => fk_cert.certificate_hash))
+               K3.farkas_infeasibility_certificate_json(fk_cert))
     fk_bad_cert = K3.make_farkas_infeasibility_certificate(fk_matrix.hash,
                                                            [1//1; fill(0//1, 9)],
                                                            fill(0//1, 10),
                                                            [fk_proof],
                                                            0//1,
                                                            -1//1)
-    fk_tamper = Dict("certsdp_farkas_certificate_version" => "3.0",
-                     "problem_hash" => fk_cert.problem_hash,
-                     "multiplier_identity_lhs" => ["1"; K3.rational_string.(fk_cert.multiplier_identity_lhs[2:end])],
-                     "multiplier_identity_rhs" => K3.rational_string.(fk_cert.multiplier_identity_rhs),
-                     "cone_proofs" => [K3.low_rank_proof_json(proof) for proof in fk_cert.cone_proofs],
-                     "contradiction_lhs" => K3.rational_string(fk_cert.contradiction_lhs),
-                     "contradiction_rhs" => K3.rational_string(fk_cert.contradiction_rhs),
-                     "certificate_hash" => fk_bad_cert.certificate_hash)
+    fk_tamper = certsdp3_mutable_json(K3.farkas_infeasibility_certificate_json(fk_bad_cert))
     write_json(joinpath(farkas_dir, "tampered_multiplier.json"), fk_tamper)
 
     tssos_dir = joinpath(ROOT, "tssos_sparse_industry_medium")
@@ -612,12 +572,7 @@ function main()
     write_json(joinpath(tssos_dir, "artifact.json"), tssos_artifact)
     tssos_candidate = CertSDP.import_tssos_artifact(joinpath(tssos_dir, "artifact.json"))
     write_json(joinpath(tssos_dir, "certificate.json"),
-               Dict("certsdp_sparse_sos_candidate_version" => "3.0",
-                    "source" => String(tssos_candidate.source),
-                    "source_hash" => tssos_candidate.source_hash,
-                    "artifact_hash" => tssos_candidate.artifact_hash,
-                    "certificate_hash" => tssos_candidate.certificate.certificate_hash,
-                    "problem_hash" => tssos_candidate.certificate.problem.problem_hash))
+               K3.sparse_sos_certificate_json(tssos_candidate.certificate))
     tssos_basis_tamper = deepcopy(tssos_artifact)
     tssos_basis_tamper["monomial_bases"][1]["exponents"][1][1] = 2
     add_artifact_hash(tssos_basis_tamper)
@@ -706,12 +661,7 @@ function main()
     nctssos_candidate = CertSDP.import_nctssos_artifact(joinpath(nctssos_dir,
                                                                  "artifact.json"))
     write_json(joinpath(nctssos_dir, "certificate.json"),
-               Dict("certsdp_quantum_candidate_version" => "3.0",
-                    "source" => String(nctssos_candidate.source),
-                    "source_hash" => nctssos_candidate.source_hash,
-                    "artifact_hash" => nctssos_candidate.artifact_hash,
-                    "certificate_hash" => nctssos_candidate.certificate.certificate_hash,
-                    "problem_hash" => nctssos_candidate.certificate.problem.problem_hash))
+               K3.quantum_bound_certificate_json(nctssos_candidate.certificate))
     nctssos_relation_tamper = deepcopy(nctssos_artifact)
     nctssos_relation_tamper["quotient_relations"][1]["data"]["symbol"] = "BAD"
     add_artifact_hash(nctssos_relation_tamper)
@@ -789,7 +739,8 @@ function main()
                 "tamper_files" => ["tampered_algebraic_sign.json"],
                 "max_runtime_seconds" => 45,
                 "max_memory_mb" => 1536,
-                "certificate_hash" => alg_proof.identity_proof_hash,
+                "certificate_hash" => String(K3.algebraic_low_rank_psd_certificate_json(alg_matrix,
+                                                                                         alg_proof).certificate_hash),
                 "problem_hash" => alg_matrix.hash,
                 "required_optional_deps" => Any[],
                 "validation_purpose" => "Gate D/L algebraic low-rank PSD exact identity and sign replay",

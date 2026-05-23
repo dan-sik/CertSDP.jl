@@ -1,12 +1,200 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://certsdp.local/schemas/certsdp_nc_quantum_v3.schema.json",
-  "title": "CertSDP NC Quantum v3",
+  "title": "CertSDP NC Quantum Certificate v3",
   "type": "object",
   "additionalProperties": false,
-  "required": ["certsdp_nc_quantum_version", "status"],
+  "required": [
+    "certsdp_quantum_certificate_version",
+    "problem",
+    "moment_certificate",
+    "objective_terms",
+    "bound",
+    "proof_dag",
+    "certificate_hash"
+  ],
   "properties": {
-    "certsdp_nc_quantum_version": { "const": "3.0" },
-    "status": { "enum": ["reserved_for_nc_quantum_gate_j"] }
+    "certsdp_quantum_certificate_version": { "const": "3.0" },
+    "problem": { "$ref": "#/$defs/npa_problem" },
+    "moment_certificate": { "$ref": "#/$defs/moment_certificate" },
+    "objective_terms": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nc_term" }
+    },
+    "bound": { "$ref": "#/$defs/rational" },
+    "proof_dag": { "$ref": "certsdp_certificate_v3.schema.json#/$defs/proof_dag" },
+    "certificate_hash": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "rational": {
+      "type": "string",
+      "pattern": "^-?[0-9]+(/[1-9][0-9]*)?$"
+    },
+    "word": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "nc_term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["word", "coefficient"],
+      "properties": {
+        "word": { "$ref": "#/$defs/word" },
+        "coefficient": { "$ref": "#/$defs/rational" }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": {
+          "enum": [
+            "projection",
+            "unitary",
+            "commutation",
+            "trace_cyclic",
+            "star_involution",
+            "normalization"
+          ]
+        },
+        "symbol": { "type": "string" },
+        "left_symbols": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "right_symbols": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "value": { "$ref": "#/$defs/rational" }
+      }
+    },
+    "rewrite_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "before", "after", "relation_id"],
+      "properties": {
+        "rule": { "type": "string" },
+        "before": { "$ref": "#/$defs/word" },
+        "after": { "$ref": "#/$defs/word" },
+        "relation_id": { "type": "string" }
+      }
+    },
+    "rewrite_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_word",
+        "steps",
+        "final_word",
+        "relation_ids_used",
+        "trace_rotations",
+        "star_steps"
+      ],
+      "properties": {
+        "input_word": { "$ref": "#/$defs/word" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rewrite_step" }
+        },
+        "final_word": { "$ref": "#/$defs/word" },
+        "relation_ids_used": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "trace_rotations": { "type": "integer", "minimum": 0 },
+        "star_steps": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "sparse_matrix": {
+      "$ref": "certsdp_sparse_lmi_v3.schema.json#/$defs/sparse_matrix"
+    },
+    "low_rank_psd_proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "matrix_hash",
+        "factor",
+        "diagonal",
+        "identity_proof_hash"
+      ],
+      "properties": {
+        "field": { "const": "QQ" },
+        "matrix_hash": { "$ref": "#/$defs/sha256" },
+        "factor": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/rational" }
+          }
+        },
+        "diagonal": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rational" }
+        },
+        "identity_proof_hash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "npa_problem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variables",
+        "relations",
+        "word_basis",
+        "trace_cyclic",
+        "problem_hash"
+      ],
+      "properties": {
+        "variables": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/relation" }
+        },
+        "word_basis": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/word" }
+        },
+        "trace_cyclic": { "type": "boolean" },
+        "problem_hash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "moment_certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "problem_hash",
+        "moment_matrix",
+        "psd_proof",
+        "coefficient_terms",
+        "witnesses",
+        "certificate_hash"
+      ],
+      "properties": {
+        "problem_hash": { "$ref": "#/$defs/sha256" },
+        "moment_matrix": { "$ref": "#/$defs/sparse_matrix" },
+        "psd_proof": { "$ref": "#/$defs/low_rank_psd_proof" },
+        "coefficient_terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nc_term" }
+        },
+        "witnesses": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rewrite_witness" }
+        },
+        "certificate_hash": { "$ref": "#/$defs/sha256" }
+      }
+    }
   }
 }

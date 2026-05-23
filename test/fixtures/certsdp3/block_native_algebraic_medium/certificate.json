@@ -10409,5 +10409,52 @@
             "proof_hash": "sha256:5e9f54ae25693dae6c81cd3fb9db038d8f27d627fb4eb37c6a8d475214d2e8ca"
         }
     ],
+    "proof_dag": {
+        "claim_type": "block_native_algebraic",
+        "nodes": [
+            {
+                "id": "block_native_incidence",
+                "kind": "hash",
+                "inputs": [
+                ],
+                "output_hash": "sha256:d9006fd0e281141f158265867e99c9303d82013730ae1badbfff185b3557fb35",
+                "checker": "block_native_incidence_system_hash",
+                "status": "accepted"
+            },
+            {
+                "id": "active_block_replay",
+                "kind": "exact_algebraic_replay",
+                "inputs": [
+                    "sha256:d9006fd0e281141f158265867e99c9303d82013730ae1badbfff185b3557fb35"
+                ],
+                "output_hash": "sha256:16285f5cebb8a5510f05cf4a4c21e6b1598f5f8e9a3a33a8fd6d1797481b83ab",
+                "checker": "verify_block_native_active_blocks",
+                "status": "accepted"
+            },
+            {
+                "id": "inactive_psd_replay",
+                "kind": "psd_margin",
+                "inputs": [
+                    "sha256:d9006fd0e281141f158265867e99c9303d82013730ae1badbfff185b3557fb35"
+                ],
+                "output_hash": "sha256:5b54fd6e9346a0eeaec72561e759a603d0a1b06f03dbd37623deef695c828d4e",
+                "checker": "verify_block_native_inactive_blocks",
+                "status": "accepted"
+            },
+            {
+                "id": "block_native_certificate",
+                "kind": "exact_replay",
+                "inputs": [
+                    "sha256:16285f5cebb8a5510f05cf4a4c21e6b1598f5f8e9a3a33a8fd6d1797481b83ab",
+                    "sha256:5b54fd6e9346a0eeaec72561e759a603d0a1b06f03dbd37623deef695c828d4e"
+                ],
+                "output_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a",
+                "checker": "verify_block_native_algebraic_certificate",
+                "status": "accepted"
+            }
+        ],
+        "root_hash": "sha256:95e3bd9c4d1539c59aa32cc447a1fc6fc93de2634983d0b4c0637b3aabebb9b9",
+        "schema_version": "3.0"
+    },
     "certificate_hash": "sha256:28b40f750942fff29d6056edd4c33b4f24589685d13300d380ef370820261e6a"
 }

@@ -43,6 +43,7 @@ end
     include("npa_certificate_replay.jl")
     include("field_layer.jl")
     include("cli_product_surface.jl")
+    include("validation_cli_surface.jl")
     include("paper_bundle.jl")
     include("hash_stability.jl")
     include("backward_compatibility.jl")

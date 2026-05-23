@@ -20,7 +20,10 @@ function certsdp3_cli_handles(args::AbstractVector{<:AbstractString})
     command = first(args)
     command in ("help", "--help", "-h") && return false
     command in ("version", "--version") && return "--json" in args[2:end]
-    command in ("replay", "bundle", "import") && return true
+    command == "import" && return true
+    command == "certify" && return "--candidate" in args[2:end]
+    command in ("replay", "verify", "bundle") &&
+        return _replay_like_args_are_v3(args[2:end])
     command == "diagnose" && return _diagnose_args_are_v3(args[2:end])
     command == "schema" || return false
     return _schema_args_are_v3(args[2:end])
@@ -46,6 +49,8 @@ function certsdp3_cli_main(args=String[]; io::IO=stdout, err::IO=stderr)
         return CLI_EXIT_OK
     elseif command == "replay"
         return _replay(rest; io, err)
+    elseif command == "verify"
+        return _verify(rest; io, err)
     elseif command == "diagnose"
         return _diagnose(rest; io, err)
     elseif command == "schema"
@@ -54,9 +59,25 @@ function certsdp3_cli_main(args=String[]; io::IO=stdout, err::IO=stderr)
         return _bundle(rest; io, err)
     elseif command == "import"
         return _import(rest; io, err)
+    elseif command == "certify"
+        return _certify(rest; io, err)
     end
     println(err, "[FAIL] unknown CertSDP 3.0 command `$command`")
     return _usage(err)
+end
+
+function _verify(args; io::IO, err::IO)
+    isempty(args) && return _fail(err, "verify expects a certificate path")
+    rest = String[]
+    strict_seen = false
+    for arg in args
+        if arg == "--strict"
+            strict_seen = true
+        else
+            push!(rest, arg)
+        end
+    end
+    return _replay(vcat(rest, ["--strict"]); io, err)
 end
 
 function _replay(args; io::IO, err::IO)
@@ -171,7 +192,11 @@ function _schema(args; io::IO, err::IO)
     text = read(path, String)
     try
         if kind === :certificate
-            Kernel.validate_certificate_schema_v3(text)
+            report = Kernel._replay_parsed_certificate_text(text,
+                                                            JSON3.read(text);
+                                                            strict=true)
+            report.accepted ||
+                throw(ArgumentError("certificate did not strict-replay: $(report.reason)"))
         elseif kind === :problem
             Kernel.validate_problem_schema_v3(text)
         else
@@ -183,6 +208,51 @@ function _schema(args; io::IO, err::IO)
         return CLI_EXIT_INVALID_INPUT
     end
     println(io, "[OK] schema valid: ", kind)
+    return CLI_EXIT_OK
+end
+
+function _certify(args; io::IO, err::IO)
+    problem_path = nothing
+    candidate_path = nothing
+    out_path = nothing
+    i = 1
+    while i <= length(args)
+        arg = args[i]
+        if arg == "--candidate"
+            i += 1
+            i <= length(args) || return _fail(err, "--candidate requires a path")
+            candidate_path = args[i]
+        elseif arg == "--out"
+            i += 1
+            i <= length(args) || return _fail(err, "--out requires a path")
+            out_path = args[i]
+        elseif startswith(arg, "--")
+            return _fail(err, "unknown certify option `$arg`")
+        elseif isnothing(problem_path)
+            problem_path = arg
+        else
+            return _fail(err, "unexpected certify argument `$arg`")
+        end
+        i += 1
+    end
+    isnothing(problem_path) && return _fail(err, "certify expects a problem path")
+    isnothing(candidate_path) && return _fail(err, "certify requires --candidate")
+    isnothing(out_path) && return _fail(err, "certify requires --out")
+    report = Kernel.replay_file(candidate_path; strict=true)
+    report.accepted ||
+        return _fail(err, "candidate did not strict-replay: $(report.reason)")
+    problem_hash = try
+        _problem_hash_for_certify(problem_path)
+    catch problem_error
+        return _fail(err, "problem artifact rejected: $(sprint(showerror, problem_error))")
+    end
+    if !isnothing(problem_hash) && !isnothing(report.problem_hash) &&
+       problem_hash != report.problem_hash
+        return _fail(err,
+                     "candidate problem hash mismatch: expected $(problem_hash), got $(report.problem_hash)")
+    end
+    cp(candidate_path, out_path; force=true)
+    println(io, "[OK] certified candidate by exact replay: ", out_path)
     return CLI_EXIT_OK
 end
 
@@ -247,8 +317,9 @@ function _paper_bundle(cert_path::AbstractString, out_dir::AbstractString)
     write(joinpath(out_dir, "problem.json"),
           JSON3.write(Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
                            "source" => "embedded_or_not_supplied")))
-    cert = Kernel.parse_certificate_json_v3(cert_text; strict=true)
-    _write_json(joinpath(out_dir, "proof_dag.json"), Kernel.proof_dag_json(cert))
+    parsed = JSON3.read(cert_text)
+    dag_json = _proof_dag_json_from_replay_artifact(cert_text, parsed)
+    _write_json(joinpath(out_dir, "proof_dag.json"), dag_json)
     _write_json(joinpath(out_dir, "replay_report.json"),
                 Kernel.diagnostic_report_json(report))
     write(joinpath(out_dir, "replay_report.html"),
@@ -271,7 +342,7 @@ julia --project="$project_root" --startup-file=no -e 'using CertSDP; exit(CertSD
     write(joinpath(out_dir, "CITATION.cff"),
           "cff-version: 1.2.0\nmessage: Cite the CertSDP proof-carrying certificate artifact.\ntitle: CertSDP 3.0 Certificate Bundle\n")
     write(joinpath(out_dir, "theorem_statement.txt"),
-          "claim_type: $(cert.certificate_type)\ncertificate_id: $(cert.certificate_id)\nproblem_hash: $(cert.problem_hash)\n")
+          "claim_type: $(_claim_type_from_replay_artifact(parsed))\ncertificate_id: $(report.certificate_hash)\nproblem_hash: $(report.problem_hash)\n")
     hashes = String[]
     for file in ["certificate.json", "problem.json", "proof_dag.json",
                  "replay_report.json", "replay_report.html", "VERIFY.sh",
@@ -281,6 +352,33 @@ julia --project="$project_root" --startup-file=no -e 'using CertSDP; exit(CertSD
     end
     write(joinpath(out_dir, "hashes.txt"), join(hashes, "\n") * "\n")
     return out_dir
+end
+
+function _proof_dag_json_from_replay_artifact(text::AbstractString, parsed)
+    if haskey(parsed, :certsdp_certificate_version)
+        return Kernel.proof_dag_json(Kernel.parse_certificate_json_v3(text; strict=true))
+    elseif haskey(parsed, :certsdp_block_native_certificate_version)
+        cert = Kernel.parse_block_native_algebraic_certificate_json(text)
+        return Kernel.block_native_algebraic_certificate_dag_json(cert)
+    elseif haskey(parsed, :proof_dag)
+        return parsed[:proof_dag]
+    end
+    return Dict("claim_type" => _claim_type_from_replay_artifact(parsed),
+                "nodes" => Any[],
+                "root_hash" => "sha256:" * repeat("0", 64),
+                "schema_version" => Kernel.CERTSDP3_SCHEMA_VERSION)
+end
+
+function _claim_type_from_replay_artifact(parsed)
+    haskey(parsed, :certificate_type) && return String(parsed[:certificate_type])
+    haskey(parsed, :certsdp_algebraic_psd_factor_version) && return "algebraic_low_rank_psd"
+    haskey(parsed, :certsdp_block_native_certificate_version) && return "block_native_algebraic"
+    haskey(parsed, :certsdp_primal_dual_certificate_version) && return "primal_dual_optimality"
+    haskey(parsed, :certsdp_farkas_certificate_version) && return "farkas_infeasibility"
+    haskey(parsed, :certsdp_sparse_sos_certificate_version) && return "sparse_sos"
+    haskey(parsed, :certsdp_quantum_certificate_version) && return "quantum_bound"
+    haskey(parsed, :certsdp_symmetry_certificate_version) && return "symmetry_reduction"
+    return "unknown"
 end
 
 function _parse_path_out(args, command::AbstractString, err::IO)
@@ -316,12 +414,34 @@ end
 
 function _validate_auto_schema(text::AbstractString)
     try
-        Kernel.validate_certificate_schema_v3(text)
-        return true
+        report = Kernel._replay_parsed_certificate_text(text,
+                                                        JSON3.read(text);
+                                                        strict=true)
+        report.accepted && return true
     catch
     end
     Kernel.validate_problem_schema_v3(text)
     return true
+end
+
+function _problem_hash_for_certify(path::AbstractString)
+    text = read(path, String)
+    parsed = JSON3.read(text)
+    if haskey(parsed, :type) && String(parsed[:type]) == "block_lmi_feasibility"
+        problem = Main.CertSDP._parse_block_lmi_problem_object(parsed;
+                                                               path="root")
+        return Main.CertSDP.block_lmi_problem_hash(problem)
+    elseif haskey(parsed, :hash)
+        return String(parsed[:hash])
+    elseif haskey(parsed, :problem_hash)
+        return String(parsed[:problem_hash])
+    elseif haskey(parsed, :problem) && haskey(parsed[:problem], :problem_hash)
+        return String(parsed[:problem][:problem_hash])
+    end
+    problem = Main.CertSDP.parse_problem_json(text)
+    return problem isa Main.CertSDP.BlockLMIProblem ?
+           Main.CertSDP.block_lmi_problem_hash(problem) :
+           Main.CertSDP.lmi_problem_hash(problem)
 end
 
 function _schema_args_are_v3(args::AbstractVector{String})
@@ -357,14 +477,37 @@ function _schema_args_are_v3(args::AbstractVector{String})
     catch
         return false
     end
-    if kind in (:auto, :certificate) &&
-       haskey(parsed, :certsdp_certificate_version) &&
-       String(parsed[:certsdp_certificate_version]) == Kernel.CERTSDP3_SCHEMA_VERSION
+    if kind in (:auto, :certificate) && _is_v3_replay_artifact(parsed)
         return true
     end
     return kind in (:auto, :problem) &&
            haskey(parsed, :certsdp_problem_version) &&
            String(parsed[:certsdp_problem_version]) == Kernel.CERTSDP3_SCHEMA_VERSION
+end
+
+function _replay_like_args_are_v3(args::AbstractVector{<:AbstractString})
+    path = nothing
+    i = 1
+    while i <= length(args)
+        text = String(args[i])
+        if text == "--out"
+            i += 2
+            continue
+        elseif startswith(text, "--")
+            i += 1
+            continue
+        end
+        isnothing(path) || return false
+        path = text
+        i += 1
+    end
+    isnothing(path) && return false
+    parsed = try
+        JSON3.read(read(path, String))
+    catch
+        return false
+    end
+    return _is_v3_replay_artifact(parsed)
 end
 
 function _diagnose_args_are_v3(args::AbstractVector{String})
@@ -397,13 +540,29 @@ function _diagnose_args_are_v3(args::AbstractVector{String})
     catch
         return true
     end
-    return haskey(parsed, :certsdp_certificate_version) ||
-           haskey(parsed, :certsdp_quantum_certificate_version) ||
-           haskey(parsed, :certsdp_sparse_sos_certificate_version) ||
-           haskey(parsed, :certsdp_block_native_certificate_version) ||
-           haskey(parsed, :certsdp_symmetry_certificate_version) ||
+    return _is_v3_replay_artifact(parsed) ||
            haskey(parsed, :certsdp_tssos_artifact_version) ||
            haskey(parsed, :certsdp_nctssos_artifact_version)
+end
+
+function _is_v3_replay_artifact(parsed)
+    return _has_v3_version(parsed, :certsdp_certificate_version) ||
+           _has_v3_version(parsed, :certsdp_algebraic_psd_factor_version) ||
+           _has_v3_version(parsed, :certsdp_block_native_certificate_version) ||
+           _has_v3_version(parsed, :certsdp_primal_dual_certificate_version) ||
+           _has_v3_version(parsed, :certsdp_farkas_certificate_version) ||
+           _has_v3_version(parsed, :certsdp_sparse_sos_certificate_version) ||
+           _has_v3_version(parsed, :certsdp_quantum_certificate_version) ||
+           _has_v3_version(parsed, :certsdp_symmetry_certificate_version)
+end
+
+function _has_v3_version(parsed, key::Symbol)
+    haskey(parsed, key) || return false
+    try
+        return String(parsed[key]) == Kernel.CERTSDP3_SCHEMA_VERSION
+    catch
+        return false
+    end
 end
 
 function _write_json(path::AbstractString, object)

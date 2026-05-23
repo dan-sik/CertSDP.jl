@@ -18,6 +18,7 @@ const REQUIRED_TESTS = [
     "schema_strict.jl",
     "diagnostics_report.jl",
     "cli_product_surface.jl",
+    "validation_cli_surface.jl",
     "hash_stability.jl",
     "mutation_corpus.jl",
 ]
@@ -44,7 +45,7 @@ const GATES = [
     (:K_nctssos_importer, ["nctssos_importer.jl"]),
     (:L_field_layer, ["field_layer.jl"]),
     (:O_diagnostics, ["diagnostics_report.jl", "cli_replay_explain.jl"]),
-    (:P_cli, ["cli_product_surface.jl"]),
+    (:P_cli, ["cli_product_surface.jl", "validation_cli_surface.jl"]),
     (:Q_validation_corpus, ["../fixtures/certsdp3/index.json"]),
     (:R_tamper_tests, ["mutation_corpus.jl"]),
     (:S_performance, ["../../scripts/validate_certsdp3.jl"]),
@@ -124,14 +125,28 @@ function audit(; quiet_validation::Bool=false)
                            String(fixture[:fixture_id]))
             cert_path = joinpath(dir, "certificate.json")
             family = String(fixture[:problem_family])
-            measurement = _audit_measure_family(family, dir, cert_path)
+            measurement = CertSDP.Perf.measure_replay(cert_path)
             runtime += measurement.elapsed_seconds
             peak_memory = max(peak_memory, measurement.allocated_bytes / 1024^2)
             accepted += measurement.accepted ? 1 : 0
+            cli_code = CertSDP.main(["replay", cert_path, "--strict"];
+                                    io=IOBuffer(), err=IOBuffer())
+            cli_code == CertSDP.CLI_EXIT_OK || begin
+                gate_status[:P_cli] = "FAIL"
+                gate_status[:Q_validation_corpus] = "FAIL"
+                gate_status[:Z_release_audit] = "FAIL"
+            end
             for tamper in fixture[:tamper_files]
                 tamper_path = joinpath(dir, String(tamper))
                 report = _audit_tamper_family(family, tamper_path)
                 rejected_tamper += report.accepted ? 0 : 1
+                tamper_code = CertSDP.main(["replay", tamper_path, "--strict"];
+                                           io=IOBuffer(), err=IOBuffer())
+                tamper_code == CertSDP.CLI_EXIT_OK && begin
+                    gate_status[:P_cli] = "FAIL"
+                    gate_status[:R_tamper_tests] = "FAIL"
+                    gate_status[:Z_release_audit] = "FAIL"
+                end
             end
         end
     end
