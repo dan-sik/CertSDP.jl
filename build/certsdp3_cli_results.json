@@ -1,6 +1,144 @@
 {
     "cli_checks": [
         {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_120",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_chordal_120/certificate.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_stress_3000",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "api_exact_replay_sparse_stress"
+        },
+        {
+            "fixture": "sparse_chordal_120",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_chordal_120/tampered_wrong_separator.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_stress_3000",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_chordal_stress_3000/tampered_separator_entry_changed.json --strict --json"
+        },
+        {
+            "fixture": "block_native_algebraic_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/block_native_algebraic_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "block_native_algebraic_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/block_native_algebraic_medium/tampered_block_3_kernel.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_algebraic_40",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_algebraic_40/certificate.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_120",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_chordal_120/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_algebraic_40",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_algebraic_40/tampered_algebraic_sign.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_120",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_chordal_120/tampered_wrong_clique_psd.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "quantum_i3322_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_i3322_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "primal_dual_portfolio_50",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/primal_dual_portfolio_50/certificate.json --strict --json"
+        },
+        {
+            "fixture": "farkas_infeasible_lmi_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/farkas_infeasible_lmi_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "primal_dual_portfolio_50",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/primal_dual_portfolio_50/tampered_gap_value.json --strict --json"
+        },
+        {
+            "fixture": "farkas_infeasible_lmi_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/farkas_infeasible_lmi_medium/tampered_multiplier.json --strict --json"
+        },
+        {
             "fixture": "sparse_sos_control_lyapunov",
             "kind": "valid_replay",
             "exit": 0,
@@ -35,6 +173,387 @@
             "kind": "tamper_replay",
             "exit": 1,
             "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/tampered_coefficient_map.json --strict --json"
+        },
+        {
+            "fixture": "tssos_sparse_industry_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "tssos_sparse_industry_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/tampered_coefficient_map.json --strict --json"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_P4JGJ0z0Pk.json",
+            "cwd": "/Users/shani_mac/CertSDP/"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_VaFchYfwtI.json",
+            "cwd": "/Users/shani_mac/CertSDP/"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
+            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_u54ava"
+        },
+        {
+            "fixture": "quantum_chsh_level2",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_chsh_level2/certificate.json --strict --json"
+        },
+        {
+            "fixture": "quantum_i3322_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_i3322_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "quantum_i3322_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_i3322_medium/tampered_commutation_relation.json --strict --json"
+        },
+        {
+            "fixture": "nctssos_trace_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/nctssos_trace_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "nctssos_trace_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/nctssos_trace_medium/tampered_quotient_relation.json --strict --json"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_Ng5C5idQHM.json",
+            "cwd": "/Users/shani_mac/CertSDP/"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_DA76F4PybA.json",
+            "cwd": "/Users/shani_mac/CertSDP/"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
+            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_n6Cfxp"
+        },
+        {
+            "fixture": "psd_factor_algebraic_40",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_algebraic_40/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_algebraic_40",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_algebraic_40/tampered_algebraic_sign.json --strict --json"
+        },
+        {
+            "fixture": "block_native_algebraic_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/block_native_algebraic_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "block_native_algebraic_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/block_native_algebraic_medium/tampered_block_3_kernel.json --strict --json"
+        },
+        {
+            "fixture": "tssos_sparse_industry_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "nctssos_trace_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/nctssos_trace_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "tssos_sparse_industry_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/tampered_clique_basis.json --strict --json"
+        },
+        {
+            "fixture": "nctssos_trace_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/nctssos_trace_medium/tampered_quotient_relation.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_30BQhQ9QXe.json",
+            "cwd": "/Users/shani_mac/CertSDP/"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_BKjgnIrIt6.json",
+            "cwd": "/Users/shani_mac/CertSDP/"
+        },
+        {
+            "fixture": "external_like",
+            "kind": "subprocess_cli",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
+            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_T3N6VZ"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_stress_3000",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "api_exact_replay_sparse_stress"
+        },
+        {
+            "fixture": "primal_dual_portfolio_50",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/primal_dual_portfolio_50/certificate.json --strict --json"
+        },
+        {
+            "fixture": "farkas_infeasible_lmi_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/farkas_infeasible_lmi_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "tssos_sparse_industry_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/tssos_sparse_industry_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "sparse_putinar_opf_5bus",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_putinar_opf_5bus/certificate.json --strict --json"
+        },
+        {
+            "fixture": "sparse_sos_control_lyapunov",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_sos_control_lyapunov/certificate.json --strict --json"
+        },
+        {
+            "fixture": "quantum_i3322_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_i3322_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "nctssos_trace_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/nctssos_trace_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_algebraic_40",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_algebraic_40/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_stress_3000",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "api_exact_replay_sparse_stress"
+        },
+        {
+            "fixture": "sparse_chordal_stress_3000",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_chordal_stress_3000/tampered_graph_hash_changed.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_stress_3000",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "api_exact_replay_sparse_stress"
+        },
+        {
+            "fixture": "sparse_chordal_stress_3000",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_chordal_stress_3000/tampered_separator_entry_changed.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "sparse_chordal_120",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/sparse_chordal_120/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "symmetric_sos_cyclic_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/symmetric_sos_cyclic_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "symmetric_sos_cyclic_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/symmetric_sos_cyclic_medium/tampered_group_action.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "paper_bundle_demo",
+            "kind": "bundle_verify",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) bundle verify /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_6WYDkk"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/tampered_negative_diagonal.json --strict --json"
+        },
+        {
+            "fixture": "psd_factor_rational_150",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict --json"
+        },
+        {
+            "fixture": "quantum_i3322_medium",
+            "kind": "valid_replay",
+            "exit": 0,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_i3322_medium/certificate.json --strict --json"
+        },
+        {
+            "fixture": "quantum_i3322_medium",
+            "kind": "tamper_replay",
+            "exit": 1,
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/quantum_i3322_medium/tampered_psd_proof.json --strict --json"
         }
     ]
 }

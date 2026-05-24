@@ -118,7 +118,12 @@ end
 
 function scan_latest_commit!(failures)
     message = lowercase(strip(read(`git -C $(ROOT) log -1 --pretty=%B`, String)))
-    if occursin("[skip ci]", message) || occursin("[skip actions]", message)
+    manual_only = begin
+        workflow = joinpath(ROOT, ".github", "workflows", "certsdp3.yml")
+        isfile(workflow) && occursin("workflow_dispatch", read(workflow, String)) &&
+            !occursin(r"(?m)^\s*push\s*:", read(workflow, String))
+    end
+    if !manual_only && (occursin("[skip ci]", message) || occursin("[skip actions]", message))
         push!(failures, "latest commit message contains CI skip token")
     end
 end

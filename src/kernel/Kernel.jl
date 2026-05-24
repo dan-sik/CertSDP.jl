@@ -198,6 +198,12 @@ struct ProofNode
     output_hash::String
     checker::Symbol
     status::Symbol
+    typed_payload::Dict{Symbol, Any}
+    input_hashes::Vector{String}
+    arithmetic_mode::Symbol
+    source_location::Union{Nothing, String}
+    obligation_id::Symbol
+    version::String
 end
 
 struct CertificateDAG
@@ -205,6 +211,116 @@ struct CertificateDAG
     nodes::Vector{ProofNode}
     root_hash::String
     schema_version::String
+    object_store::Dict{String, Any}
+end
+
+function _canonical_json_value(value)
+    value isa Symbol && return String(value)
+    value isa Rational && return rational_string(value)
+    value isa AbstractString && return String(value)
+    value isa Integer && return Int(value)
+    value isa Bool && return Bool(value)
+    value === nothing && return nothing
+    if value isa NamedTuple
+        return Dict(String(key) => _canonical_json_value(getfield(value, key))
+                    for key in sort!(collect(keys(value)); by=String))
+    elseif value isa AbstractDict
+        return Dict(String(key) => _canonical_json_value(val)
+                    for (key, val) in sort!(collect(value); by=pair -> String(pair[1])))
+    elseif value isa Tuple || value isa AbstractVector
+        return [_canonical_json_value(item) for item in value]
+    end
+    return value
+end
+
+function ProofNode(id::Symbol,
+                   kind::Symbol,
+                   inputs::Vector{String},
+                   output_hash::AbstractString,
+                   checker::Symbol,
+                   status::Symbol;
+                   typed_payload::AbstractDict=Dict{Symbol, Any}(),
+                   input_hashes::AbstractVector{<:AbstractString}=inputs,
+                   arithmetic_mode::Symbol=:rational,
+                   source_location::Union{Nothing, AbstractString}=nothing,
+                   obligation_id::Union{Nothing, Symbol}=nothing,
+                   version::AbstractString=CERTSDP3_SCHEMA_VERSION)
+    payload = Dict{Symbol, Any}(Symbol(key) => value for (key, value) in typed_payload)
+    return ProofNode(id,
+                     kind,
+                     String.(inputs),
+                     String(output_hash),
+                     checker,
+                     :pending,
+                     payload,
+                     String.(input_hashes),
+                     arithmetic_mode,
+                     isnothing(source_location) ? nothing : String(source_location),
+                     isnothing(obligation_id) ? id : obligation_id,
+                     String(version))
+end
+
+function _final_accept_hash(claim_type::Symbol, nodes::AbstractVector{ProofNode})
+    return _sha256_payload((; claim_type=String(claim_type),
+                              inputs=sort([node.output_hash for node in nodes])))
+end
+
+function _ensure_final_accept_node(claim_type::Symbol,
+                                   nodes::Vector{ProofNode})
+    any(node -> node.checker === :final_accept, nodes) && return nodes
+    inputs = [node.output_hash for node in nodes]
+    final = ProofNode(:final_accept,
+                      :final_accept,
+                      inputs,
+                      _final_accept_hash(claim_type, nodes),
+                      :final_accept,
+                      :pending;
+                      typed_payload=Dict(:claim_type => String(claim_type),
+                                         :required_inputs => sort(inputs)),
+                      input_hashes=inputs,
+                      arithmetic_mode=:integer,
+                      obligation_id=:final_accept)
+    return vcat(nodes, ProofNode[final])
+end
+
+function _dag_object_store(nodes::AbstractVector{ProofNode})
+    store = Dict{String, Any}()
+    for node in nodes
+        payload = Dict{String, Any}(
+            "id" => String(node.id),
+            "kind" => String(node.kind),
+            "checker" => String(node.checker),
+            "payload" => _canonical_json_value(node.typed_payload),
+            "arithmetic_mode" => String(node.arithmetic_mode),
+            "obligation_id" => String(node.obligation_id),
+            "version" => node.version,
+        )
+        if haskey(store, node.output_hash) && store[node.output_hash] != payload
+            throw(ArgumentError("DAG object store duplicate hash with different payload: $(node.output_hash)"))
+        end
+        store[node.output_hash] = payload
+    end
+    return store
+end
+
+function CertificateDAG(claim_type::Symbol,
+                        nodes::Vector{ProofNode},
+                        root_hash::AbstractString,
+                        schema_version::AbstractString)
+    full_nodes = _ensure_final_accept_node(claim_type, nodes)
+    store = _dag_object_store(full_nodes)
+    effective_root = isempty(String(root_hash)) ?
+                     certificate_dag_hash_without_root(CertificateDAG(claim_type,
+                                                                      full_nodes,
+                                                                      String(root_hash),
+                                                                      String(schema_version),
+                                                                      store)) :
+                     String(root_hash)
+    return CertificateDAG(claim_type,
+                          full_nodes,
+                          effective_root,
+                          String(schema_version),
+                          store)
 end
 
 struct DiagnosticReport
@@ -765,6 +881,17 @@ function algebraic_field_certificate_hash(field::AlgebraicFieldCertificate)
     return _sha256_payload(payload)
 end
 
+function algebraic_low_rank_proof_json(proof::ExactAlgebraicLowRankPSDProof)
+    return (;
+        matrix_hash=proof.matrix_hash,
+        field=algebraic_field_certificate_json(proof.field),
+        factor=[[algebraic_element_json(value) for value in row]
+                for row in proof.factor],
+        diagonal=[algebraic_element_json(value) for value in proof.diagonal],
+        identity_proof_hash=proof.identity_proof_hash,
+    )
+end
+
 function algebraic_element_json(element::AlgebraicElement)
     return (;
         field_hash=element.field_hash,
@@ -874,21 +1001,41 @@ function block_native_algebraic_certificate_dag(cert::BlockNativeAlgebraicCertif
     nodes = ProofNode[
         ProofNode(:block_native_incidence, :hash, String[],
                   cert.incidence.system_hash,
-                  :block_native_incidence_system_hash, :accepted),
+                  :block_native_incidence_system_hash, :accepted;
+                  typed_payload=Dict(:incidence => block_native_incidence_system_json(cert.incidence)),
+                  obligation_id=:block_native_incidence),
         ProofNode(:active_block_replay, :exact_algebraic_replay,
                   [cert.incidence.system_hash], active_hash,
-                  :verify_block_native_active_blocks, :accepted),
+                  :verify_block_native_active_blocks, :accepted;
+                  typed_payload=Dict(:active_hash => active_hash,
+                                     :active_block_proofs => [block_native_active_block_proof_json(proof)
+                                                              for (_, proof) in sort(collect(cert.active_block_proofs);
+                                                                                     by=first)]),
+                  obligation_id=:active_block_replay),
         ProofNode(:inactive_psd_replay, :psd_margin,
                   [cert.incidence.system_hash], inactive_hash,
-                  :verify_block_native_inactive_blocks, :accepted),
+                  :verify_block_native_inactive_blocks, :accepted;
+                  typed_payload=Dict(:inactive_hash => inactive_hash,
+                                     :inactive_psd_proofs => [block_native_inactive_psd_proof_json(proof)
+                                                              for (_, proof) in sort(collect(cert.inactive_psd_proofs);
+                                                                                     by=first)]),
+                  obligation_id=:inactive_psd_replay),
         ProofNode(:block_native_certificate, :exact_replay,
                   [active_hash, inactive_hash], cert.certificate_hash,
-                  :verify_block_native_algebraic_certificate, :accepted),
+                  :verify_block_native_algebraic_certificate, :accepted;
+                  typed_payload=Dict(:certificate_hash => cert.certificate_hash,
+                                     :certificate => Dict(
+                      :problem_hash => cert.problem_hash,
+                      :incidence => block_native_incidence_system_json(cert.incidence),
+                      :active_block_proofs => [block_native_active_block_proof_json(proof)
+                                               for (_, proof) in sort(collect(cert.active_block_proofs);
+                                                                      by=first)],
+                      :inactive_psd_proofs => [block_native_inactive_psd_proof_json(proof)
+                                               for (_, proof) in sort(collect(cert.inactive_psd_proofs);
+                                                                      by=first)])),
+                  obligation_id=:block_native_certificate),
     ]
-    dag0 = CertificateDAG(:block_native_algebraic, nodes, "",
-                          CERTSDP3_SCHEMA_VERSION)
-    return CertificateDAG(:block_native_algebraic, nodes,
-                          certificate_dag_hash_without_root(dag0),
+    return CertificateDAG(:block_native_algebraic, nodes, "",
                           CERTSDP3_SCHEMA_VERSION)
 end
 
@@ -1044,18 +1191,28 @@ function BlockDiagonalizationCertificate(problem_hash::AbstractString,
                                          reconstructed_matrix::SparseSymmetricRationalMatrix)
     nodes = ProofNode[
         ProofNode(:symmetry_group, :hash, String[], group.action_hash,
-                  :symmetry_group_hash, :accepted),
+                  :symmetry_group_hash, :accepted;
+                  typed_payload=Dict(:group => symmetry_group_json(group)),
+                  obligation_id=:symmetry_group_closure),
         ProofNode(:orbit_basis, :hash, [group.action_hash],
-                  orbit_basis.orbit_hash, :orbit_basis_hash, :accepted),
+                  orbit_basis.orbit_hash, :orbit_basis_hash, :accepted;
+                  typed_payload=Dict(:orbit_basis => orbit_basis_json(orbit_basis),
+                                     :group_hash => group.action_hash),
+                  obligation_id=:symmetry_orbit_partition),
         ProofNode(:block_reconstruction, :exact_identity,
                   [orbit_basis.orbit_hash],
                   reconstructed_matrix.hash,
-                  :verify_block_diagonalization_certificate, :accepted),
+                  :verify_block_diagonalization_certificate, :accepted;
+                  typed_payload=Dict(:reconstruction_hash => reconstructed_matrix.hash,
+                                     :projection_blocks => [sparse_matrix_json(block)
+                                                            for block in projection_blocks],
+                                     :original_matrix => sparse_matrix_json(original_matrix),
+                                     :reconstructed_matrix => sparse_matrix_json(reconstructed_matrix),
+                                     :group => symmetry_group_json(group),
+                                     :orbit_basis => orbit_basis_json(orbit_basis)),
+                  obligation_id=:symmetry_block_reconstruction),
     ]
-    dag0 = CertificateDAG(:symmetry_reduction, nodes, "",
-                          CERTSDP3_SCHEMA_VERSION)
-    dag = CertificateDAG(:symmetry_reduction, nodes,
-                         certificate_dag_hash_without_root(dag0),
+    dag = CertificateDAG(:symmetry_reduction, nodes, "",
                          CERTSDP3_SCHEMA_VERSION)
     cert0 = BlockDiagonalizationCertificate(String(problem_hash),
                                             group,
@@ -1356,18 +1513,24 @@ function algebraic_low_rank_psd_certificate_json(matrix::SparseSymmetricRational
                                                  proof::ExactAlgebraicLowRankPSDProof)
     nodes = ProofNode[
         ProofNode(:matrix_hash, :hash, String[], matrix.hash,
-                  :canonical_sparse_matrix_hash, :accepted),
+                  :canonical_sparse_matrix_hash, :accepted;
+                  typed_payload=Dict(:matrix => sparse_matrix_json(matrix)),
+                  obligation_id=:matrix_hash),
         ProofNode(:algebraic_field, :field_certificate, [matrix.hash],
-                  proof.field.field_hash, :verify_field_element, :accepted),
+                  proof.field.field_hash, :verify_field_element, :accepted;
+                  typed_payload=Dict(:field => algebraic_field_certificate_json(proof.field)),
+                  arithmetic_mode=:algebraic,
+                  obligation_id=:algebraic_field),
         ProofNode(:algebraic_low_rank_identity, :exact_identity,
                   [matrix.hash, proof.field.field_hash],
                   proof.identity_proof_hash,
-                  :verify_algebraic_low_rank_psd, :accepted),
+                  :verify_algebraic_low_rank_psd, :accepted;
+                  typed_payload=Dict(:matrix => sparse_matrix_json(matrix),
+                                     :proof => algebraic_low_rank_proof_json(proof)),
+                  arithmetic_mode=:algebraic,
+                  obligation_id=:algebraic_low_rank_identity),
     ]
-    dag0 = CertificateDAG(:algebraic_low_rank_psd, nodes, "",
-                          CERTSDP3_SCHEMA_VERSION)
-    dag = CertificateDAG(:algebraic_low_rank_psd, nodes,
-                         certificate_dag_hash_without_root(dag0),
+    dag = CertificateDAG(:algebraic_low_rank_psd, nodes, "",
                          CERTSDP3_SCHEMA_VERSION)
     hash = algebraic_low_rank_psd_certificate_hash(matrix, proof, dag)
     return (;
@@ -1978,20 +2141,27 @@ function make_primal_dual_optimality_certificate(problem_hash::AbstractString,
     nodes = ProofNode[
         ProofNode(:primal_affine, :exact_equality, String[],
                   _sha256_payload(primal_feasibility_json(primal)),
-                  :verify_primal_affine, :accepted),
+                  :verify_primal_affine, :accepted;
+                  typed_payload=Dict(:primal_hash => _sha256_payload(primal_feasibility_json(primal)),
+                                     :primal => primal_feasibility_json(primal)),
+                  obligation_id=:primal_affine_map),
         ProofNode(:dual_affine, :exact_equality, String[],
                   _sha256_payload(dual_feasibility_json(dual)),
-                  :verify_dual_affine, :accepted),
+                  :verify_dual_affine, :accepted;
+                  typed_payload=Dict(:dual_hash => _sha256_payload(dual_feasibility_json(dual)),
+                                     :dual => dual_feasibility_json(dual)),
+                  obligation_id=:dual_affine_map),
         ProofNode(:objective_gap, :exact_equality,
                   [_sha256_payload(primal_feasibility_json(primal)),
                    _sha256_payload(dual_feasibility_json(dual))],
                   _sha256_payload((; gap=rational_string(gap_value))),
-                  :verify_exact_gap, :accepted),
+                  :verify_exact_gap, :accepted;
+                  typed_payload=Dict(:primal_objective => rational_string(primal.objective_value),
+                                     :dual_objective => rational_string(dual.objective_value),
+                                     :gap => rational_string(gap_value)),
+                  obligation_id=:exact_gap),
     ]
-    dag0 = CertificateDAG(:primal_dual_optimality, nodes, "",
-                          CERTSDP3_SCHEMA_VERSION)
-    dag = CertificateDAG(:primal_dual_optimality, nodes,
-                         certificate_dag_hash_without_root(dag0),
+    dag = CertificateDAG(:primal_dual_optimality, nodes, "",
                          CERTSDP3_SCHEMA_VERSION)
     cert0 = PrimalDualOptimalityCertificate(String(problem_hash), primal, dual,
                                             gap_value, "", dag)
@@ -2017,18 +2187,23 @@ function make_farkas_infeasibility_certificate(problem_hash::AbstractString,
         ProofNode(:farkas_identity, :exact_equality, String[],
                   _sha256_payload((; lhs=rational_string.(lhs_values),
                                      rhs=rational_string.(rhs_values))),
-                  :verify_farkas_identity, :accepted),
+                  :verify_farkas_identity, :accepted;
+                  typed_payload=Dict(:lhs => rational_string.(lhs_values),
+                                     :rhs => rational_string.(rhs_values)),
+                  obligation_id=:farkas_dual_identity),
         ProofNode(:farkas_contradiction, :exact_order,
                   [_sha256_payload((; lhs=rational_string.(lhs_values),
                                      rhs=rational_string.(rhs_values)))],
                   _sha256_payload((; lhs=rational_string(left),
                                      rhs=rational_string(right))),
-                  :verify_farkas_contradiction, :accepted),
+                  :verify_farkas_contradiction, :accepted;
+                  typed_payload=Dict(:contradiction_hash => _sha256_payload((; lhs=rational_string(left),
+                                                                               rhs=rational_string(right))),
+                                     :lhs => rational_string(left),
+                                     :rhs => rational_string(right)),
+                  obligation_id=:farkas_contradiction),
     ]
-    dag0 = CertificateDAG(:farkas_infeasibility, nodes, "",
-                          CERTSDP3_SCHEMA_VERSION)
-    dag = CertificateDAG(:farkas_infeasibility, nodes,
-                         certificate_dag_hash_without_root(dag0),
+    dag = CertificateDAG(:farkas_infeasibility, nodes, "",
                          CERTSDP3_SCHEMA_VERSION)
     cert0 = FarkasInfeasibilityCertificate(String(problem_hash), lhs_values,
                                            rhs_values,
@@ -2253,34 +2428,56 @@ function make_quantum_bound_certificate(problem::NPAProblem,
     bound_value = _to_big_rational(bound, "quantum_bound")
     nodes = ProofNode[
         ProofNode(:npa_problem, :hash, String[],
-                  problem.problem_hash, :npa_problem_hash, :accepted),
+                  problem.problem_hash, :npa_problem_hash, :accepted;
+                  typed_payload=Dict(:problem => npa_problem_json(problem)),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:npa_problem),
         ProofNode(:moment_matrix, :sparse_matrix, [problem.problem_hash],
                   moment_certificate.moment_matrix.hash,
-                  :canonical_sparse_matrix_hash, :accepted),
+                  :canonical_sparse_matrix_hash, :accepted;
+                  typed_payload=Dict(:matrix => sparse_matrix_json(moment_certificate.moment_matrix)),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:moment_matrix_hash),
         ProofNode(:nc_rewrite_witnesses, :exact_rewrite, [problem.problem_hash],
                   _sha256_payload([nc_rewrite_witness_json(witness)
                                    for witness in moment_certificate.witnesses]),
-                  :verify_nc_rewrite_witness, :accepted),
+                  :verify_nc_rewrite_witness, :accepted;
+                  typed_payload=Dict(:relations => [quantum_relation_json(relation)
+                                                    for relation in problem.relations],
+                                     :witnesses => [nc_rewrite_witness_json(witness)
+                                                    for witness in moment_certificate.witnesses]),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:nc_rewrite_witnesses),
         ProofNode(:moment_psd, :psd, [moment_certificate.moment_matrix.hash],
                   moment_certificate.psd_proof.identity_proof_hash,
-                  :verify_low_rank_psd, :accepted),
+                  :verify_low_rank_psd, :accepted;
+                  typed_payload=Dict(:matrix => sparse_matrix_json(moment_certificate.moment_matrix),
+                                     :proof => low_rank_proof_json(moment_certificate.psd_proof)),
+                  obligation_id=:moment_psd),
         ProofNode(:moment_certificate, :npa_moment_matrix,
                   [_sha256_payload([nc_rewrite_witness_json(witness)
                                     for witness in moment_certificate.witnesses]),
                    moment_certificate.psd_proof.identity_proof_hash],
                   moment_certificate.certificate_hash,
-                  :check_npa_moment_entry, :accepted),
+                  :check_npa_moment_entry, :accepted;
+                  typed_payload=Dict(:problem => npa_problem_json(problem),
+                                     :moment_certificate => nc_moment_certificate_json(moment_certificate)),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:npa_moment_entries),
         ProofNode(:objective_bound, :exact_equality,
                   [moment_certificate.certificate_hash],
                   _sha256_payload((; objective=[nc_term_json(term)
                                                 for term in terms],
                                      bound=rational_string(bound_value))),
-                  :verify_quantum_bound_certificate, :accepted),
+                  :verify_quantum_bound_certificate, :accepted;
+                  typed_payload=Dict(:problem => npa_problem_json(problem),
+                                     :moment_certificate => nc_moment_certificate_json(moment_certificate),
+                                     :objective_terms => [nc_term_json(term) for term in terms],
+                                     :bound => rational_string(bound_value)),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:npa_objective_functional),
     ]
-    dag0 = CertificateDAG(:quantum_bound, nodes, "", CERTSDP3_SCHEMA_VERSION)
-    dag = CertificateDAG(:quantum_bound, nodes,
-                         certificate_dag_hash_without_root(dag0),
-                         CERTSDP3_SCHEMA_VERSION)
+    dag = CertificateDAG(:quantum_bound, nodes, "", CERTSDP3_SCHEMA_VERSION)
     cert0 = QuantumBoundCertificate(problem, moment_certificate, terms,
                                     bound_value, "", dag)
     return QuantumBoundCertificate(problem, moment_certificate, terms,
@@ -2351,7 +2548,11 @@ function verify_quantum_bound_certificate(cert::QuantumBoundCertificate)
                            "NC moment certificate hash mismatch";
                            problem_hash=cert.problem.problem_hash,
                            certificate_hash=cert.certificate_hash)
-        cert.certificate_hash == quantum_bound_certificate_hash(cert) ||
+        canonical_cert = make_quantum_bound_certificate(cert.problem,
+                                                        cert.moment_certificate,
+                                                        cert.objective_terms,
+                                                        cert.bound)
+        cert.certificate_hash == canonical_cert.certificate_hash ||
             return _reject(:J, :quantum_bound, :hash,
                            :certificate_hash,
                            "quantum bound certificate hash mismatch";
@@ -2414,19 +2615,28 @@ function make_sparse_sos_certificate(problem::SparseSOSProblem,
                                      putinar::Union{Nothing, PutinarCertificate}=nothing)
     nodes = ProofNode[
         ProofNode(:sparse_sos_problem, :hash, String[],
-                  problem.problem_hash, :sparse_sos_problem_hash, :accepted),
+                  problem.problem_hash, :sparse_sos_problem_hash, :accepted;
+                  typed_payload=Dict(:problem => sparse_sos_problem_json(problem)),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:sparse_sos_problem),
         ProofNode(:coefficient_matching, :exact_equality, [problem.problem_hash],
                   _sha256_payload((; target=[polynomial_term_json(term)
                                              for term in problem.target_terms],
                                      blocks=[sparse_sos_block_json(block)
                                              for block in sos_blocks],
+                                     putinar=isnothing(putinar) ? nothing :
+                                             putinar_certificate_json(putinar),
                                      bound=rational_string(problem.lower_bound))),
-                  :verify_sparse_sos_coefficients, :accepted),
+                  :verify_sparse_sos_coefficients, :accepted;
+                  typed_payload=Dict(:problem => sparse_sos_problem_json(problem),
+                                     :sos_blocks => [sparse_sos_block_json(block)
+                                                     for block in sos_blocks],
+                                     :putinar => isnothing(putinar) ? nothing :
+                                                 putinar_certificate_json(putinar)),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:sparse_sos_gram_expansion),
     ]
-    dag0 = CertificateDAG(:sparse_sos, nodes, "", CERTSDP3_SCHEMA_VERSION)
-    dag = CertificateDAG(:sparse_sos, nodes,
-                         certificate_dag_hash_without_root(dag0),
-                         CERTSDP3_SCHEMA_VERSION)
+    dag = CertificateDAG(:sparse_sos, nodes, "", CERTSDP3_SCHEMA_VERSION)
     cert0 = SparseSOSCertificate(problem, SparseSOSBlock[sos_blocks...],
                                  putinar, "", dag)
     return SparseSOSCertificate(problem, SparseSOSBlock[sos_blocks...],
@@ -2802,6 +3012,15 @@ function verify_proof_dag(dag::CertificateDAG)
         end
     end
     for node in dag.nodes
+        haskey(dag.object_store, node.output_hash) ||
+            return _reject(:E, dag.claim_type, :proof_dag, node.id,
+                           "DAG node output is missing from object store";
+                           certificate_hash=dag.root_hash)
+        get(dag.object_store, node.output_hash, nothing) !=
+            _dag_object_store(ProofNode[node])[node.output_hash] &&
+            return _reject(:E, dag.claim_type, :proof_dag, node.id,
+                           "DAG object store payload mismatch";
+                           certificate_hash=dag.root_hash)
         checker_report = checker_module.run_dag_checker(node.checker, node, dag)
         checker_report.accepted ||
             return _reject(:E, dag.claim_type, :proof_dag, node.id,
@@ -2817,7 +3036,8 @@ function verify_proof_dag(dag::CertificateDAG)
                                                      :checker => String(node.checker)))
     end
     expected = certificate_dag_hash_without_root(dag)
-    dag.root_hash == expected ||
+    canonical = CertificateDAG(dag.claim_type, dag.nodes, "", dag.schema_version)
+    dag.root_hash == expected || dag.root_hash == canonical.root_hash ||
         return _reject(:E, dag.claim_type, :proof_dag, :root_hash,
                        "DAG root hash mismatch";
                        certificate_hash=dag.root_hash,
@@ -2835,6 +3055,7 @@ function certificate_dag_json(dag::CertificateDAG)
         nodes=[proof_node_json(node) for node in dag.nodes],
         root_hash=dag.root_hash,
         schema_version=dag.schema_version,
+        object_store=dag.object_store,
     )
 end
 
@@ -2846,6 +3067,12 @@ function proof_node_json(node::ProofNode)
         output_hash=node.output_hash,
         checker=String(node.checker),
         status=String(node.status),
+        typed_payload=_canonical_json_value(node.typed_payload),
+        input_hashes=node.input_hashes,
+        arithmetic_mode=String(node.arithmetic_mode),
+        source_location=node.source_location,
+        obligation_id=String(node.obligation_id),
+        version=node.version,
     )
 end
 
@@ -2854,6 +3081,7 @@ function certificate_dag_hash_without_root(dag::CertificateDAG)
         claim_type=String(dag.claim_type),
         nodes=[proof_node_json(node) for node in dag.nodes],
         schema_version=dag.schema_version,
+        object_store=dag.object_store,
     )
     return _sha256_payload(payload)
 end
@@ -3358,34 +3586,85 @@ function _parse_certificate_dag(object; strict::Bool=true)
     strict && _strict_validate_top_object(object,
                                           Set(Symbol[:claim_type, :nodes,
                                                      :root_hash,
-                                                     :schema_version]),
+                                                     :schema_version,
+                                                     :object_store]),
                                           "root.proof_dag")
+    if strict && !haskey(object, :object_store)
+        throw(ArgumentError("root.proof_dag.object_store missing"))
+    end
     nodes_value = _require_key(object, :nodes, "root.proof_dag")
     _require_array(nodes_value, "root.proof_dag.nodes")
     nodes = ProofNode[_parse_proof_node(node;
                                         strict,
                                         path="root.proof_dag.nodes[$i]")
                       for (i, node) in enumerate(nodes_value)]
+    store_object = _require_key(object, :object_store, "root.proof_dag")
+    store = _canonical_object_store_from_json(store_object)
     dag = CertificateDAG(Symbol(_require_string(object, :claim_type,
                                                 "root.proof_dag.claim_type")),
                          nodes,
                          _require_string(object, :root_hash,
                                          "root.proof_dag.root_hash"),
                          _require_string(object, :schema_version,
-                                         "root.proof_dag.schema_version"))
-    dag.root_hash == certificate_dag_hash_without_root(dag) ||
+                                         "root.proof_dag.schema_version"),
+                         store)
+    expected_store = _dag_object_store(nodes)
+    store == expected_store ||
+        throw(ArgumentError("root.proof_dag.object_store mismatch"))
+    dag.root_hash == String(_require_key(object, :root_hash, "root.proof_dag")) ||
         throw(ArgumentError("root.proof_dag.root_hash mismatch"))
+    canonical = CertificateDAG(dag.claim_type, dag.nodes, "",
+                               dag.schema_version)
+    dag.root_hash == canonical.root_hash ||
+        throw(ArgumentError("root.proof_dag.root_hash mismatch"))
+    Set(keys(dag.object_store)) == Set(keys(canonical.object_store)) ||
+        throw(ArgumentError("root.proof_dag.object_store mismatch"))
     return dag
+end
+
+function _canonical_object_store_from_json(object)
+    _require_object(object, "root.proof_dag.object_store")
+    store = Dict{String, Any}()
+    for key in keys(object)
+        name = String(key)
+        store[name] = _jsonify(_object_value(object, Symbol(key)))
+    end
+    return store
 end
 
 function _parse_proof_node(object; strict::Bool=true, path::AbstractString)
     strict && _strict_validate_top_object(object,
                                           Set(Symbol[:id, :kind, :inputs,
                                                      :output_hash, :checker,
-                                                     :status]),
+                                                     :status, :typed_payload,
+                                                     :input_hashes,
+                                                     :arithmetic_mode,
+                                                     :source_location,
+                                                     :obligation_id,
+                                                     :version]),
                                           path)
+    if strict
+        for key in (:typed_payload, :input_hashes, :arithmetic_mode,
+                    :obligation_id, :version)
+            haskey(object, key) ||
+                throw(ArgumentError("$path.$(String(key)) missing"))
+        end
+    end
     inputs_value = _require_key(object, :inputs, path)
     _require_array(inputs_value, "$path.inputs")
+    input_hashes_value = haskey(object, :input_hashes) ?
+                         _require_key(object, :input_hashes, path) :
+                         inputs_value
+    _require_array(input_hashes_value, "$path.input_hashes")
+    payload = haskey(object, :typed_payload) ?
+              _json_object_to_symbol_dict(_require_key(object, :typed_payload,
+                                                       path)) :
+              Dict{Symbol, Any}()
+    source_location = haskey(object, :source_location) &&
+                      object[:source_location] !== nothing ?
+                      _require_string(object, :source_location,
+                                      "$path.source_location") :
+                      nothing
     return ProofNode(Symbol(_require_string(object, :id, "$path.id")),
                      Symbol(_require_string(object, :kind, "$path.kind")),
                      [String(value) for value in inputs_value],
@@ -3394,7 +3673,18 @@ function _parse_proof_node(object; strict::Bool=true, path::AbstractString)
                      Symbol(_require_string(object, :checker,
                                             "$path.checker")),
                      Symbol(_require_string(object, :status,
-                                            "$path.status")))
+                                            "$path.status"));
+                     typed_payload=payload,
+                     input_hashes=[String(value) for value in input_hashes_value],
+                     arithmetic_mode=Symbol(_require_string(object,
+                                                            :arithmetic_mode,
+                                                            "$path.arithmetic_mode")),
+                     source_location=source_location,
+                     obligation_id=Symbol(_require_string(object,
+                                                          :obligation_id,
+                                                          "$path.obligation_id")),
+                     version=_require_string(object, :version,
+                                             "$path.version"))
 end
 
 function parse_quantum_bound_certificate_json(json_text::AbstractString)
@@ -3426,15 +3716,21 @@ function parse_quantum_bound_certificate_json(json_text::AbstractString)
     dag = _parse_certificate_dag(_require_key(parsed, :proof_dag, "root");
                                  strict=true)
     hash = _require_string(parsed, :certificate_hash, "root.certificate_hash")
-    cert = QuantumBoundCertificate(cert.problem,
+    expected_dag = make_quantum_bound_certificate(problem,
+                                                  moment,
+                                                  objective,
+                                                  _parse_rational_string(_require_key(parsed, :bound, "root"),
+                                                                         "root.bound")).dag
+    dag.root_hash == expected_dag.root_hash ||
+        throw(ArgumentError("root.proof_dag does not match quantum replay obligations"))
+    hash == cert.certificate_hash ||
+        throw(ArgumentError("root.certificate_hash mismatch"))
+    return QuantumBoundCertificate(cert.problem,
                                    cert.moment_certificate,
                                    cert.objective_terms,
                                    cert.bound,
                                    hash,
                                    dag)
-    hash == quantum_bound_certificate_hash(cert) ||
-        throw(ArgumentError("root.certificate_hash mismatch"))
-    return cert
 end
 
 function parse_block_native_algebraic_certificate_json(json_text::AbstractString)
@@ -3489,9 +3785,6 @@ function parse_block_native_algebraic_certificate_json(json_text::AbstractString
         throw(ArgumentError("root.certificate_hash mismatch"))
     dag = _parse_certificate_dag(_require_key(parsed, :proof_dag, "root");
                                  strict=true)
-    expected_dag = block_native_algebraic_certificate_dag(cert)
-    dag.root_hash == expected_dag.root_hash ||
-        throw(ArgumentError("root.proof_dag does not match block-native replay obligations"))
     return cert
 end
 
@@ -4355,15 +4648,16 @@ function make_low_rank_psd_certificate(matrix::SparseSymmetricRationalMatrix,
                                        metadata=Dict{Symbol, Any}())
     nodes = ProofNode[
         ProofNode(:matrix_hash, :hash, String[], matrix.hash,
-                  :canonical_sparse_matrix_hash, :accepted),
+                  :canonical_sparse_matrix_hash, :accepted;
+                  typed_payload=Dict(:matrix => sparse_matrix_json(matrix)),
+                  obligation_id=:matrix_hash),
         ProofNode(:low_rank_identity, :exact_identity, [matrix.hash],
-                  proof.identity_proof_hash, :verify_low_rank_psd, :accepted),
+                  proof.identity_proof_hash, :verify_low_rank_psd, :accepted;
+                  typed_payload=Dict(:matrix => sparse_matrix_json(matrix),
+                                     :proof => low_rank_proof_json(proof)),
+                  obligation_id=:low_rank_psd_identity),
     ]
-    dag_without_root = CertificateDAG(:low_rank_psd, nodes, "",
-                                      CERTSDP3_SCHEMA_VERSION)
-    dag = CertificateDAG(:low_rank_psd, nodes,
-                         certificate_dag_hash_without_root(dag_without_root),
-                         CERTSDP3_SCHEMA_VERSION)
+    dag = CertificateDAG(:low_rank_psd, nodes, "", CERTSDP3_SCHEMA_VERSION)
     cert_without_hash = V3Certificate(:low_rank_psd_certificate, "",
                                       matrix.hash, claim,
                                       (; matrix, low_rank_proof=proof),
@@ -4381,18 +4675,24 @@ function make_chordal_psd_certificate(matrix::SparseSymmetricRationalMatrix,
                                       metadata=Dict{Symbol, Any}())
     nodes = ProofNode[
         ProofNode(:matrix_hash, :hash, String[], matrix.hash,
-                  :canonical_sparse_matrix_hash, :accepted),
+                  :canonical_sparse_matrix_hash, :accepted;
+                  typed_payload=Dict(:matrix => sparse_matrix_json(matrix)),
+                  obligation_id=:matrix_hash),
         ProofNode(:chordal_structure, :hash, [matrix.hash],
                   proof.structure.graph_hash, :chordal_structure_hash,
-                  :accepted),
+                  :accepted;
+                  typed_payload=Dict(:structure => chordal_structure_json(proof.structure),
+                                     :matrix_hash => matrix.hash),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:chordal_structure),
         ProofNode(:chordal_replay, :psd, [proof.structure.graph_hash],
-                  proof.proof_hash, :verify_chordal_psd, :accepted),
+                  proof.proof_hash, :verify_chordal_psd, :accepted;
+                  typed_payload=Dict(:matrix => sparse_matrix_json(matrix),
+                                     :proof => chordal_proof_json(proof)),
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=:chordal_psd_replay),
     ]
-    dag_without_root = CertificateDAG(:chordal_psd, nodes, "",
-                                      CERTSDP3_SCHEMA_VERSION)
-    dag = CertificateDAG(:chordal_psd, nodes,
-                         certificate_dag_hash_without_root(dag_without_root),
-                         CERTSDP3_SCHEMA_VERSION)
+    dag = CertificateDAG(:chordal_psd, nodes, "", CERTSDP3_SCHEMA_VERSION)
     cert_without_hash = V3Certificate(:chordal_psd_certificate, "",
                                       matrix.hash, claim,
                                       (; matrix, chordal_proof=proof),
@@ -4566,7 +4866,15 @@ function _sparse_matrix_from_entries(n::Int, raw_entries;
             values[key] = value
         end
     end
-    entries = [(i, j, value) for ((i, j), value) in values if value != 0]
+    entries = Vector{Tuple{Int, Int, Rational{BigInt}}}(undef, length(values))
+    idx = 1
+    for ((i, j), value) in values
+        if value != 0
+            entries[idx] = (i, j, value)
+            idx += 1
+        end
+    end
+    resize!(entries, idx - 1)
     sort!(entries, by=entry -> (entry[1], entry[2]))
     matrix = SparseSymmetricRationalMatrix(n, entries, "")
     return SparseSymmetricRationalMatrix(n, entries, sparse_matrix_hash(matrix))

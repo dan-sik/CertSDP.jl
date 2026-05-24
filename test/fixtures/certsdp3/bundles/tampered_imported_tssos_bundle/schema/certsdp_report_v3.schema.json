@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://certsdp.local/schemas/certsdp_report_v3.schema.json",
+  "title": "CertSDP Diagnostic Report v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certsdp_report_version",
+    "accepted",
+    "gate",
+    "family",
+    "stage",
+    "reason",
+    "obligation_id"
+  ],
+  "properties": {
+    "certsdp_report_version": { "const": "3.0" },
+    "accepted": { "type": "boolean" },
+    "gate": { "type": "string" },
+    "family": { "type": "string" },
+    "stage": { "type": "string" },
+    "reason": { "type": "string" },
+    "obligation_id": { "type": "string" },
+    "problem_hash": { "type": ["string", "null"] },
+    "certificate_hash": { "type": ["string", "null"] },
+    "block_id": { "type": ["string", "null"] },
+    "clique_id": { "type": ["string", "null"] },
+    "separator_id": { "type": ["string", "null"] },
+    "artifact_path": { "type": ["string", "null"] },
+    "details": { "type": "object" }
+  }
+}

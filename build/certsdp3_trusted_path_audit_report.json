@@ -1,0 +1,243 @@
+{
+    "trusted_path": {
+        "passed": true,
+        "verifiers": [
+            {
+                "proof_obligations": [
+                    "clique_cover",
+                    "separator_consistency",
+                    "clique_psd"
+                ],
+                "name": "verify_chordal_psd",
+                "arithmetic_mode": "symbolic_sparse",
+                "dag_checkers": [
+                    "verify_chordal_psd",
+                    "check_chordal_separator_consistency"
+                ],
+                "source_path": "src/kernel/Kernel.jl",
+                "allowed_numeric_types": [
+                    "Integer",
+                    "Rational"
+                ],
+                "forbidden_calls": [
+                    "Float64",
+                    "BigFloat",
+                    "isapprox",
+                    "eigvals",
+                    "eigen",
+                    "svd",
+                    "cholesky",
+                    "solver_status",
+                    "residual_tolerance",
+                    "rand",
+                    "time"
+                ]
+            },
+            {
+                "proof_obligations": [
+                    "affine_identity",
+                    "contradiction"
+                ],
+                "name": "verify_farkas_infeasibility",
+                "arithmetic_mode": "rational",
+                "dag_checkers": [
+                    "verify_farkas_identity",
+                    "verify_farkas_contradiction"
+                ],
+                "source_path": "src/kernel/Kernel.jl",
+                "allowed_numeric_types": [
+                    "Integer",
+                    "Rational"
+                ],
+                "forbidden_calls": [
+                    "Float64",
+                    "BigFloat",
+                    "isapprox",
+                    "eigvals",
+                    "eigen",
+                    "svd",
+                    "cholesky",
+                    "solver_status",
+                    "residual_tolerance",
+                    "rand",
+                    "time"
+                ]
+            },
+            {
+                "proof_obligations": [
+                    "matrix_identity",
+                    "nonnegative_diagonal"
+                ],
+                "name": "verify_low_rank_psd",
+                "arithmetic_mode": "rational",
+                "dag_checkers": [
+                    "verify_low_rank_psd",
+                    "check_low_rank_psd_identity"
+                ],
+                "source_path": "src/kernel/Kernel.jl",
+                "allowed_numeric_types": [
+                    "Integer",
+                    "Rational"
+                ],
+                "forbidden_calls": [
+                    "Float64",
+                    "BigFloat",
+                    "isapprox",
+                    "eigvals",
+                    "eigen",
+                    "svd",
+                    "cholesky",
+                    "solver_status",
+                    "residual_tolerance",
+                    "rand",
+                    "time"
+                ]
+            },
+            {
+                "proof_obligations": [
+                    "rewrite_step"
+                ],
+                "name": "verify_nc_rewrite_witness",
+                "arithmetic_mode": "symbolic_sparse",
+                "dag_checkers": [
+                    "verify_nc_rewrite_witness",
+                    "check_nc_rewrite_step"
+                ],
+                "source_path": "src/kernel/Kernel.jl",
+                "allowed_numeric_types": [
+                    "Integer",
+                    "Rational"
+                ],
+                "forbidden_calls": [
+                    "Float64",
+                    "BigFloat",
+                    "isapprox",
+                    "eigvals",
+                    "eigen",
+                    "svd",
+                    "cholesky",
+                    "solver_status",
+                    "residual_tolerance",
+                    "rand",
+                    "time"
+                ]
+            },
+            {
+                "proof_obligations": [
+                    "primal_affine",
+                    "dual_affine",
+                    "gap"
+                ],
+                "name": "verify_primal_dual_optimality",
+                "arithmetic_mode": "rational",
+                "dag_checkers": [
+                    "verify_primal_affine",
+                    "verify_dual_affine",
+                    "verify_exact_gap"
+                ],
+                "source_path": "src/kernel/Kernel.jl",
+                "allowed_numeric_types": [
+                    "Integer",
+                    "Rational"
+                ],
+                "forbidden_calls": [
+                    "Float64",
+                    "BigFloat",
+                    "isapprox",
+                    "eigvals",
+                    "eigen",
+                    "svd",
+                    "cholesky",
+                    "solver_status",
+                    "residual_tolerance",
+                    "rand",
+                    "time"
+                ]
+            },
+            {
+                "proof_obligations": [
+                    "rewrite_witnesses",
+                    "moment_entries",
+                    "objective_bound"
+                ],
+                "name": "verify_quantum_bound_certificate",
+                "arithmetic_mode": "symbolic_sparse",
+                "dag_checkers": [
+                    "verify_quantum_bound_certificate",
+                    "check_quantum_objective_bound"
+                ],
+                "source_path": "src/kernel/Kernel.jl",
+                "allowed_numeric_types": [
+                    "Integer",
+                    "Rational"
+                ],
+                "forbidden_calls": [
+                    "Float64",
+                    "BigFloat",
+                    "isapprox",
+                    "eigvals",
+                    "eigen",
+                    "svd",
+                    "cholesky",
+                    "solver_status",
+                    "residual_tolerance",
+                    "rand",
+                    "time"
+                ]
+            },
+            {
+                "proof_obligations": [
+                    "gram_expansion",
+                    "localizing_identity",
+                    "psd_blocks"
+                ],
+                "name": "verify_sparse_sos_certificate",
+                "arithmetic_mode": "rational",
+                "dag_checkers": [
+                    "verify_sparse_sos_coefficients",
+                    "check_sparse_sos_gram_expansion"
+                ],
+                "source_path": "src/kernel/Kernel.jl",
+                "allowed_numeric_types": [
+                    "Integer",
+                    "Rational"
+                ],
+                "forbidden_calls": [
+                    "Float64",
+                    "BigFloat",
+                    "isapprox",
+                    "eigvals",
+                    "eigen",
+                    "svd",
+                    "cholesky",
+                    "solver_status",
+                    "residual_tolerance",
+                    "rand",
+                    "time"
+                ]
+            }
+        ]
+    },
+    "seeded_bad_static_checks": [
+        {
+            "detected": true,
+            "path": "test/fixtures_static_bad/trusted_dense_conversion_accept.jl"
+        },
+        {
+            "detected": true,
+            "path": "test/fixtures_static_bad/trusted_float64_accept.jl"
+        },
+        {
+            "detected": true,
+            "path": "test/fixtures_static_bad/trusted_isapprox_accept.jl"
+        },
+        {
+            "detected": true,
+            "path": "test/fixtures_static_bad/trusted_solver_status_accept.jl"
+        },
+        {
+            "detected": true,
+            "path": "test/fixtures_static_bad/trusted_time_hash.jl"
+        }
+    ]
+}

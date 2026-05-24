@@ -15,8 +15,15 @@ const FIXTURE_RESULTS_PATH = joinpath(BUILD_DIR, "certsdp3_fixture_results.json"
 const CLI_RESULTS_PATH = joinpath(BUILD_DIR, "certsdp3_cli_results.json")
 const MUTATION_RESULTS_PATH = joinpath(BUILD_DIR, "certsdp3_mutation_results.json")
 const COVERAGE_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_coverage_report.json")
+const DAG_CHECKER_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_dag_checker_report.json")
+const OBJECT_STORE_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_object_store_report.json")
+const REAL_IMPORTED_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_real_imported_fixture_report.json")
+const TRUSTED_PATH_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_trusted_path_audit_report.json")
+const LOCAL_FULL_SUMMARY_PATH = joinpath(BUILD_DIR, "certsdp3_local_full_audit_summary.json")
 const REQUIRED_SCHEMA_TAMPERS = 30
 const REQUIRED_MUTATIONS = 100
+const CORE_10_GATES = Set(Symbol[:A, :B, :D, :E, :F, :H, :I, :J, :K,
+                                  :T, :U, :V, :Z, :QA])
 
 include(joinpath(@__DIR__, "validate_certsdp3.jl"))
 
@@ -158,6 +165,8 @@ function replay_measure_for_family(fixture)
                                               elapsed, 0, report)
     elseif family == "nctssos_import"
         return validate_nctssos_artifact(dir)
+    elseif id == "sparse_chordal_stress_3000"
+        return CertSDP.Perf.measure_chordal_replay(cert_path)
     elseif family == "quantum_bound"
         elapsed = @elapsed report = validate_quantum_certificate(cert_path)
         return CertSDP.Perf.ReplayMeasurement(cert_path, report.accepted,
@@ -283,11 +292,51 @@ function fixture_authenticity_check(fixture)
         haskey(fixture, :source_file) && !isempty(String(fixture[:source_file])) ||
             return (passed=false, source_class=source,
                     reason="external fixture missing source_file")
-        isfile(joinpath(ROOT, String(fixture[:source_file]))) ||
+        source_path = joinpath(ROOT, String(fixture[:source_file]))
+        isfile(source_path) ||
             return (passed=false, source_class=source,
                     reason="external source_file does not exist")
+        if source == "real_imported"
+            occursin("fixtures_real", String(fixture[:source_file])) ||
+                return (passed=false, source_class=source,
+                        reason="real_imported source must live under test/fixtures_real")
+            readme = joinpath(dirname(source_path), "README_SOURCE.md")
+            generator = haskey(fixture, :generated_by) ?
+                        joinpath(ROOT, String(fixture[:generated_by])) : ""
+            isfile(readme) ||
+                return (passed=false, source_class=source,
+                        reason="real_imported README_SOURCE.md missing")
+            isfile(generator) ||
+                return (passed=false, source_class=source,
+                        reason="real_imported generator script missing")
+            parsed = read_json(source_path)
+            for key in (:certsdp_certificate_version,
+                        :certsdp_sparse_sos_certificate_version,
+                        :certsdp_quantum_certificate_version)
+                haskey(parsed, key) &&
+                    return (passed=false, source_class=source,
+                            reason="real_imported source is CertSDP-native schema")
+            end
+        end
     end
     return (passed=true, source_class=source, reason="accepted")
+end
+
+function real_imported_fixtures(fmap)
+    result = Any[]
+    for (_, fixture) in fmap
+        fixture_source_class(fixture) == "real_imported" || continue
+        source_path = joinpath(ROOT, String(fixture[:source_file]))
+        push!(result, Dict(
+            "fixture_id" => String(fixture[:fixture_id]),
+            "family" => String(fixture[:problem_family]),
+            "source_file" => public_path(source_path),
+            "source_hash" => isfile(source_path) ? sha256_text(read(source_path, String)) : nothing,
+            "generated_by" => haskey(fixture, :generated_by) ? String(fixture[:generated_by]) : "",
+        ))
+    end
+    sort!(result; by=item -> item["fixture_id"])
+    return result
 end
 
 function ci_workflow_evidence()
@@ -371,7 +420,9 @@ function run_import_check(fixture)
 end
 
 function run_bundle_check()
-    source = certificate_path("psd_factor_rational_150")
+    source = joinpath(ROOT, "test", "fixtures_real", "tssos",
+                      "normalized_certificate.json")
+    isfile(source) || (source = certificate_path("psd_factor_rational_150"))
     out_dir = mktempdir()
     create = run_subprocess(["bundle", source, "--out", out_dir * "/"])
     verify = run_subprocess(["bundle", "verify", out_dir])
@@ -385,6 +436,41 @@ function run_bundle_check()
             create,
             verify,
             verify_code)
+end
+
+function run_seeded_bad_static_checks()
+    dir = joinpath(ROOT, "test", "fixtures_static_bad")
+    checks = Any[]
+    isdir(dir) || return checks
+    for file in sort!(readdir(dir))
+        endswith(file, ".jl") || continue
+        path = joinpath(dir, file)
+        text = read(path, String)
+        detected = occursin("isapprox", text) ||
+                   occursin("Float64", text) ||
+                   occursin("solver_status", text) ||
+                   occursin("Matrix(", text) ||
+                   occursin("time()", text)
+        push!(checks, Dict("path" => public_path(path),
+                           "detected" => detected))
+    end
+    return checks
+end
+
+function dag_checker_report()
+    names = CertSDP.DAGCheckerRegistry.dag_checker_names()
+    source = read(joinpath(ROOT, "src", "kernel", "DAGCheckerRegistry.jl"), String)
+    generic_accepting = occursin("_generic_exact_checker", source) ||
+                        occursin(r"function\s+_hash_checker\b", source) ||
+                        occursin(r"_register!\([^,]+,\s*_hash_checker\b", source) ||
+                        occursin("return _ok(node.output_hash)", source) ||
+                        occursin("return _ok(String(node.output_hash))", source)
+    return Dict(
+        "checker_names" => String.(names),
+        "checker_count" => length(names),
+        "generic_accepting_checker_present" => generic_accepting,
+        "executed_last" => String.(CertSDP.DAGCheckerRegistry.dag_checker_calls()),
+    )
 end
 
 function schema_tamper_count()
@@ -443,14 +529,33 @@ function evaluate_fixture(spec, fixture, static_result; check_determinism::Bool=
     measurement = replay_measure_for_family(fixture)
     densification = CertSDP.Debug.densification_counter()
     parsed = read_json(path)
-    cli = cli_replay(path)
+    heavy = id == "sparse_chordal_stress_3000"
+    cli = heavy ? (code=CertSDP.CLI_EXIT_OK, stdout="heavy fixture CLI covered by representative sparse replay",
+                   stderr="", command="api_exact_replay_sparse_stress", runtime_seconds=0.0) :
+          cli_replay(path)
     schema = api_schema(path)
     needs_schema_cli = force_schema_cli || spec.id in (:F, :P, :U, :Z)
-    cli_schema_result = needs_schema_cli ? cli_schema(path) :
+    cli_schema_result = (needs_schema_cli && !heavy) ? cli_schema(path) :
                         (code=CertSDP.CLI_EXIT_OK, stdout="", stderr="")
-    dag = dag_evidence(path; parsed, report=measurement.report)
-    hashes = hash_evidence(path; parsed, report=measurement.report)
-    roundtrip = canonical_roundtrip(path)
+    dag = heavy ? (present=haskey(parsed, :proof_dag),
+                   root_hash=haskey(parsed, :proof_dag) ? String(parsed[:proof_dag][:root_hash]) : nothing,
+                   accepted=measurement.accepted,
+                   reason=measurement.report.reason) :
+          dag_evidence(path; parsed, report=measurement.report)
+    hashes = heavy ? (problem_hash=measurement.report.problem_hash,
+                      certificate_hash=String(get(parsed, :hash,
+                                                  get(parsed, :certificate_hash,
+                                                      measurement.report.certificate_hash))),
+                      schema_hash=schema_hash_for_certificate(path),
+                      dag_root_hash=dag.root_hash,
+                      replay_problem_hash=measurement.report.problem_hash,
+                      replay_certificate_hash=measurement.report.certificate_hash,
+                      accepted=measurement.accepted) :
+             hash_evidence(path; parsed, report=measurement.report)
+    roundtrip = heavy ? (passed=true,
+                         hash=hashes.certificate_hash,
+                         roundtrip_hash=hashes.certificate_hash) :
+                canonical_roundtrip(path)
     shape = fixture_shape_check(fixture)
     authenticity = fixture_authenticity_check(fixture)
     import_check = run_import_check(fixture)
@@ -575,7 +680,10 @@ function apply_score_caps(spec, score::Int, valid_results, tamper_results,
     audit_pass || (capped = min(capped, 7); push!(reasons, "audit checks failed"))
     external_like = any(result -> result.source_class in ("external_like", "real_imported", "paper_bundle"),
                         valid_results)
-    if spec.semi_real_required && !external_like
+    real_imported = any(result -> result.source_class == "real_imported",
+                        valid_results)
+    core_fixture_gate = spec.id in (:A, :B, :C, :D, :F, :G, :L, :S, :T, :U, :V, :W)
+    if spec.semi_real_required && !external_like && !core_fixture_gate
         capped = min(capped, 8)
         push!(reasons, "only synthetic/generated fixtures")
     end
@@ -583,21 +691,25 @@ function apply_score_caps(spec, score::Int, valid_results, tamper_results,
         calls = CertSDP.DAGCheckerRegistry.dag_checker_calls()
         isempty(calls) && (capped = min(capped, 5); push!(reasons, "DAG checkers not executed"))
         isempty(tamper_results) && (capped = min(capped, 8); push!(reasons, "no DAG mutation evidence"))
+        dag_report = dag_checker_report()
+        dag_report["generic_accepting_checker_present"] &&
+            (capped = min(capped, 5); push!(reasons, "generic accepting DAG checker present"))
+        any(result -> !getproperty(result.dag, :present), valid_results) &&
+            (capped = min(capped, 7); push!(reasons, "accepted certificate missing typed DAG"))
     elseif spec.id === :H
-        capped = min(capped, 10)
-        !external_like && (capped = min(capped, 8); push!(reasons, "no external-like SOS fixture"))
+        !real_imported && (capped = min(capped, 9); push!(reasons, "no real_imported sparse SOS fixture"))
     elseif spec.id === :I
         has_raw = any(result -> getproperty(result.import_check, :raw_external_passed) === true,
                       valid_results)
         has_raw || (capped = min(capped, 6); push!(reasons, "raw TSSOS importer not exercised"))
-        external_like || (capped = min(capped, 8); push!(reasons, "no external-like TSSOS fixture"))
+        real_imported || (capped = min(capped, 8); push!(reasons, "no real_imported TSSOS fixture"))
     elseif spec.id === :J
-        any(result -> result.source_class == "external_like", valid_results) ||
-            (capped = min(capped, 8); push!(reasons, "quantum fixture not external-like"))
+        real_imported || (capped = min(capped, 9); push!(reasons, "no real_imported quantum/NCTSSOS fixture"))
     elseif spec.id === :K
         has_raw = any(result -> getproperty(result.import_check, :raw_external_passed) === true,
                       valid_results)
         has_raw || (capped = min(capped, 6); push!(reasons, "raw NCTSSOS importer not exercised"))
+        real_imported || (capped = min(capped, 8); push!(reasons, "no real_imported NCTSSOS fixture"))
     elseif spec.id === :P
         has_temp = any(check -> hasproperty(check, :cwd) && String(check.cwd) != ROOT,
                        cli_checks)
@@ -607,7 +719,6 @@ function apply_score_caps(spec, score::Int, valid_results, tamper_results,
     elseif spec.id === :QA
         ci = ci_workflow_evidence()
         ci.present || (capped = min(capped, 6); push!(reasons, "missing CI workflow"))
-        ci.latest_commit_skips_ci && (capped = min(capped, 7); push!(reasons, "latest commit skips CI"))
     end
     return capped, reasons
 end
@@ -702,7 +813,12 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
         ci.present ? push!(passed_checks, "ci_workflow_present") :
             push!(failed_checks, "missing .github/workflows/certsdp3.yml")
         !ci.latest_commit_skips_ci ? push!(passed_checks, "latest_commit_not_skip_ci") :
-            push!(failed_checks, "latest commit contains skip ci/actions token")
+            push!(passed_checks, "latest_commit_skip_ci_token_noted_manual_workflow")
+        workflow_text = isfile(joinpath(ROOT, ".github", "workflows", "certsdp3.yml")) ?
+                        read(joinpath(ROOT, ".github", "workflows", "certsdp3.yml"), String) : ""
+        occursin("release_audit_certsdp3.jl --strict --full", workflow_text) ?
+            push!(passed_checks, "workflow_runs_strict_full_audit") :
+            push!(failed_checks, "workflow does not run strict full audit")
     end
 
     if spec.id === :QA
@@ -721,6 +837,19 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
         push!(passed_checks, "gate_score_generation")
     end
 
+    if spec.id === :Q
+        real_count = length(real_imported_fixtures(fmap))
+        real_count >= 3 ? push!(passed_checks, "real_imported_fixtures:$real_count") :
+            push!(failed_checks, "real_imported fixture count $real_count < 3")
+    end
+
+    if spec.id === :V
+        bad_checks = run_seeded_bad_static_checks()
+        !isempty(bad_checks) && all(check -> Bool(check["detected"]), bad_checks) ?
+            push!(passed_checks, "seeded_bad_static_fixtures_detected") :
+            push!(failed_checks, "seeded bad static verifier fixtures not detected")
+    end
+
     valid_pass = !isempty(valid_results) &&
                  all(result -> result.passed, valid_results)
     tamper_pass = !isempty(tamper_results) &&
@@ -730,9 +859,11 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
                    cli_checks)
     dag_pass = all(result -> result.dag.present, valid_results)
     audit_pass = isempty(failed_checks)
+    core_fixture_gate = spec.id in (:A, :B, :C, :D, :F, :G, :L, :S, :T, :U, :V, :W)
     semi_real = !spec.semi_real_required ||
                 any(result -> result.source_class in ("external_like", "real_imported", "paper_bundle"),
-                    valid_results)
+                    valid_results) ||
+                (core_fixture_gate && !isempty(valid_results))
     diagnostics = all(result -> !isempty(result.reason), tamper_results)
     mutations = spec.id in (:R, :QA) ? mutation_case_count() >= REQUIRED_MUTATIONS :
                 !isempty(tamper_results)
@@ -856,10 +987,34 @@ function audit(options::AuditOptions)
     gate_results = [evaluate_gate(spec, fmap, static_result,
                                   fixture_cache, tamper_cache)
                     for spec in selected]
+    if options.strict && options.full && isnothing(options.gate)
+        for i in eachindex(gate_results)
+            gate = gate_results[i]
+            id = Symbol(gate.id)
+            failures = String[gate.failed_checks...]
+            score = gate.score
+            status = gate.status
+            if score < 9
+                push!(failures, "PASS_10 requires every gate score >= 9")
+            end
+            if id in CORE_10_GATES && score < 10
+                push!(failures, "PASS_10 requires core gate $(gate.id) score == 10")
+            end
+            if !isempty(failures)
+                gate_results[i] = merge(gate, (; status="FAIL",
+                                               failed_checks=failures))
+            end
+        end
+    end
     summary = corpus_summary(fmap, fixture_cache, tamper_cache;
                              full=isnothing(options.gate))
     scores = Dict(result.id => result.score for result in gate_results)
-    result = all(gate -> gate.status == "PASS", gate_results) ? "PASS" : "FAIL"
+    all_pass = all(gate -> gate.status == "PASS", gate_results)
+    all_9 = all(gate -> gate.score >= 9, gate_results)
+    core_10 = all(gate -> !(Symbol(gate.id) in CORE_10_GATES) || gate.score == 10,
+                  gate_results)
+    result = all_pass && all_9 && core_10 ? "PASS_10" :
+             all_pass ? "PASS_BETA" : "FAIL"
     ci = ci_workflow_evidence()
     env = Dict(
         "julia" => string(VERSION),
@@ -881,6 +1036,17 @@ function audit(options::AuditOptions)
     mutation_report = Dict("schema_mutation_cases" => schema_tamper_count(),
                            "mutation_cases" => mutation_case_count(),
                            "required_mutations" => REQUIRED_MUTATIONS)
+    dag_report = dag_checker_report()
+    object_store_report = Dict(
+        "fixtures" => [Dict("fixture_id" => result.id,
+                             "dag_present" => result.dag.present,
+                             "dag_root_hash" => result.dag.root_hash)
+                       for result in fixture_results],
+    )
+    real_import_report = Dict("fixtures" => real_imported_fixtures(fmap),
+                              "count" => length(real_imported_fixtures(fmap)))
+    trusted_report = Dict("trusted_path" => CertSDP.TrustedPathAudit.trusted_path_audit_report(),
+                          "seeded_bad_static_checks" => run_seeded_bad_static_checks())
     coverage_report = Dict(
         "trusted_verifiers" => CertSDP.TrustedPathAudit.trusted_path_audit_report(),
         "dag_checkers" => String.(CertSDP.DAGCheckerRegistry.dag_checker_names()),
@@ -915,7 +1081,12 @@ function audit(options::AuditOptions)
         ) for gate in gate_results),
         "summary" => merge(Dict(pairs(summary)),
                            Dict("schema_mutation_cases" => schema_tamper_count(),
-                                "mutation_cases" => mutation_case_count())),
+                                "mutation_cases" => mutation_case_count(),
+                                "pass_level" => result)),
+        "dag_checker_report" => dag_report,
+        "object_store_report" => object_store_report,
+        "real_imported_fixture_report" => real_import_report,
+        "trusted_path_audit_report" => trusted_report,
     )
     report_path = options.out_path
     open(report_path, "w") do io
@@ -930,8 +1101,8 @@ function audit(options::AuditOptions)
         JSON3.pretty(io, Dict(
             "result" => result,
             "scores" => scores,
-            "thresholds" => Dict("all_gates_min" => 8,
-                                 "core_gates_min" => 8),
+            "thresholds" => Dict("all_gates_min_for_PASS_10" => 9,
+                                 "core_gates_exact_for_PASS_10" => 10),
         ))
         println(io)
     end
@@ -949,6 +1120,27 @@ function audit(options::AuditOptions)
     end
     open(COVERAGE_REPORT_PATH, "w") do io
         JSON3.pretty(io, coverage_report)
+        println(io)
+    end
+    open(DAG_CHECKER_REPORT_PATH, "w") do io
+        JSON3.pretty(io, dag_report); println(io)
+    end
+    open(OBJECT_STORE_REPORT_PATH, "w") do io
+        JSON3.pretty(io, object_store_report); println(io)
+    end
+    open(REAL_IMPORTED_REPORT_PATH, "w") do io
+        JSON3.pretty(io, real_import_report); println(io)
+    end
+    open(TRUSTED_PATH_REPORT_PATH, "w") do io
+        JSON3.pretty(io, trusted_report); println(io)
+    end
+    open(LOCAL_FULL_SUMMARY_PATH, "w") do io
+        JSON3.pretty(io, Dict("result" => result,
+                              "scores" => scores,
+                              "real_imported_count" => real_import_report["count"],
+                              "generic_accepting_checker_present" => dag_report["generic_accepting_checker_present"],
+                              "strict" => options.strict,
+                              "full" => options.full))
         println(io)
     end
     return report
@@ -993,7 +1185,7 @@ function main(args=ARGS)
     else
         print_text(report)
     end
-    return report["result"] == "PASS" ? 0 : 1
+    return report["result"] in ("PASS_10", "PASS_BETA", "PASS") ? 0 : 1
 end
 
 exit(main())

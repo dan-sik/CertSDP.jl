@@ -340,14 +340,19 @@ function _paper_bundle(cert_path::AbstractString, out_dir::AbstractString)
     mkpath(out_dir)
     schema_dir = joinpath(out_dir, "schema")
     mkpath(schema_dir)
+    source_dir = joinpath(out_dir, "source_artifacts")
+    mkpath(source_dir)
     cert_text = read(cert_path, String)
     write(joinpath(out_dir, "certificate.json"), cert_text)
+    parsed = JSON3.read(cert_text)
     write(joinpath(out_dir, "problem.json"),
           JSON3.write(Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
-                           "source" => "embedded_or_not_supplied")))
-    parsed = JSON3.read(cert_text)
+                           "problem_hash" => report.problem_hash,
+                           "source" => "certificate_exact_problem_reference",
+                           "claim_type" => _claim_type_from_replay_artifact(parsed))))
     dag_json = _proof_dag_json_from_replay_artifact(cert_text, parsed)
     _write_json(joinpath(out_dir, "proof_dag.json"), dag_json)
+    _write_json(joinpath(out_dir, "object_store.json"), dag_json[:object_store])
     _write_json(joinpath(out_dir, "replay_report.json"),
                 Kernel.diagnostic_report_json(report))
     write(joinpath(out_dir, "replay_report.html"),
@@ -384,6 +389,16 @@ julia --project="\$PROJECT" --startup-file=no -e 'using CertSDP; exit(CertSDP.Ke
 """
     write(joinpath(out_dir, "VERIFY.sh"), verify_script)
     chmod(joinpath(out_dir, "VERIFY.sh"), 0o755)
+    _write_json(joinpath(out_dir, "environment.json"),
+                Dict("julia_version" => string(VERSION),
+                     "offline_replay" => true,
+                     "certsdp_schema_version" => Kernel.CERTSDP3_SCHEMA_VERSION))
+    source_hint = if occursin("fixtures_real", cert_path)
+        cp(cert_path, joinpath(source_dir, basename(cert_path)); force=true)
+        basename(cert_path)
+    else
+        "certificate.json"
+    end
     write(joinpath(out_dir, "CITATION.cff"),
           "cff-version: 1.2.0\nmessage: Cite the CertSDP proof-carrying certificate artifact.\ntitle: CertSDP 3.0 Certificate Bundle\n")
     write(joinpath(out_dir, "theorem_statement.txt"),
@@ -398,6 +413,7 @@ julia --project="\$PROJECT" --startup-file=no -e 'using CertSDP; exit(CertSDP.Ke
         "schema_hash" => schema_hash,
         "dag_root_hash" => _dag_root_from_replay_artifact(parsed),
         "verify_script" => "VERIFY.sh",
+        "source_artifacts" => [source_hint],
     )
     write(joinpath(out_dir, "CERTSDP_BUNDLE.json"), JSON3.write(manifest))
     write(joinpath(out_dir, "schema.json"),
@@ -413,13 +429,19 @@ julia --project="\$PROJECT" --startup-file=no -e 'using CertSDP; exit(CertSDP.Ke
     hashes = String[]
     for file in ["CERTSDP_BUNDLE.json", "certificate.json", "problem.json",
                  "schema.json", "audit_expected.json", "README.md",
-                 "proof_dag.json", "replay_report.json", "replay_report.html", "VERIFY.sh",
-                 "CITATION.cff", "theorem_statement.txt"]
+                 "proof_dag.json", "object_store.json", "replay_report.json",
+                 "replay_report.html", "VERIFY.sh", "CITATION.cff",
+                 "theorem_statement.txt", "environment.json"]
         path = joinpath(out_dir, file)
         isfile(path) && push!(hashes, file * " " * bytes2hex(sha256(read(path))))
     end
     for schema_file in sort!(readdir(schema_dir))
         rel = joinpath("schema", schema_file)
+        path = joinpath(out_dir, rel)
+        isfile(path) && push!(hashes, rel * " " * bytes2hex(sha256(read(path))))
+    end
+    for source_file in sort!(readdir(source_dir))
+        rel = joinpath("source_artifacts", source_file)
         path = joinpath(out_dir, rel)
         isfile(path) && push!(hashes, rel * " " * bytes2hex(sha256(read(path))))
     end

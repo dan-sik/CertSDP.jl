@@ -12,11 +12,15 @@ const REQUIRED_FILES = [
     "problem.json",
     "certificate.json",
     "proof_dag.json",
+    "object_store.json",
     "schema.json",
     "VERIFY.sh",
     "replay_report.json",
     "hashes.txt",
+    "environment.json",
+    "theorem_statement.txt",
     "README.md",
+    "source_artifacts",
 ]
 
 function _sha256_file(path)
@@ -43,6 +47,13 @@ function bundle_file_hashes(dir::AbstractString)
             result[rel] = _sha256_file(joinpath(dir, rel))
         end
     end
+    source_dir = joinpath(dir, "source_artifacts")
+    if isdir(source_dir)
+        for file in sort!(readdir(source_dir))
+            rel = joinpath("source_artifacts", file)
+            result[rel] = _sha256_file(joinpath(dir, rel))
+        end
+    end
     return result
 end
 
@@ -66,13 +77,23 @@ end
 function verify_bundle_directory(dir::AbstractString)
     try
         for file in REQUIRED_FILES
-            isfile(joinpath(dir, file)) ||
-                return (passed=false, reason="missing bundle file $file")
+            if file == "source_artifacts"
+                isdir(joinpath(dir, file)) ||
+                    return (passed=false, reason="missing bundle directory $file")
+            else
+                isfile(joinpath(dir, file)) ||
+                    return (passed=false, reason="missing bundle file $file")
+            end
         end
         manifest = JSON3.read(read(joinpath(dir, "CERTSDP_BUNDLE.json"), String))
         for key in (:certificate_hash, :problem_hash)
             haskey(manifest, key) ||
                 return (passed=false, reason="bundle manifest missing $(String(key))")
+        end
+        problem = JSON3.read(read(joinpath(dir, "problem.json"), String))
+        if haskey(problem, :source) &&
+           String(problem[:source]) in ("embedded_or_not_supplied", "empty_problem_marker")
+            return (passed=false, reason="problem.json lacks replayable problem evidence")
         end
         hashes = _parse_hashes_txt(joinpath(dir, "hashes.txt"))
         actual = bundle_file_hashes(dir)
@@ -86,10 +107,22 @@ function verify_bundle_directory(dir::AbstractString)
                                     io=nothing)
         report.accepted ||
             return (passed=false, reason="certificate replay rejected: $(report.reason)")
+        certificate = JSON3.read(read(joinpath(dir, "certificate.json"), String))
+        dag = JSON3.read(read(joinpath(dir, "proof_dag.json"), String))
+        dag_root = haskey(dag, :root_hash) ? String(dag[:root_hash]) : ""
+        haskey(certificate, :proof_dag) &&
+            String(certificate[:proof_dag][:root_hash]) == dag_root ||
+            return (passed=false, reason="proof_dag.json does not match certificate")
+        object_store = JSON3.read(read(joinpath(dir, "object_store.json"), String))
+        haskey(dag, :object_store) &&
+            JSON3.write(object_store) == JSON3.write(dag[:object_store]) ||
+            return (passed=false, reason="object_store.json does not match proof DAG")
         String(manifest[:certificate_hash]) == report.certificate_hash ||
             return (passed=false, reason="manifest certificate hash mismatch")
         String(manifest[:problem_hash]) == report.problem_hash ||
             return (passed=false, reason="manifest problem hash mismatch")
+        haskey(manifest, :dag_root_hash) && String(manifest[:dag_root_hash]) == dag_root ||
+            return (passed=false, reason="manifest DAG root hash mismatch")
         replay_report = JSON3.read(read(joinpath(dir, "replay_report.json"), String))
         haskey(replay_report, :accepted) && Bool(replay_report[:accepted]) ||
             return (passed=false, reason="stale replay_report.json")

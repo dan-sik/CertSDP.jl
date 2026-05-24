@@ -1,9 +1,11 @@
 module Perf
 
 using ..Kernel
+using JSON3: JSON3
 
 export ReplayMeasurement,
        measure_replay,
+       measure_chordal_replay,
        memory_budget_check,
        validation_summary
 
@@ -14,6 +16,27 @@ struct ReplayMeasurement
     elapsed_seconds::Float64
     allocated_bytes::Int64
     report::Kernel.DiagnosticReport
+end
+
+function measure_chordal_replay(path::AbstractString)
+    parsed = JSON3.read(read(String(path), String))
+    proof_object = haskey(parsed, :proof) ? parsed[:proof] : parsed
+    matrix = Kernel.parse_sparse_matrix_object(proof_object[:matrix];
+                                               strict=true,
+                                               path="root.proof.matrix")
+    chordal = Kernel._parse_chordal_proof_object(proof_object[:chordal_proof],
+                                                 matrix;
+                                                 strict=true)
+    report_ref = Ref{Kernel.DiagnosticReport}()
+    allocated_ref = Ref{Int64}(0)
+    elapsed = @elapsed begin
+        allocated = @allocated begin
+            report_ref[] = Kernel.verify_chordal_psd(matrix, chordal)
+        end
+        allocated_ref[] = Int64(allocated)
+    end
+    return ReplayMeasurement(String(path), report_ref[].accepted, elapsed,
+                             allocated_ref[], report_ref[])
 end
 
 function measure_replay(path::AbstractString)

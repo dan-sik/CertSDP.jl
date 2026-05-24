@@ -24,7 +24,7 @@
         ],
         "action_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
     },
-    "certificate_hash": "sha256:bbe816faf182967a0a8e453e5a87b05a9cc7890ed7e98449c6d612ecff321b31",
+    "certificate_hash": "sha256:d91ffe550b0978d30bf180b320173249e0f5e16c3a3e4bf00c5fd70cc6f9d695",
     "certsdp_symmetry_certificate_version": "3.0",
     "orbit_basis": {
         "orbit_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
@@ -397,36 +397,1543 @@
         "claim_type": "symmetry_reduction",
         "nodes": [
             {
+                "status": "pending",
+                "version": "3.0",
+                "obligation_id": "symmetry_group_closure",
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "output_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                "typed_payload": {
+                    "group": {
+                        "variables": [
+                            "x1",
+                            "x2",
+                            "x3",
+                            "x4",
+                            "x5",
+                            "x6"
+                        ],
+                        "generators": [
+                            {
+                                "id": "cyclic_shift",
+                                "image": [
+                                    2,
+                                    3,
+                                    4,
+                                    5,
+                                    6,
+                                    1
+                                ]
+                            }
+                        ],
+                        "action_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
+                    }
+                },
                 "inputs": [
                 ],
                 "kind": "hash",
-                "status": "accepted",
                 "id": "symmetry_group",
                 "checker": "symmetry_group_hash",
-                "output_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
+                "input_hashes": [
+                ]
             },
             {
+                "status": "pending",
+                "version": "3.0",
+                "obligation_id": "symmetry_orbit_partition",
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "output_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                "typed_payload": {
+                    "group_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                    "orbit_basis": {
+                        "orbit_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                        "monomial_exponents": [
+                            [
+                                2,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                2,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                2,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                2,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                2,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                2
+                            ],
+                            [
+                                1,
+                                1,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                1,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                1,
+                                1,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                1,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                1,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                0,
+                                1,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                1,
+                                0,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                1,
+                                0,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                0,
+                                0,
+                                0,
+                                1
+                            ]
+                        ],
+                        "orbits": [
+                            [
+                                1,
+                                2,
+                                3,
+                                4,
+                                5,
+                                6
+                            ],
+                            [
+                                7,
+                                8,
+                                9,
+                                10,
+                                11,
+                                12
+                            ],
+                            [
+                                13,
+                                14,
+                                15,
+                                16,
+                                17,
+                                18
+                            ]
+                        ]
+                    }
+                },
                 "inputs": [
                     "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
                 ],
                 "kind": "hash",
-                "status": "accepted",
                 "id": "orbit_basis",
                 "checker": "orbit_basis_hash",
-                "output_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                "input_hashes": [
+                    "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
+                ]
             },
             {
+                "status": "pending",
+                "version": "3.0",
+                "obligation_id": "symmetry_block_reconstruction",
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "output_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                "typed_payload": {
+                    "reconstruction_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                    "group": {
+                        "variables": [
+                            "x1",
+                            "x2",
+                            "x3",
+                            "x4",
+                            "x5",
+                            "x6"
+                        ],
+                        "generators": [
+                            {
+                                "id": "cyclic_shift",
+                                "image": [
+                                    2,
+                                    3,
+                                    4,
+                                    5,
+                                    6,
+                                    1
+                                ]
+                            }
+                        ],
+                        "action_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
+                    },
+                    "orbit_basis": {
+                        "orbit_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                        "monomial_exponents": [
+                            [
+                                2,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                2,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                2,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                2,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                2,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                2
+                            ],
+                            [
+                                1,
+                                1,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                1,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                1,
+                                1,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                1,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                1,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                0,
+                                1,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                1,
+                                0,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                1,
+                                0,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                0,
+                                0,
+                                0,
+                                1
+                            ]
+                        ],
+                        "orbits": [
+                            [
+                                1,
+                                2,
+                                3,
+                                4,
+                                5,
+                                6
+                            ],
+                            [
+                                7,
+                                8,
+                                9,
+                                10,
+                                11,
+                                12
+                            ],
+                            [
+                                13,
+                                14,
+                                15,
+                                16,
+                                17,
+                                18
+                            ]
+                        ]
+                    },
+                    "original_matrix": {
+                        "n": 18,
+                        "hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "entries": [
+                            {
+                                "value": "1",
+                                "j": 1,
+                                "i": 1
+                            },
+                            {
+                                "value": "1",
+                                "j": 2,
+                                "i": 2
+                            },
+                            {
+                                "value": "1",
+                                "j": 3,
+                                "i": 3
+                            },
+                            {
+                                "value": "1",
+                                "j": 4,
+                                "i": 4
+                            },
+                            {
+                                "value": "1",
+                                "j": 5,
+                                "i": 5
+                            },
+                            {
+                                "value": "1",
+                                "j": 6,
+                                "i": 6
+                            },
+                            {
+                                "value": "1",
+                                "j": 7,
+                                "i": 7
+                            },
+                            {
+                                "value": "1",
+                                "j": 8,
+                                "i": 8
+                            },
+                            {
+                                "value": "1",
+                                "j": 9,
+                                "i": 9
+                            },
+                            {
+                                "value": "1",
+                                "j": 10,
+                                "i": 10
+                            },
+                            {
+                                "value": "1",
+                                "j": 11,
+                                "i": 11
+                            },
+                            {
+                                "value": "1",
+                                "j": 12,
+                                "i": 12
+                            },
+                            {
+                                "value": "1",
+                                "j": 13,
+                                "i": 13
+                            },
+                            {
+                                "value": "1",
+                                "j": 14,
+                                "i": 14
+                            },
+                            {
+                                "value": "1",
+                                "j": 15,
+                                "i": 15
+                            },
+                            {
+                                "value": "1",
+                                "j": 16,
+                                "i": 16
+                            },
+                            {
+                                "value": "1",
+                                "j": 17,
+                                "i": 17
+                            },
+                            {
+                                "value": "1",
+                                "j": 18,
+                                "i": 18
+                            }
+                        ]
+                    },
+                    "reconstructed_matrix": {
+                        "n": 18,
+                        "hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "entries": [
+                            {
+                                "value": "1",
+                                "j": 1,
+                                "i": 1
+                            },
+                            {
+                                "value": "1",
+                                "j": 2,
+                                "i": 2
+                            },
+                            {
+                                "value": "1",
+                                "j": 3,
+                                "i": 3
+                            },
+                            {
+                                "value": "1",
+                                "j": 4,
+                                "i": 4
+                            },
+                            {
+                                "value": "1",
+                                "j": 5,
+                                "i": 5
+                            },
+                            {
+                                "value": "1",
+                                "j": 6,
+                                "i": 6
+                            },
+                            {
+                                "value": "1",
+                                "j": 7,
+                                "i": 7
+                            },
+                            {
+                                "value": "1",
+                                "j": 8,
+                                "i": 8
+                            },
+                            {
+                                "value": "1",
+                                "j": 9,
+                                "i": 9
+                            },
+                            {
+                                "value": "1",
+                                "j": 10,
+                                "i": 10
+                            },
+                            {
+                                "value": "1",
+                                "j": 11,
+                                "i": 11
+                            },
+                            {
+                                "value": "1",
+                                "j": 12,
+                                "i": 12
+                            },
+                            {
+                                "value": "1",
+                                "j": 13,
+                                "i": 13
+                            },
+                            {
+                                "value": "1",
+                                "j": 14,
+                                "i": 14
+                            },
+                            {
+                                "value": "1",
+                                "j": 15,
+                                "i": 15
+                            },
+                            {
+                                "value": "1",
+                                "j": 16,
+                                "i": 16
+                            },
+                            {
+                                "value": "1",
+                                "j": 17,
+                                "i": 17
+                            },
+                            {
+                                "value": "1",
+                                "j": 18,
+                                "i": 18
+                            }
+                        ]
+                    },
+                    "projection_blocks": [
+                        {
+                            "n": 18,
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "value": "1",
+                                    "j": 1,
+                                    "i": 1
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 2,
+                                    "i": 2
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 3,
+                                    "i": 3
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 4,
+                                    "i": 4
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 5,
+                                    "i": 5
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 6,
+                                    "i": 6
+                                }
+                            ]
+                        },
+                        {
+                            "n": 18,
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "value": "1",
+                                    "j": 7,
+                                    "i": 7
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 8,
+                                    "i": 8
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 9,
+                                    "i": 9
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 10,
+                                    "i": 10
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 11,
+                                    "i": 11
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 12,
+                                    "i": 12
+                                }
+                            ]
+                        },
+                        {
+                            "n": 18,
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "value": "1",
+                                    "j": 13,
+                                    "i": 13
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 14,
+                                    "i": 14
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 15,
+                                    "i": 15
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 16,
+                                    "i": 16
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 17,
+                                    "i": 17
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 18,
+                                    "i": 18
+                                }
+                            ]
+                        }
+                    ]
+                },
                 "inputs": [
                     "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
                 ],
                 "kind": "exact_identity",
-                "status": "accepted",
                 "id": "block_reconstruction",
                 "checker": "verify_block_diagonalization_certificate",
-                "output_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+                "input_hashes": [
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                ]
+            },
+            {
+                "status": "pending",
+                "version": "3.0",
+                "obligation_id": "final_accept",
+                "arithmetic_mode": "integer",
+                "source_location": null,
+                "output_hash": "sha256:faeda66d71cca281eb92ea8a5fe7d8d00c63baf8739dc6a14f6a3318effa1daf",
+                "typed_payload": {
+                    "claim_type": "symmetry_reduction",
+                    "required_inputs": [
+                        "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                        "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                    ]
+                },
+                "inputs": [
+                    "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                    "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+                ],
+                "kind": "final_accept",
+                "id": "final_accept",
+                "checker": "final_accept",
+                "input_hashes": [
+                    "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                    "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+                ]
             }
         ],
-        "root_hash": "sha256:869c975e8e09206a33d7b7e5ca5930263a8e510f74dbdcf6ec3cf6b2e0c63df1",
+        "root_hash": "sha256:95bedfc29434a73b3e9c277e76f156fabe7126c3c2cfda19bf52ec90efbd8a3b",
+        "object_store": {
+            "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6": {
+                "kind": "exact_identity",
+                "version": "3.0",
+                "payload": {
+                    "reconstruction_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                    "group": {
+                        "variables": [
+                            "x1",
+                            "x2",
+                            "x3",
+                            "x4",
+                            "x5",
+                            "x6"
+                        ],
+                        "generators": [
+                            {
+                                "id": "cyclic_shift",
+                                "image": [
+                                    2,
+                                    3,
+                                    4,
+                                    5,
+                                    6,
+                                    1
+                                ]
+                            }
+                        ],
+                        "action_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
+                    },
+                    "orbit_basis": {
+                        "orbit_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                        "monomial_exponents": [
+                            [
+                                2,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                2,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                2,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                2,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                2,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                2
+                            ],
+                            [
+                                1,
+                                1,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                1,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                1,
+                                1,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                1,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                1,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                0,
+                                1,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                1,
+                                0,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                1,
+                                0,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                0,
+                                0,
+                                0,
+                                1
+                            ]
+                        ],
+                        "orbits": [
+                            [
+                                1,
+                                2,
+                                3,
+                                4,
+                                5,
+                                6
+                            ],
+                            [
+                                7,
+                                8,
+                                9,
+                                10,
+                                11,
+                                12
+                            ],
+                            [
+                                13,
+                                14,
+                                15,
+                                16,
+                                17,
+                                18
+                            ]
+                        ]
+                    },
+                    "original_matrix": {
+                        "n": 18,
+                        "hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "entries": [
+                            {
+                                "value": "1",
+                                "j": 1,
+                                "i": 1
+                            },
+                            {
+                                "value": "1",
+                                "j": 2,
+                                "i": 2
+                            },
+                            {
+                                "value": "1",
+                                "j": 3,
+                                "i": 3
+                            },
+                            {
+                                "value": "1",
+                                "j": 4,
+                                "i": 4
+                            },
+                            {
+                                "value": "1",
+                                "j": 5,
+                                "i": 5
+                            },
+                            {
+                                "value": "1",
+                                "j": 6,
+                                "i": 6
+                            },
+                            {
+                                "value": "1",
+                                "j": 7,
+                                "i": 7
+                            },
+                            {
+                                "value": "1",
+                                "j": 8,
+                                "i": 8
+                            },
+                            {
+                                "value": "1",
+                                "j": 9,
+                                "i": 9
+                            },
+                            {
+                                "value": "1",
+                                "j": 10,
+                                "i": 10
+                            },
+                            {
+                                "value": "1",
+                                "j": 11,
+                                "i": 11
+                            },
+                            {
+                                "value": "1",
+                                "j": 12,
+                                "i": 12
+                            },
+                            {
+                                "value": "1",
+                                "j": 13,
+                                "i": 13
+                            },
+                            {
+                                "value": "1",
+                                "j": 14,
+                                "i": 14
+                            },
+                            {
+                                "value": "1",
+                                "j": 15,
+                                "i": 15
+                            },
+                            {
+                                "value": "1",
+                                "j": 16,
+                                "i": 16
+                            },
+                            {
+                                "value": "1",
+                                "j": 17,
+                                "i": 17
+                            },
+                            {
+                                "value": "1",
+                                "j": 18,
+                                "i": 18
+                            }
+                        ]
+                    },
+                    "reconstructed_matrix": {
+                        "n": 18,
+                        "hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "entries": [
+                            {
+                                "value": "1",
+                                "j": 1,
+                                "i": 1
+                            },
+                            {
+                                "value": "1",
+                                "j": 2,
+                                "i": 2
+                            },
+                            {
+                                "value": "1",
+                                "j": 3,
+                                "i": 3
+                            },
+                            {
+                                "value": "1",
+                                "j": 4,
+                                "i": 4
+                            },
+                            {
+                                "value": "1",
+                                "j": 5,
+                                "i": 5
+                            },
+                            {
+                                "value": "1",
+                                "j": 6,
+                                "i": 6
+                            },
+                            {
+                                "value": "1",
+                                "j": 7,
+                                "i": 7
+                            },
+                            {
+                                "value": "1",
+                                "j": 8,
+                                "i": 8
+                            },
+                            {
+                                "value": "1",
+                                "j": 9,
+                                "i": 9
+                            },
+                            {
+                                "value": "1",
+                                "j": 10,
+                                "i": 10
+                            },
+                            {
+                                "value": "1",
+                                "j": 11,
+                                "i": 11
+                            },
+                            {
+                                "value": "1",
+                                "j": 12,
+                                "i": 12
+                            },
+                            {
+                                "value": "1",
+                                "j": 13,
+                                "i": 13
+                            },
+                            {
+                                "value": "1",
+                                "j": 14,
+                                "i": 14
+                            },
+                            {
+                                "value": "1",
+                                "j": 15,
+                                "i": 15
+                            },
+                            {
+                                "value": "1",
+                                "j": 16,
+                                "i": 16
+                            },
+                            {
+                                "value": "1",
+                                "j": 17,
+                                "i": 17
+                            },
+                            {
+                                "value": "1",
+                                "j": 18,
+                                "i": 18
+                            }
+                        ]
+                    },
+                    "projection_blocks": [
+                        {
+                            "n": 18,
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "value": "1",
+                                    "j": 1,
+                                    "i": 1
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 2,
+                                    "i": 2
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 3,
+                                    "i": 3
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 4,
+                                    "i": 4
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 5,
+                                    "i": 5
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 6,
+                                    "i": 6
+                                }
+                            ]
+                        },
+                        {
+                            "n": 18,
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "value": "1",
+                                    "j": 7,
+                                    "i": 7
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 8,
+                                    "i": 8
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 9,
+                                    "i": 9
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 10,
+                                    "i": 10
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 11,
+                                    "i": 11
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 12,
+                                    "i": 12
+                                }
+                            ]
+                        },
+                        {
+                            "n": 18,
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "value": "1",
+                                    "j": 13,
+                                    "i": 13
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 14,
+                                    "i": 14
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 15,
+                                    "i": 15
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 16,
+                                    "i": 16
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 17,
+                                    "i": 17
+                                },
+                                {
+                                    "value": "1",
+                                    "j": 18,
+                                    "i": 18
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "id": "block_reconstruction",
+                "obligation_id": "symmetry_block_reconstruction",
+                "arithmetic_mode": "rational",
+                "checker": "verify_block_diagonalization_certificate"
+            },
+            "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214": {
+                "kind": "hash",
+                "version": "3.0",
+                "payload": {
+                    "group": {
+                        "variables": [
+                            "x1",
+                            "x2",
+                            "x3",
+                            "x4",
+                            "x5",
+                            "x6"
+                        ],
+                        "generators": [
+                            {
+                                "id": "cyclic_shift",
+                                "image": [
+                                    2,
+                                    3,
+                                    4,
+                                    5,
+                                    6,
+                                    1
+                                ]
+                            }
+                        ],
+                        "action_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214"
+                    }
+                },
+                "id": "symmetry_group",
+                "obligation_id": "symmetry_group_closure",
+                "arithmetic_mode": "rational",
+                "checker": "symmetry_group_hash"
+            },
+            "sha256:faeda66d71cca281eb92ea8a5fe7d8d00c63baf8739dc6a14f6a3318effa1daf": {
+                "kind": "final_accept",
+                "version": "3.0",
+                "payload": {
+                    "claim_type": "symmetry_reduction",
+                    "required_inputs": [
+                        "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                        "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                    ]
+                },
+                "id": "final_accept",
+                "obligation_id": "final_accept",
+                "arithmetic_mode": "integer",
+                "checker": "final_accept"
+            },
+            "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb": {
+                "kind": "hash",
+                "version": "3.0",
+                "payload": {
+                    "group_hash": "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                    "orbit_basis": {
+                        "orbit_hash": "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                        "monomial_exponents": [
+                            [
+                                2,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                2,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                2,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                2,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                2,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                2
+                            ],
+                            [
+                                1,
+                                1,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                1,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                1,
+                                1,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                1,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                1,
+                                0,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                0,
+                                1,
+                                0,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                1,
+                                0,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                0,
+                                0,
+                                1,
+                                0,
+                                1
+                            ],
+                            [
+                                1,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0
+                            ],
+                            [
+                                0,
+                                1,
+                                0,
+                                0,
+                                0,
+                                1
+                            ]
+                        ],
+                        "orbits": [
+                            [
+                                1,
+                                2,
+                                3,
+                                4,
+                                5,
+                                6
+                            ],
+                            [
+                                7,
+                                8,
+                                9,
+                                10,
+                                11,
+                                12
+                            ],
+                            [
+                                13,
+                                14,
+                                15,
+                                16,
+                                17,
+                                18
+                            ]
+                        ]
+                    }
+                },
+                "id": "orbit_basis",
+                "obligation_id": "symmetry_orbit_partition",
+                "arithmetic_mode": "rational",
+                "checker": "orbit_basis_hash"
+            }
+        },
         "schema_version": "3.0"
     },
     "projection_blocks": [

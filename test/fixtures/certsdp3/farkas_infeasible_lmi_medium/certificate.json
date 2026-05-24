@@ -508,7 +508,39 @@
                 ],
                 "output_hash": "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea",
                 "checker": "verify_farkas_identity",
-                "status": "accepted"
+                "status": "pending",
+                "typed_payload": {
+                    "rhs": [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "lhs": [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ]
+                },
+                "input_hashes": [
+                ],
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "obligation_id": "farkas_dual_identity",
+                "version": "3.0"
             },
             {
                 "id": "farkas_contradiction",
@@ -518,11 +550,113 @@
                 ],
                 "output_hash": "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87",
                 "checker": "verify_farkas_contradiction",
-                "status": "accepted"
+                "status": "pending",
+                "typed_payload": {
+                    "contradiction_hash": "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87",
+                    "rhs": "-1",
+                    "lhs": "0"
+                },
+                "input_hashes": [
+                    "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea"
+                ],
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "obligation_id": "farkas_contradiction",
+                "version": "3.0"
+            },
+            {
+                "id": "final_accept",
+                "kind": "final_accept",
+                "inputs": [
+                    "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea",
+                    "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87"
+                ],
+                "output_hash": "sha256:ab3ec9a839bed994c3488ad70c160e1f1ea7631f721f945cb8dd35cb98aa0fed",
+                "checker": "final_accept",
+                "status": "pending",
+                "typed_payload": {
+                    "required_inputs": [
+                        "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea",
+                        "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87"
+                    ],
+                    "claim_type": "farkas_infeasibility"
+                },
+                "input_hashes": [
+                    "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea",
+                    "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87"
+                ],
+                "arithmetic_mode": "integer",
+                "source_location": null,
+                "obligation_id": "final_accept",
+                "version": "3.0"
             }
         ],
-        "root_hash": "sha256:c37280809ebd6a2ce62f31778ddc5f2baaca226337df4aebc07135fd292aa8ee",
-        "schema_version": "3.0"
+        "root_hash": "sha256:e45418b1d840484a0758cd73e57b71c04b8f55f77106afa37b2ffafe41842e51",
+        "schema_version": "3.0",
+        "object_store": {
+            "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87": {
+                "kind": "exact_order",
+                "arithmetic_mode": "rational",
+                "payload": {
+                    "contradiction_hash": "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87",
+                    "rhs": "-1",
+                    "lhs": "0"
+                },
+                "id": "farkas_contradiction",
+                "obligation_id": "farkas_contradiction",
+                "checker": "verify_farkas_contradiction",
+                "version": "3.0"
+            },
+            "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea": {
+                "kind": "exact_equality",
+                "arithmetic_mode": "rational",
+                "payload": {
+                    "rhs": [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
+                    "lhs": [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ]
+                },
+                "id": "farkas_identity",
+                "obligation_id": "farkas_dual_identity",
+                "checker": "verify_farkas_identity",
+                "version": "3.0"
+            },
+            "sha256:ab3ec9a839bed994c3488ad70c160e1f1ea7631f721f945cb8dd35cb98aa0fed": {
+                "kind": "final_accept",
+                "arithmetic_mode": "integer",
+                "payload": {
+                    "required_inputs": [
+                        "sha256:83c3f79fdcee4d2c6b2c913b6bbede536586e4dce7d4c960c0056e97e2dd7fea",
+                        "sha256:bbf8c4189ca5bf708adbab1ca954ae8d09ffdaa1588cc2e1f6941d69b88a0b87"
+                    ],
+                    "claim_type": "farkas_infeasibility"
+                },
+                "id": "final_accept",
+                "obligation_id": "final_accept",
+                "checker": "final_accept",
+                "version": "3.0"
+            }
+        }
     },
-    "certificate_hash": "sha256:5bfb33a4b096e32c34980fff253ab5f2fdf03a867cee00e2e4c79bb4d59d8bd4"
+    "certificate_hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143"
 }
