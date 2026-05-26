@@ -19,11 +19,12 @@ const DAG_CHECKER_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_dag_checker_report
 const OBJECT_STORE_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_object_store_report.json")
 const REAL_IMPORTED_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_real_imported_fixture_report.json")
 const TRUSTED_PATH_REPORT_PATH = joinpath(BUILD_DIR, "certsdp3_trusted_path_audit_report.json")
+const PERFORMANCE_PROFILE_PATH = joinpath(BUILD_DIR, "certsdp3_performance_profile.json")
 const LOCAL_FULL_SUMMARY_PATH = joinpath(BUILD_DIR, "certsdp3_local_full_audit_summary.json")
 const REQUIRED_SCHEMA_TAMPERS = 30
 const REQUIRED_MUTATIONS = 100
-const CORE_10_GATES = Set(Symbol[:A, :B, :D, :E, :F, :H, :I, :J, :K,
-                                  :T, :U, :V, :Z, :QA])
+const CORE_10_GATES = Set(Symbol[:A, :B, :D, :E, :F, :G, :H, :I, :J, :K,
+                                  :L, :T, :U, :V, :W, :X, :Z, :QA])
 
 include(joinpath(@__DIR__, "validate_certsdp3.jl"))
 
@@ -397,7 +398,9 @@ function run_import_check(fixture)
     family = String(fixture[:problem_family])
     if family == "tssos_sparse_sos_import"
         result = CertSDP.certify_tssos_artifact(joinpath(dir, "artifact.json"))
-        raw_path = joinpath(ROOT, "test", "fixtures_external", "tssos",
+        raw_path = fixture_source_class(fixture) == "real_imported" ?
+                   joinpath(ROOT, String(fixture[:source_file])) :
+                   joinpath(ROOT, "test", "fixtures_external", "tssos",
                             "raw_tssos_sparse_poly_medium.json")
         raw_result = isfile(raw_path) ? CertSDP.certify_raw_tssos_artifact(raw_path) : nothing
         return (passed=result isa CertSDP.CertifiedResult &&
@@ -407,7 +410,9 @@ function run_import_check(fixture)
                 raw_external_passed=raw_result isa CertSDP.CertifiedResult)
     elseif family == "nctssos_import"
         result = CertSDP.certify_nctssos_artifact(joinpath(dir, "artifact.json"))
-        raw_path = joinpath(ROOT, "test", "fixtures_external", "nctssos",
+        raw_path = fixture_source_class(fixture) == "real_imported" ?
+                   joinpath(ROOT, String(fixture[:source_file])) :
+                   joinpath(ROOT, "test", "fixtures_external", "nctssos",
                             "raw_nctssos_trace_medium.json")
         raw_result = isfile(raw_path) ? CertSDP.certify_raw_nctssos_artifact(raw_path) : nothing
         return (passed=result isa CertSDP.CertifiedResult &&
@@ -429,13 +434,16 @@ function run_bundle_check()
     verify_code = isfile(joinpath(out_dir, "VERIFY.sh")) ?
                   success(Cmd(`bash $(joinpath(out_dir, "VERIFY.sh"))`;
                               dir=out_dir)) : false
+    placeholder_problem = bundle_problem_is_placeholder(out_dir)
     return (passed=create.exit_code == CertSDP.CLI_EXIT_OK &&
                    verify.exit_code == CertSDP.CLI_EXIT_OK &&
-                   verify_code,
+                   verify_code &&
+                   !placeholder_problem,
             path=public_path(out_dir),
             create,
             verify,
-            verify_code)
+            verify_code,
+            placeholder_problem)
 end
 
 function run_seeded_bad_static_checks()
@@ -457,9 +465,164 @@ function run_seeded_bad_static_checks()
     return checks
 end
 
+function json_get(obj, key::Symbol, default=nothing)
+    (obj isa AbstractDict || obj isa NamedTuple || obj isa JSON3.Object) || return default
+    for candidate in (key, String(key))
+        try
+            haskey(obj, candidate) && return obj[candidate]
+        catch
+        end
+    end
+    return default
+end
+
+function json_values(obj)
+    if obj isa AbstractDict || obj isa NamedTuple || obj isa JSON3.Object
+        return Any[obj[key] for key in keys(obj)]
+    elseif obj isa AbstractVector || obj isa JSON3.Array
+        return Any[item for item in obj]
+    end
+    return Any[]
+end
+
+function recursive_max_matrix_dimension(value)
+    best = 0
+    if value isa AbstractDict || value isa NamedTuple || value isa JSON3.Object
+        nrows = json_get(value, :nrows, json_get(value, :rows, nothing))
+        ncols = json_get(value, :ncols, json_get(value, :cols, nothing))
+        if nrows !== nothing && ncols !== nothing
+            try
+                best = max(best, Int(nrows), Int(ncols))
+            catch
+            end
+        end
+    end
+    for child in json_values(value)
+        best = max(best, recursive_max_matrix_dimension(child))
+    end
+    return best
+end
+
+function recursive_count_key_entries(value, wanted::Symbol)
+    count = 0
+    if value isa AbstractDict || value isa NamedTuple || value isa JSON3.Object
+        for key in keys(value)
+            child = value[key]
+            if String(key) == String(wanted) && (child isa AbstractVector || child isa JSON3.Array)
+                count += length(child)
+            end
+            count += recursive_count_key_entries(child, wanted)
+        end
+    elseif value isa AbstractVector || value isa JSON3.Array
+        for child in value
+            count += recursive_count_key_entries(child, wanted)
+        end
+    end
+    return count
+end
+
+function recursive_largest_clique_size(value)
+    best = 0
+    if value isa AbstractDict || value isa NamedTuple || value isa JSON3.Object
+        cliques = json_get(value, :cliques, nothing)
+        if cliques isa AbstractVector || cliques isa JSON3.Array
+            for clique in cliques
+                if clique isa AbstractVector || clique isa JSON3.Array
+                    best = max(best, length(clique))
+                end
+            end
+        end
+    end
+    for child in json_values(value)
+        best = max(best, recursive_largest_clique_size(child))
+    end
+    return best
+end
+
+function fixture_performance_record(result)
+    cert_path = joinpath(ROOT, result.path)
+    parsed = isfile(cert_path) ? read_json(cert_path) : nothing
+    proof_dag = parsed === nothing ? nothing : json_get(parsed, :proof_dag, nothing)
+    object_store = parsed === nothing ? nothing : json_get(parsed, :object_store, nothing)
+    dag_nodes = proof_dag === nothing ? 0 : length(json_get(proof_dag, :nodes, []))
+    object_count = object_store === nothing ? 0 : length(json_get(object_store, :objects, []))
+    moment_entries = parsed === nothing ? 0 : recursive_count_key_entries(json_get(parsed, :moment_certificate, parsed), :entries)
+    polynomial_monomials = parsed === nothing ? 0 : recursive_count_key_entries(parsed, :terms)
+    affine_obligations = 0
+    if parsed !== nothing
+        problem = json_get(parsed, :problem, nothing)
+        blocks = problem === nothing ? nothing : json_get(problem, :blocks, nothing)
+        if blocks isa AbstractVector || blocks isa JSON3.Array
+            for block in blocks
+                for matrix in json_get(block, :A, [])
+                    affine_obligations += length(json_get(matrix, :entries, []))
+                end
+            end
+        end
+    end
+    projector_count = 0
+    if parsed !== nothing
+        projectors = json_get(parsed, :projector_matrices, nothing)
+        if projectors isa AbstractVector || projectors isa JSON3.Array
+            n = length(projectors)
+            projector_count = n + div(n * max(n - 1, 0), 2) + (n > 0 ? 1 : 0)
+        end
+    end
+    return Dict(
+        "fixture_id" => result.id,
+        "family" => result.family,
+        "path" => result.path,
+        "elapsed_wall_seconds" => result.runtime_seconds,
+        "allocated_bytes" => result.allocated_bytes,
+        "peak_rss_bytes" => nothing,
+        "peak_rss_checked" => false,
+        "peak_rss_unsupported_reason" => "platform RSS sampler is not configured; allocated bytes are reported separately",
+        "memory_checked" => true,
+        "densification_count" => result.densification_count,
+        "object_store_objects" => object_count,
+        "dag_nodes" => dag_nodes,
+        "checker_executions" => dag_nodes,
+        "largest_matrix_dimension" => parsed === nothing ? 0 : recursive_max_matrix_dimension(parsed),
+        "largest_clique_size" => parsed === nothing ? 0 : recursive_largest_clique_size(parsed),
+        "moment_entries_checked" => moment_entries,
+        "polynomial_monomials_expanded" => polynomial_monomials,
+        "affine_map_obligations_replayed" => affine_obligations,
+        "symmetry_projector_obligations_replayed" => projector_count,
+    )
+end
+
+function build_performance_profile(result::AbstractString, fixture_results, gate_results)
+    records = [fixture_performance_record(fixture) for fixture in fixture_results]
+    dominant_runtime = sort(records; by=record -> record["elapsed_wall_seconds"], rev=true)[1:min(5, length(records))]
+    dominant_memory = sort(records; by=record -> record["allocated_bytes"], rev=true)[1:min(5, length(records))]
+    active_caps = String[]
+    for gate in gate_results
+        for check in gate.failed_checks
+            occursin("score", lowercase(String(check))) && push!(active_caps, "$(gate.id): $(check)")
+        end
+        for check in gate.passed_checks
+            startswith(String(check), "score_cap_note:") && push!(active_caps, "$(gate.id): $(check)")
+        end
+    end
+    return Dict(
+        "result" => result,
+        "active_score_caps" => active_caps,
+        "memory_checked" => true,
+        "peak_rss_checked" => false,
+        "peak_rss_unsupported_reason" => "platform RSS sampler is not configured; allocated bytes are reported separately",
+        "fixtures" => records,
+        "dominant_runtime_fixtures" => dominant_runtime,
+        "dominant_memory_fixtures" => dominant_memory,
+        "total_runtime_seconds" => sum(record["elapsed_wall_seconds"] for record in records),
+        "peak_allocated_bytes" => isempty(records) ? 0 : maximum(record["allocated_bytes"] for record in records),
+        "densification_count" => isempty(records) ? 0 : maximum(record["densification_count"] for record in records),
+    )
+end
+
 function dag_checker_report()
     names = CertSDP.DAGCheckerRegistry.dag_checker_names()
     source = read(joinpath(ROOT, "src", "kernel", "DAGCheckerRegistry.jl"), String)
+    semantic_report = CertSDP.DAGCheckerRegistry.dag_checker_semantics_report()
     generic_accepting = occursin("_generic_exact_checker", source) ||
                         occursin(r"function\s+_hash_checker\b", source) ||
                         occursin(r"_register!\([^,]+,\s*_hash_checker\b", source) ||
@@ -469,8 +632,100 @@ function dag_checker_report()
         "checker_names" => String.(names),
         "checker_count" => length(names),
         "generic_accepting_checker_present" => generic_accepting,
+        "semantic_classification" => semantic_report,
+        "proof_relevant_hash_only" => semantic_report["proof_relevant_hash_only"],
+        "proof_relevant_hash_only_count" => semantic_report["proof_relevant_hash_only_count"],
         "executed_last" => String.(CertSDP.DAGCheckerRegistry.dag_checker_calls()),
     )
+end
+
+function certificate_has_key_recursive(value, wanted::Symbol)
+    if value isa AbstractDict || value isa NamedTuple || value isa JSON3.Object
+        for key in keys(value)
+            (key == wanted || String(key) == String(wanted)) && return true
+            certificate_has_key_recursive(value[key], wanted) && return true
+        end
+    elseif value isa AbstractVector || value isa JSON3.Array
+        for item in value
+            certificate_has_key_recursive(item, wanted) && return true
+        end
+    end
+    return false
+end
+
+function fixture_certificate(fixture)
+    path = certificate_path(String(fixture[:fixture_id]))
+    return isfile(path) ? read_json(path) : nothing
+end
+
+function uses_primal_dual_supplied_affine_arrays(fixture)
+    String(fixture[:problem_family]) in ("primal_dual_optimality", "farkas_infeasibility") || return false
+    cert = fixture_certificate(fixture)
+    isnothing(cert) && return true
+    if haskey(cert, :primal) || haskey(cert, :dual)
+        return (haskey(cert[:primal], :affine_lhs) || haskey(cert[:primal], :affine_rhs) ||
+                haskey(cert[:dual], :affine_lhs) || haskey(cert[:dual], :affine_rhs)) &&
+               !haskey(cert, :problem)
+    end
+    return haskey(cert, :multiplier_identity_lhs) &&
+           haskey(cert, :multiplier_identity_rhs) &&
+           !haskey(cert, :problem)
+end
+
+function npa_missing_every_entry_replay(fixture)
+    String(fixture[:problem_family]) in ("quantum_bound", "nctssos_import") || return false
+    cert = fixture_certificate(fixture)
+    isnothing(cert) && return true
+    haskey(cert, :problem) && haskey(cert, :moment_certificate) || return true
+    basis_count = length(cert[:problem][:word_basis])
+    witness_count = length(cert[:moment_certificate][:witnesses])
+    matrix_entries = length(cert[:moment_certificate][:moment_matrix][:entries])
+    # Full replay requires enough entry obligations to cover all declared entries.
+    return witness_count < matrix_entries || witness_count < min(100, basis_count)
+end
+
+function symmetry_missing_projector_semantics(fixture)
+    String(fixture[:problem_family]) == "symmetry_reduction" || return false
+    cert = fixture_certificate(fixture)
+    isnothing(cert) && return true
+    return !(haskey(cert, :projector_matrices) ||
+             haskey(cert, :projector_semantics) ||
+             certificate_has_key_recursive(cert, :projector_idempotence))
+end
+
+function algebraic_missing_generic_sign_certificates(fixture)
+    String(fixture[:problem_family]) == "algebraic_low_rank_psd" || return false
+    cert = fixture_certificate(fixture)
+    isnothing(cert) && return true
+    field_degree = try
+        proof = haskey(cert, :proof) ? cert[:proof] :
+                haskey(cert, :algebraic_psd_certificate) ? cert[:algebraic_psd_certificate] :
+                nothing
+        if !isnothing(proof)
+            length(proof[:field][:minimal_polynomial]) - 1
+        elseif haskey(cert, :field)
+            length(cert[:field][:minimal_polynomial]) - 1
+        else
+            return true
+        end
+    catch
+        0
+    end
+    has_sign_certificates = certificate_has_key_recursive(cert, :sign_certificate) ||
+                            (haskey(cert, :sign_certificates) &&
+                             cert[:sign_certificates] isa AbstractVector &&
+                             !isempty(cert[:sign_certificates]))
+    return field_degree < 3 || !has_sign_certificates
+end
+
+function bundle_problem_is_placeholder(bundle_dir::AbstractString)
+    problem_path = joinpath(bundle_dir, "problem.json")
+    isfile(problem_path) || return true
+    text = read(problem_path, String)
+    isempty(strip(text)) && return true
+    return occursin("certificate_exact_problem_reference", text) ||
+           occursin("placeholder", lowercase(text)) ||
+           !occursin("certsdp_problem_version", text)
 end
 
 function schema_tamper_count()
@@ -671,7 +926,7 @@ function cli_external_import_checks()
 end
 
 function apply_score_caps(spec, score::Int, valid_results, tamper_results,
-                          cli_checks, audit_pass::Bool)
+                          cli_checks, audit_pass::Bool, fmap)
     capped = score
     reasons = String[]
     isempty(valid_results) && (capped = min(capped, 4); push!(reasons, "no valid fixture"))
@@ -694,8 +949,13 @@ function apply_score_caps(spec, score::Int, valid_results, tamper_results,
         dag_report = dag_checker_report()
         dag_report["generic_accepting_checker_present"] &&
             (capped = min(capped, 5); push!(reasons, "generic accepting DAG checker present"))
+        dag_report["proof_relevant_hash_only_count"] > 0 &&
+            (capped = min(capped, 7); push!(reasons, "proof-relevant hash-only DAG checker present"))
         any(result -> !getproperty(result.dag, :present), valid_results) &&
             (capped = min(capped, 7); push!(reasons, "accepted certificate missing typed DAG"))
+    elseif spec.id === :G
+        any(result -> uses_primal_dual_supplied_affine_arrays(fmap[result.id]), valid_results) &&
+            (capped = min(capped, 6); push!(reasons, "primal-dual/Farkas replay uses supplied affine lhs/rhs payloads"))
     elseif spec.id === :H
         !real_imported && (capped = min(capped, 9); push!(reasons, "no real_imported sparse SOS fixture"))
     elseif spec.id === :I
@@ -705,17 +965,30 @@ function apply_score_caps(spec, score::Int, valid_results, tamper_results,
         real_imported || (capped = min(capped, 8); push!(reasons, "no real_imported TSSOS fixture"))
     elseif spec.id === :J
         real_imported || (capped = min(capped, 9); push!(reasons, "no real_imported quantum/NCTSSOS fixture"))
+        any(result -> npa_missing_every_entry_replay(fmap[result.id]), valid_results) &&
+            (capped = min(capped, 7); push!(reasons, "NPA replay does not reconstruct every moment entry"))
     elseif spec.id === :K
         has_raw = any(result -> getproperty(result.import_check, :raw_external_passed) === true,
                       valid_results)
         has_raw || (capped = min(capped, 6); push!(reasons, "raw NCTSSOS importer not exercised"))
         real_imported || (capped = min(capped, 8); push!(reasons, "no real_imported NCTSSOS fixture"))
+        any(result -> npa_missing_every_entry_replay(fmap[result.id]), valid_results) &&
+            (capped = min(capped, 7); push!(reasons, "NCTSSOS replay lacks complete moment-entry reconstruction"))
+    elseif spec.id === :L
+        any(result -> algebraic_missing_generic_sign_certificates(fmap[result.id]), valid_results) &&
+            (capped = min(capped, 8); push!(reasons, "generic algebraic sign certificate replay missing"))
     elseif spec.id === :P
         has_temp = any(check -> hasproperty(check, :cwd) && String(check.cwd) != ROOT,
                        cli_checks)
         has_temp || (capped = min(capped, 8); push!(reasons, "no temp-cwd subprocess CLI"))
     elseif spec.id === :X
         isempty(tamper_results) && (capped = min(capped, 8); push!(reasons, "no tampered bundle rejection"))
+        bundle = run_bundle_check()
+        bundle.placeholder_problem &&
+            (capped = min(capped, 6); push!(reasons, "bundle problem.json is a placeholder"))
+    elseif spec.id === :W
+        any(result -> symmetry_missing_projector_semantics(fmap[result.id]), valid_results) &&
+            (capped = min(capped, 7); push!(reasons, "symmetry replay lacks projector idempotence/orthogonality semantics"))
     elseif spec.id === :QA
         ci = ci_workflow_evidence()
         ci.present || (capped = min(capped, 6); push!(reasons, "missing CI workflow"))
@@ -882,7 +1155,7 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
                                             performance=performance)
     score, cap_reasons = apply_score_caps(spec, score, valid_results,
                                           tamper_results, cli_checks,
-                                          audit_pass)
+                                          audit_pass, fmap)
     if score < 8
         append!(failed_checks, cap_reasons)
     else
@@ -1047,6 +1320,8 @@ function audit(options::AuditOptions)
                               "count" => length(real_imported_fixtures(fmap)))
     trusted_report = Dict("trusted_path" => CertSDP.TrustedPathAudit.trusted_path_audit_report(),
                           "seeded_bad_static_checks" => run_seeded_bad_static_checks())
+    performance_profile = build_performance_profile(result, fixture_results,
+                                                    gate_results)
     coverage_report = Dict(
         "trusted_verifiers" => CertSDP.TrustedPathAudit.trusted_path_audit_report(),
         "dag_checkers" => String.(CertSDP.DAGCheckerRegistry.dag_checker_names()),
@@ -1133,6 +1408,9 @@ function audit(options::AuditOptions)
     end
     open(TRUSTED_PATH_REPORT_PATH, "w") do io
         JSON3.pretty(io, trusted_report); println(io)
+    end
+    open(PERFORMANCE_PROFILE_PATH, "w") do io
+        JSON3.pretty(io, performance_profile); println(io)
     end
     open(LOCAL_FULL_SUMMARY_PATH, "w") do io
         JSON3.pretty(io, Dict("result" => result,

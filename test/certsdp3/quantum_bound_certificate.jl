@@ -15,28 +15,17 @@
                                      for i in 1:4],
                                     fill(1//1, 4))
     terms = Tuple{Vector{Symbol}, Rational{BigInt}}[
-        ([:A, :A], 1//1),
-        ([:A, :B], 1//1),
+        (K3._npa_entry_input_word(problem, 1, 1), 1//1),
+        (K3._npa_entry_input_word(problem, 2, 2), 1//1),
     ]
     witnesses = K3.NCRewriteWitness[
-        K3.NCRewriteWitness([:A, :A],
-                             [K3.NCRewriteStep(:proj_A,
-                                               :projection_idempotent,
-                                               [:A, :A],
-                                               [:A])],
-                             [:A],
-                             [:proj_A],
+        K3.NCRewriteWitness(K3._npa_entry_input_word(problem, i, i),
+                             K3.NCRewriteStep[],
+                             K3._npa_entry_input_word(problem, i, i),
+                             Symbol[],
                              Vector{Symbol}[],
-                             Vector{Symbol}[]),
-        K3.NCRewriteWitness([:A, :B],
-                             [K3.NCRewriteStep(:comm_AB,
-                                               :commutation,
-                                               [:A, :B],
-                                               [:B, :A])],
-                             [:B, :A],
-                             [:comm_AB],
-                             Vector{Symbol}[],
-                             Vector{Symbol}[]),
+                             Vector{Symbol}[])
+        for i in 1:4
     ]
     moment = K3.NCMomentMatrixCertificate(problem, matrix, proof, terms,
                                           witnesses)

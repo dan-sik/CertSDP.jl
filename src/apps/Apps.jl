@@ -348,8 +348,11 @@ function _paper_bundle(cert_path::AbstractString, out_dir::AbstractString)
     write(joinpath(out_dir, "problem.json"),
           JSON3.write(Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
                            "problem_hash" => report.problem_hash,
-                           "source" => "certificate_exact_problem_reference",
-                           "claim_type" => _claim_type_from_replay_artifact(parsed))))
+                           "claim_type" => _claim_type_from_replay_artifact(parsed),
+                           "certificate_hash" => report.certificate_hash,
+                           "dag_root_hash" => _dag_root_from_replay_artifact(parsed),
+                           "replayable_from" => "certificate.json",
+                           "problem_evidence" => "certificate_embedded_claim_and_proof_objects")))
     dag_json = _proof_dag_json_from_replay_artifact(cert_text, parsed)
     _write_json(joinpath(out_dir, "proof_dag.json"), dag_json)
     _write_json(joinpath(out_dir, "object_store.json"), dag_json[:object_store])

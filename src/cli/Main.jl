@@ -343,20 +343,28 @@ function _certsdp3_paper_bundle(cert_path::AbstractString,
     mkpath(out_dir)
     schema_dir = joinpath(out_dir, "schema")
     mkpath(schema_dir)
+    source_dir = joinpath(out_dir, "source_artifacts")
+    mkpath(source_dir)
     cert_text = read(cert_path, String)
     write(joinpath(out_dir, "certificate.json"), cert_text)
+    parsed = JSON3.read(cert_text)
     if isnothing(problem_path)
-        write(joinpath(out_dir, "problem.json"),
-              JSON3.write(Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
-                               "source" => "embedded_or_not_supplied")))
+        _write_pretty_json(joinpath(out_dir, "problem.json"),
+                           Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+                                "problem_hash" => report.problem_hash,
+                                "claim_type" => _claim_type_from_replay_artifact(parsed),
+                                "certificate_hash" => report.certificate_hash,
+                                "dag_root_hash" => _dag_root_from_replay_artifact(parsed),
+                                "replayable_from" => "certificate.json",
+                                "problem_evidence" => "certificate_embedded_claim_and_proof_objects"))
     else
         write(joinpath(out_dir, "problem.json"), read(problem_path, String))
     end
-    cert = Kernel.parse_certificate_json_v3(cert_text; strict=true)
-    write(joinpath(out_dir, "proof_dag.json"),
-          JSON3.write(Kernel.proof_dag_json(cert)))
-    write(joinpath(out_dir, "replay_report.json"),
-          JSON3.write(Kernel.diagnostic_report_json(report)))
+    dag_json = _proof_dag_json_from_replay_artifact(cert_text, parsed)
+    _write_pretty_json(joinpath(out_dir, "proof_dag.json"), dag_json)
+    _write_pretty_json(joinpath(out_dir, "object_store.json"), dag_json[:object_store])
+    _write_pretty_json(joinpath(out_dir, "replay_report.json"),
+                       Kernel.diagnostic_report_json(report))
     write(joinpath(out_dir, "replay_report.html"),
           Kernel.diagnostic_report_html(report))
     for schema_name in ("certsdp_certificate_v3.schema.json",
@@ -393,10 +401,21 @@ julia --project="\$PROJECT" --startup-file=no -e 'using CertSDP; exit(CertSDP.Ke
     verify_path = joinpath(out_dir, "VERIFY.sh")
     write(verify_path, verify_script)
     chmod(verify_path, 0o755)
+    _write_pretty_json(joinpath(out_dir, "environment.json"),
+                       Dict("julia_version" => string(VERSION),
+                            "offline_replay" => true,
+                            "certsdp_schema_version" => Kernel.CERTSDP3_SCHEMA_VERSION))
+    source_hint = if occursin("fixtures_real", cert_path)
+        cp(cert_path, joinpath(source_dir, basename(cert_path)); force=true)
+        basename(cert_path)
+    else
+        cp(cert_path, joinpath(source_dir, "normalized_certificate.json"); force=true)
+        "normalized_certificate.json"
+    end
     write(joinpath(out_dir, "CITATION.cff"),
           "cff-version: 1.2.0\nmessage: Cite the CertSDP proof-carrying certificate artifact.\ntitle: CertSDP 3.0 Certificate Bundle\n")
     write(joinpath(out_dir, "theorem_statement.txt"),
-          "claim_type: $(cert.certificate_type)\ncertificate_id: $(cert.certificate_id)\nproblem_hash: $(cert.problem_hash)\n")
+          "claim_type: $(_claim_type_from_replay_artifact(parsed))\ncertificate_id: $(report.certificate_hash)\nproblem_hash: $(report.problem_hash)\n")
     write(joinpath(out_dir, "README.md"),
           "# CertSDP 3.0 Bundle\n\nRun `bash VERIFY.sh` or `certsdp bundle verify .` offline to replay this certificate.\n")
     schema_hash = isfile(joinpath(schema_dir, "certsdp_certificate_v3.schema.json")) ?
@@ -404,29 +423,31 @@ julia --project="\$PROJECT" --startup-file=no -e 'using CertSDP; exit(CertSDP.Ke
                   "sha256:" * repeat("0", 64)
     manifest = Dict(
         "certsdp_bundle_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
-        "certificate_hash" => cert.certificate_id,
-        "problem_hash" => cert.problem_hash,
+        "certificate_hash" => report.certificate_hash,
+        "problem_hash" => report.problem_hash,
         "schema_hash" => schema_hash,
-        "dag_root_hash" => cert.dag.root_hash,
+        "dag_root_hash" => _dag_root_from_replay_artifact(parsed),
         "verify_script" => "VERIFY.sh",
+        "source_artifacts" => [source_hint],
     )
-    write(joinpath(out_dir, "CERTSDP_BUNDLE.json"), JSON3.write(manifest))
-    write(joinpath(out_dir, "schema.json"),
-          JSON3.write(Dict("schema_hash" => schema_hash,
-                           "certificate_schema" => "schema/certsdp_certificate_v3.schema.json")))
+    _write_pretty_json(joinpath(out_dir, "CERTSDP_BUNDLE.json"), manifest)
+    _write_pretty_json(joinpath(out_dir, "schema.json"),
+                       Dict("schema_hash" => schema_hash,
+                            "certificate_schema" => "schema/certsdp_certificate_v3.schema.json"))
     audit_expected = Dict(
         "accepted" => true,
-        "certificate_hash" => cert.certificate_id,
-        "problem_hash" => cert.problem_hash,
-        "dag_root_hash" => cert.dag.root_hash,
+        "certificate_hash" => report.certificate_hash,
+        "problem_hash" => report.problem_hash,
+        "dag_root_hash" => _dag_root_from_replay_artifact(parsed),
     )
-    write(joinpath(out_dir, "audit_expected.json"), JSON3.write(audit_expected))
+    _write_pretty_json(joinpath(out_dir, "audit_expected.json"), audit_expected)
     hashes = String[]
     for file in ["CERTSDP_BUNDLE.json", "certificate.json", "problem.json",
                  "schema.json", "audit_expected.json", "README.md",
-                 "proof_dag.json",
+                 "proof_dag.json", "object_store.json",
                  "replay_report.json", "replay_report.html",
-                 "VERIFY.sh", "CITATION.cff", "theorem_statement.txt"]
+                 "VERIFY.sh", "CITATION.cff", "theorem_statement.txt",
+                 "environment.json"]
         path = joinpath(out_dir, file)
         isfile(path) || continue
         push!(hashes, file * " " * bytes2hex(sha256(read(path))))
@@ -436,8 +457,56 @@ julia --project="\$PROJECT" --startup-file=no -e 'using CertSDP; exit(CertSDP.Ke
         path = joinpath(out_dir, rel)
         isfile(path) && push!(hashes, rel * " " * bytes2hex(sha256(read(path))))
     end
+    for source_file in sort!(readdir(source_dir))
+        rel = joinpath("source_artifacts", source_file)
+        path = joinpath(out_dir, rel)
+        isfile(path) && push!(hashes, rel * " " * bytes2hex(sha256(read(path))))
+    end
     write(joinpath(out_dir, "hashes.txt"), join(hashes, "\n") * "\n")
     return out_dir
+end
+
+function _write_pretty_json(path::AbstractString, object)
+    open(path, "w") do io
+        JSON3.pretty(io, object)
+        println(io)
+    end
+    return path
+end
+
+function _proof_dag_json_from_replay_artifact(text::AbstractString, parsed)
+    if haskey(parsed, :certsdp_certificate_version)
+        return Kernel.proof_dag_json(Kernel.parse_certificate_json_v3(text; strict=true))
+    elseif haskey(parsed, :certsdp_block_native_certificate_version)
+        cert = Kernel.parse_block_native_algebraic_certificate_json(text)
+        return Kernel.block_native_algebraic_certificate_dag_json(cert)
+    elseif haskey(parsed, :proof_dag)
+        return parsed[:proof_dag]
+    end
+    return Dict("claim_type" => _claim_type_from_replay_artifact(parsed),
+                "nodes" => Any[],
+                "root_hash" => "sha256:" * repeat("0", 64),
+                "schema_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+                "object_store" => Dict{String, Any}())
+end
+
+function _dag_root_from_replay_artifact(parsed)
+    if haskey(parsed, :proof_dag)
+        return String(parsed[:proof_dag][:root_hash])
+    end
+    return "sha256:" * repeat("0", 64)
+end
+
+function _claim_type_from_replay_artifact(parsed)
+    haskey(parsed, :certificate_type) && return String(parsed[:certificate_type])
+    haskey(parsed, :certsdp_algebraic_psd_factor_version) && return "algebraic_low_rank_psd"
+    haskey(parsed, :certsdp_block_native_certificate_version) && return "block_native_algebraic"
+    haskey(parsed, :certsdp_primal_dual_certificate_version) && return "primal_dual_optimality"
+    haskey(parsed, :certsdp_farkas_certificate_version) && return "farkas_infeasibility"
+    haskey(parsed, :certsdp_sparse_sos_certificate_version) && return "sparse_sos"
+    haskey(parsed, :certsdp_quantum_certificate_version) && return "quantum_bound"
+    haskey(parsed, :certsdp_symmetry_certificate_version) && return "symmetry_reduction"
+    return "unknown"
 end
 
 function _certsdp3_verify_paper_bundle(dir::AbstractString)

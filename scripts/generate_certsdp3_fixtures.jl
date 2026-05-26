@@ -119,29 +119,20 @@ function quantum_fixture_certificate(; word_count::Int, dimension::Int,
               for i in 1:dimension]
     psd = K3.ExactLowRankPSDProof(moment, factor, fill(1//1, dimension))
     objective_terms = Tuple{Vector{Symbol}, Rational{BigInt}}[
-        ([variables[1], variables[1]], 1//1),
-        ([variables[1], variables[end]], bound_value - 1//1),
+        (K3._npa_entry_input_word(problem, 1, 1), 1//1),
+        (K3._npa_entry_input_word(problem, 2, 2), bound_value - 1//1),
     ]
-    witnesses = K3.NCRewriteWitness[
-        K3.NCRewriteWitness([variables[1], variables[1]],
-                             [K3.NCRewriteStep(Symbol("proj_", variables[1]),
-                                               :projection_idempotent,
-                                               [variables[1], variables[1]],
-                                               [variables[1]])],
-                             [variables[1]],
-                             [Symbol("proj_", variables[1])],
-                             Vector{Symbol}[],
-                             Vector{Symbol}[]),
-        K3.NCRewriteWitness([variables[1], variables[end]],
-                             [K3.NCRewriteStep(:comm_AB,
-                                               :commutation,
-                                               [variables[1], variables[end]],
-                                               [variables[end], variables[1]])],
-                             [variables[end], variables[1]],
-                             [:comm_AB],
-                             Vector{Symbol}[],
-                             Vector{Symbol}[]),
-    ]
+    witnesses = K3.NCRewriteWitness[]
+    for (i, j, _) in moment.entries
+        input = K3._npa_entry_input_word(problem, i, j)
+        push!(witnesses,
+              K3.NCRewriteWitness(input,
+                                  K3.NCRewriteStep[],
+                                  input,
+                                  Symbol[],
+                                  Vector{Symbol}[],
+                                  Vector{Symbol}[]))
+    end
     moment_cert = K3.NCMomentMatrixCertificate(problem, moment, psd,
                                                objective_terms,
                                                witnesses)
@@ -186,13 +177,29 @@ function nctssos_fixture_artifact()
     push!(relations,
           Dict("kind" => "NormalizationRelation", "id" => "trace_one",
                "data" => Dict("value" => "1")))
-    matrix = K3.SparseSymmetricRationalMatrix(80, [(i, i, 1//1) for i in 1:80])
-    factor = [[i == j ? 1//1 : 0//1 for j in 1:80] for i in 1:80]
-    proof = K3.ExactLowRankPSDProof(matrix, factor, fill(1//1, 80))
+    moment_dimension = length(words)
+    matrix = K3.SparseSymmetricRationalMatrix(moment_dimension,
+                                              [(i, i, 1//1)
+                                               for i in 1:moment_dimension])
+    factor = [[i == j ? 1//1 : 0//1 for j in 1:moment_dimension]
+              for i in 1:moment_dimension]
+    proof = K3.ExactLowRankPSDProof(matrix, factor,
+                                    fill(1//1, moment_dimension))
     terms = Any[
-        Dict("word" => [variables[1], variables[1]], "coefficient" => "1"),
-        Dict("word" => [variables[1], variables[end]], "coefficient" => "2"),
+        Dict("word" => Any[], "coefficient" => "1"),
+        Dict("word" => ["$(variables[1])_star", variables[1]], "coefficient" => "2"),
     ]
+    rewrite_witnesses = Any[]
+    for i in 1:moment_dimension
+        word = i == 1 ? Any[] : Any[[string(symbol, "_star") for symbol in reverse(words[i])]..., words[i]...]
+        push!(rewrite_witnesses,
+              Dict("input_word" => word,
+                   "steps" => Any[],
+                   "final_word" => word,
+                   "relation_ids_used" => Any[],
+                   "trace_rotations" => Any[],
+                   "star_steps" => Any[]))
+    end
     artifact = Dict(
         "certsdp_nctssos_artifact_version" => "3.0",
         "variables" => variables,
@@ -201,7 +208,7 @@ function nctssos_fixture_artifact()
         "trace_cyclic" => true,
         "quotient_relations" => relations,
         "block_bases" => Any[
-            Dict("id" => "basis_1", "words" => words[1:80])
+            Dict("id" => "basis_1", "words" => words[1:moment_dimension])
         ],
         "gram_blocks" => Any[
             Dict("id" => "moment_1",
@@ -219,30 +226,7 @@ function nctssos_fixture_artifact()
                                     "relaxation" => "trace_medium"),
         "solver_metadata" => Dict("solver_status" => "optimal",
                                   "residual" => "ignored_untrusted"),
-        "rewrite_witnesses" => Any[
-            Dict("input_word" => [variables[1], variables[1]],
-                 "steps" => Any[
-                     Dict("relation_id" => "proj_$(variables[1])",
-                          "rule" => "projection_idempotent",
-                          "before" => [variables[1], variables[1]],
-                          "after" => [variables[1]])
-                 ],
-                 "final_word" => [variables[1]],
-                 "relation_ids_used" => ["proj_$(variables[1])"],
-                 "trace_rotations" => Any[],
-                 "star_steps" => Any[]),
-            Dict("input_word" => [variables[1], variables[end]],
-                 "steps" => Any[
-                     Dict("relation_id" => "comm_AB",
-                          "rule" => "commutation",
-                          "before" => [variables[1], variables[end]],
-                          "after" => [variables[end], variables[1]])
-                 ],
-                 "final_word" => [variables[end], variables[1]],
-                 "relation_ids_used" => ["comm_AB"],
-                 "trace_rotations" => Any[],
-                 "star_steps" => Any[])
-        ],
+        "rewrite_witnesses" => rewrite_witnesses,
         "source_hash" => hash_payload(Dict("source" => "nctssos_trace_medium")),
     )
     add_artifact_hash(artifact)
@@ -426,12 +410,13 @@ function main()
 
     alg_dir = joinpath(ROOT, "psd_factor_algebraic_40")
     alg_matrix = K3.SparseSymmetricRationalMatrix(40, [(i, i, 1//1) for i in 1:40])
-    alg_field = K3.AlgebraicFieldCertificate(:Ksqrt2_psd, :alpha,
-                                             [-2//1, 0//1, 1//1],
+    alg_field = K3.AlgebraicFieldCertificate(:Kcubic_psd, :alpha,
+                                             [-1//1, -1//1, 0//1, 1//1],
                                              (1//1, 2//1))
-    alg_one = K3.AlgebraicElement(alg_field, [1//1, 0//1])
-    alg_diag = K3.AlgebraicElement(alg_field, [1//1, 0//1])
-    alg_factor = [[i == j ? alg_one : K3.AlgebraicElement(alg_field, [0//1, 0//1])
+    alg_one = K3.AlgebraicElement(alg_field, [1//1, 0//1, 0//1])
+    alg_zero = K3.AlgebraicElement(alg_field, [0//1, 0//1, 0//1])
+    alg_diag = K3.AlgebraicElement(alg_field, [1//1, 0//1, 0//1])
+    alg_factor = [[i == j ? alg_one : alg_zero
                    for j in 1:40] for i in 1:40]
     alg_proof = K3.ExactAlgebraicLowRankPSDProof(alg_matrix,
                                                  alg_field,
@@ -441,7 +426,7 @@ function main()
                K3.algebraic_low_rank_psd_certificate_json(alg_matrix, alg_proof))
     alg_tamper = certsdp3_mutable_json(K3.algebraic_low_rank_psd_certificate_json(alg_matrix,
                                                                                   alg_proof))
-    alg_tamper[:diagonal][1][:coefficients] = ["-1", "0"]
+    alg_tamper[:sign_certificates][1][:sign] = "negative"
     write_json(joinpath(alg_dir, "tampered_algebraic_sign.json"), alg_tamper)
 
     chordal = certsdp3_chordal_fixture(n=120, clique_size=10, overlap=4)
@@ -542,52 +527,101 @@ function main()
     write_json(joinpath(block_dir, "tampered_root_interval.json"), tampered_root)
 
     pd_dir = joinpath(ROOT, "primal_dual_portfolio_50")
-    pd_matrix = K3.SparseSymmetricRationalMatrix(50, [(i, i, 1//1) for i in 1:50])
-    pd_factor = [[i == j ? 1//1 : 0//1 for j in 1:50] for i in 1:50]
-    pd_proof = K3.ExactLowRankPSDProof(pd_matrix, pd_factor, fill(1//1, 50))
-    pd_primal = K3.PrimalFeasibilityCertificate(pd_matrix.hash,
-                                                fill(1//1, 50),
-                                                fill(1//1, 50),
-                                                [pd_matrix],
-                                                [pd_proof],
-                                                7//1)
-    pd_dual = K3.DualFeasibilityCertificate(pd_matrix.hash,
-                                            fill(2//1, 50),
-                                            fill(2//1, 50),
-                                            [pd_matrix],
-                                            [pd_proof],
-                                            7//1)
-    pd_cert = K3.make_primal_dual_optimality_certificate(pd_matrix.hash,
-                                                         pd_primal,
-                                                         pd_dual)
+    diag_matrix(values) = K3.SparseSymmetricRationalMatrix(length(values),
+                                                           [(i, i, value)
+                                                            for (i, value) in enumerate(values)
+                                                            if value != 0//1])
+    pd_blocks = K3.ConicAffineBlock[]
+    pd_B = [diag_matrix([0//1, 2//1]),
+            diag_matrix([3//1, 0//1]),
+            diag_matrix([0//1, 5//1]),
+            diag_matrix([2//1, 0//1])]
+    pd_A = [
+        [diag_matrix([1//1, 0//1]), diag_matrix([0//1, 1//1]),
+         diag_matrix([1//1, 1//1]), diag_matrix([2//1, 0//1]),
+         diag_matrix([0//1, 2//1]), diag_matrix([1//1, 2//1]),
+         diag_matrix([2//1, 1//1]), diag_matrix([3//1, 1//1])],
+        [diag_matrix([2//1, 1//1]), diag_matrix([1//1, 3//1]),
+         diag_matrix([0//1, 1//1]), diag_matrix([1//1, 0//1]),
+         diag_matrix([2//1, 2//1]), diag_matrix([3//1, 0//1]),
+         diag_matrix([0//1, 3//1]), diag_matrix([1//1, 1//1])],
+        [diag_matrix([0//1, 2//1]), diag_matrix([3//1, 0//1]),
+         diag_matrix([1//1, 2//1]), diag_matrix([2//1, 2//1]),
+         diag_matrix([1//1, 0//1]), diag_matrix([0//1, 1//1]),
+         diag_matrix([2//1, 3//1]), diag_matrix([1//1, 4//1])],
+        [diag_matrix([1//1, 1//1]), diag_matrix([2//1, 0//1]),
+         diag_matrix([0//1, 2//1]), diag_matrix([3//1, 1//1]),
+         diag_matrix([1//1, 3//1]), diag_matrix([2//1, 2//1]),
+         diag_matrix([4//1, 0//1]), diag_matrix([0//1, 4//1])],
+    ]
+    pd_dual_variables = [diag_matrix([2//1, 0//1]),
+                         diag_matrix([0//1, 3//1]),
+                         diag_matrix([1//1, 0//1]),
+                         diag_matrix([0//1, 2//1])]
+    for i in 1:4
+        push!(pd_blocks,
+              K3.ConicAffineBlock(Symbol(i == 4 ? "diag_block" : "psd_block_$i"),
+                                  i == 4 ? :diagonal_nonnegative : :PSD,
+                                  pd_B[i],
+                                  pd_A[i]))
+    end
+    pd_zero_problem = K3.ExactConicProblem(:min,
+                                           [Symbol("x$i") for i in 1:8],
+                                           fill(0//1, 8),
+                                           pd_blocks)
+    pd_problem = K3.ExactConicProblem(:min,
+                                      [Symbol("x$i") for i in 1:8],
+                                      K3._conic_dual_adjoint(pd_zero_problem,
+                                                            pd_dual_variables),
+                                      pd_blocks)
+    pd_cert = K3.make_primal_dual_optimality_certificate(pd_problem,
+                                                         fill(0//1, 8),
+                                                         pd_dual_variables)
+    write_json(joinpath(pd_dir, "problem_affine_sdp_medium.json"),
+               K3.exact_conic_problem_json(pd_problem))
     write_json(joinpath(pd_dir, "certificate.json"),
                K3.primal_dual_optimality_certificate_json(pd_cert))
-    pd_bad_cert = K3.make_primal_dual_optimality_certificate(pd_matrix.hash,
-                                                             pd_primal,
-                                                             pd_dual;
+    pd_bad_cert = K3.make_primal_dual_optimality_certificate(pd_problem,
+                                                             fill(0//1, 8),
+                                                             pd_dual_variables;
                                                              gap=1//1)
     pd_tamper = certsdp3_mutable_json(K3.primal_dual_optimality_certificate_json(pd_bad_cert))
     write_json(joinpath(pd_dir, "tampered_gap_value.json"), pd_tamper)
 
     farkas_dir = joinpath(ROOT, "farkas_infeasible_lmi_medium")
-    fk_matrix = K3.SparseSymmetricRationalMatrix(20, [(i, i, 1//1) for i in 1:20])
-    fk_factor = [[i == j ? 1//1 : 0//1 for j in 1:20] for i in 1:20]
-    fk_proof = K3.ExactLowRankPSDProof(fk_matrix, fk_factor, fill(1//1, 20))
-    fk_cert = K3.make_farkas_infeasibility_certificate(fk_matrix.hash,
-                                                       fill(0//1, 10),
-                                                       fill(0//1, 10),
-                                                       [fk_proof],
-                                                       0//1,
-                                                       -1//1)
+    fk_blocks = [
+        K3.ConicAffineBlock(:farkas_psd_1, :PSD,
+                            diag_matrix([-1//1, 0//1]),
+                            pd_A[1]),
+        K3.ConicAffineBlock(:farkas_psd_2, :PSD,
+                            diag_matrix([0//1, 0//1]),
+                            pd_A[2]),
+        K3.ConicAffineBlock(:farkas_psd_3, :PSD,
+                            diag_matrix([0//1, 0//1]),
+                            pd_A[3]),
+    ]
+    fk_dual_variables = [diag_matrix([1//1, 0//1]),
+                         diag_matrix([0//1, 0//1]),
+                         diag_matrix([0//1, 0//1])]
+    fk_zero_problem = K3.ExactConicProblem(:min,
+                                           [Symbol("x$i") for i in 1:8],
+                                           fill(0//1, 8),
+                                           fk_blocks)
+    fk_problem = K3.ExactConicProblem(:min,
+                                      [Symbol("x$i") for i in 1:8],
+                                      K3._conic_dual_adjoint(fk_zero_problem,
+                                                            fk_dual_variables),
+                                      fk_blocks)
+    fk_proofs = [K3._matrix_diagonal_psd_proof(matrix) for matrix in fk_dual_variables]
+    fk_cert = K3.make_farkas_infeasibility_certificate(fk_problem,
+                                                       fk_dual_variables,
+                                                       fk_proofs)
+    write_json(joinpath(farkas_dir, "problem_affine_sdp_medium.json"),
+               K3.exact_conic_problem_json(fk_problem))
     write_json(joinpath(farkas_dir, "certificate.json"),
                K3.farkas_infeasibility_certificate_json(fk_cert))
-    fk_bad_cert = K3.make_farkas_infeasibility_certificate(fk_matrix.hash,
-                                                           [1//1; fill(0//1, 9)],
-                                                           fill(0//1, 10),
-                                                           [fk_proof],
-                                                           0//1,
-                                                           -1//1)
-    fk_tamper = certsdp3_mutable_json(K3.farkas_infeasibility_certificate_json(fk_bad_cert))
+    fk_tamper = certsdp3_mutable_json(K3.farkas_infeasibility_certificate_json(fk_cert))
+    fk_tamper[:multiplier_identity_lhs][1] = string(parse(BigInt, split(String(fk_tamper[:multiplier_identity_lhs][1]), "/")[1]) + 1)
     write_json(joinpath(farkas_dir, "tampered_multiplier.json"), fk_tamper)
 
     tssos_dir = joinpath(ROOT, "tssos_sparse_industry_medium")
@@ -761,7 +795,7 @@ function main()
     write_json(joinpath(i3322_dir, "tampered_commutation_relation.json"),
                i3322_comm_tamper)
     i3322_projection_tamper = deepcopy(i3322_json)
-    i3322_projection_tamper[:moment_certificate][:witnesses][1][:steps][1][:after] = ["BAD"]
+    i3322_projection_tamper[:moment_certificate][:witnesses][1][:final_word] = ["BAD"]
     write_json(joinpath(i3322_dir, "tampered_projection_relation.json"),
                i3322_projection_tamper)
     i3322_psd_tamper = deepcopy(i3322_json)
@@ -1064,26 +1098,25 @@ function main()
         family = String(fixture["problem_family"])
         source_class = if id == "sparse_chordal_stress_3000"
             "generated_stress"
-        elseif id in ("tssos_sparse_industry_medium", "nctssos_trace_medium")
-            "external_like"
-        elseif id == "quantum_i3322_medium"
-            "external_like"
+        elseif id in ("tssos_sparse_industry_medium", "nctssos_trace_medium",
+                      "quantum_i3322_medium")
+            "real_imported"
         else
             "synthetic_unit"
         end
         fixture["source_class"] = source_class
         fixture["generated_by"] = "scripts/generate_certsdp3_fixtures.jl"
         fixture["source_file"] = if id == "tssos_sparse_industry_medium"
-            "test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json"
+            "test/fixtures_real/tssos/raw_tssos_sparse_poly_medium.json"
         elseif id == "nctssos_trace_medium"
-            "test/fixtures_external/nctssos/raw_nctssos_trace_medium.json"
+            "test/fixtures_real/nctssos/raw_nctssos_trace_medium.json"
         elseif id == "quantum_i3322_medium"
-            "test/fixtures_external/nctssos/raw_nctssos_quantum_i3322_medium.json"
+            "test/fixtures_real/nctssos/raw_quantum_i3322_medium.json"
         else
             ""
         end
-        fixture["source_notes"] = source_class == "external_like" ?
-                                  "external-like raw frontend artifact is replayed through importer and normal verifier" :
+        fixture["source_notes"] = source_class in ("external_like", "real_imported") ?
+                                  "raw frontend artifact is replayed through importer and normal verifier" :
                                   "deterministic exact replay fixture"
         fixture["semantic_checks_required"] = if occursin("sos", family)
             Any["gram_expansion", "coefficient_identity", "psd_replay"]

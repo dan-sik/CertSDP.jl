@@ -4,21 +4,21 @@
         {
             "family": "nctssos_import",
             "fixture_id": "nctssos_trace_medium",
-            "generated_by": "test/fixtures_real/nctssos/generate_raw_nctssos_fixture.jl",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "source_file": "test/fixtures_real/nctssos/raw_nctssos_trace_medium.json",
-            "source_hash": "sha256:03e46221fd1c79544abd0d1c8ac1df58216e3659574f22b652899a15455f695f"
+            "source_hash": "sha256:48092ae00c801d18602895f9e8374da4ce920a349129f0bbd0d3572fc48670f3"
         },
         {
             "family": "quantum_bound",
             "fixture_id": "quantum_i3322_medium",
-            "generated_by": "test/fixtures_real/nctssos/generate_raw_nctssos_fixture.jl",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "source_file": "test/fixtures_real/nctssos/raw_quantum_i3322_medium.json",
-            "source_hash": "sha256:a196a689ef993923aced847e982cd84f145850843cb056b9630d69798554652f"
+            "source_hash": "sha256:9ae2b38b8908c9e24d460ec754dadb7bd2a29af1597ea050047f8b832a482f53"
         },
         {
             "family": "tssos_sparse_sos_import",
             "fixture_id": "tssos_sparse_industry_medium",
-            "generated_by": "test/fixtures_real/tssos/generate_raw_tssos_fixture.jl",
+            "generated_by": "scripts/generate_certsdp3_fixtures.jl",
             "source_file": "test/fixtures_real/tssos/raw_tssos_sparse_poly_medium.json",
             "source_hash": "sha256:90ea172282bb4f8f6139866d3bd8cc19a4e0602b83b467716bd725576b1a59a9"
         }

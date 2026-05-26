@@ -310,6 +310,121 @@
             "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff"
         }
     ],
+    "projector_matrices": [
+        {
+            "n": 18,
+            "entries": [
+                {
+                    "i": 1,
+                    "j": 1,
+                    "value": "1"
+                },
+                {
+                    "i": 2,
+                    "j": 2,
+                    "value": "1"
+                },
+                {
+                    "i": 3,
+                    "j": 3,
+                    "value": "1"
+                },
+                {
+                    "i": 4,
+                    "j": 4,
+                    "value": "1"
+                },
+                {
+                    "i": 5,
+                    "j": 5,
+                    "value": "1"
+                },
+                {
+                    "i": 6,
+                    "j": 6,
+                    "value": "1"
+                }
+            ],
+            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408"
+        },
+        {
+            "n": 18,
+            "entries": [
+                {
+                    "i": 7,
+                    "j": 7,
+                    "value": "1"
+                },
+                {
+                    "i": 8,
+                    "j": 8,
+                    "value": "1"
+                },
+                {
+                    "i": 9,
+                    "j": 9,
+                    "value": "1"
+                },
+                {
+                    "i": 10,
+                    "j": 10,
+                    "value": "1"
+                },
+                {
+                    "i": 11,
+                    "j": 11,
+                    "value": "1"
+                },
+                {
+                    "i": 12,
+                    "j": 12,
+                    "value": "1"
+                }
+            ],
+            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce"
+        },
+        {
+            "n": 18,
+            "entries": [
+                {
+                    "i": 13,
+                    "j": 13,
+                    "value": "1"
+                },
+                {
+                    "i": 14,
+                    "j": 14,
+                    "value": "1"
+                },
+                {
+                    "i": 15,
+                    "j": 15,
+                    "value": "1"
+                },
+                {
+                    "i": 16,
+                    "j": 16,
+                    "value": "1"
+                },
+                {
+                    "i": 17,
+                    "j": 17,
+                    "value": "1"
+                },
+                {
+                    "i": 18,
+                    "j": 18,
+                    "value": "1"
+                }
+            ],
+            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff"
+        }
+    ],
+    "projector_semantics": {
+        "idempotence": true,
+        "orthogonality": true,
+        "completeness": true
+    },
     "original_matrix": {
         "n": 18,
         "entries": [
@@ -848,6 +963,116 @@
                         "n": 18
                     },
                     "reconstruction_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                    "projector_matrices": [
+                        {
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "j": 1,
+                                    "value": "1",
+                                    "i": 1
+                                },
+                                {
+                                    "j": 2,
+                                    "value": "1",
+                                    "i": 2
+                                },
+                                {
+                                    "j": 3,
+                                    "value": "1",
+                                    "i": 3
+                                },
+                                {
+                                    "j": 4,
+                                    "value": "1",
+                                    "i": 4
+                                },
+                                {
+                                    "j": 5,
+                                    "value": "1",
+                                    "i": 5
+                                },
+                                {
+                                    "j": 6,
+                                    "value": "1",
+                                    "i": 6
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "j": 7,
+                                    "value": "1",
+                                    "i": 7
+                                },
+                                {
+                                    "j": 8,
+                                    "value": "1",
+                                    "i": 8
+                                },
+                                {
+                                    "j": 9,
+                                    "value": "1",
+                                    "i": 9
+                                },
+                                {
+                                    "j": 10,
+                                    "value": "1",
+                                    "i": 10
+                                },
+                                {
+                                    "j": 11,
+                                    "value": "1",
+                                    "i": 11
+                                },
+                                {
+                                    "j": 12,
+                                    "value": "1",
+                                    "i": 12
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "j": 13,
+                                    "value": "1",
+                                    "i": 13
+                                },
+                                {
+                                    "j": 14,
+                                    "value": "1",
+                                    "i": 14
+                                },
+                                {
+                                    "j": 15,
+                                    "value": "1",
+                                    "i": 15
+                                },
+                                {
+                                    "j": 16,
+                                    "value": "1",
+                                    "i": 16
+                                },
+                                {
+                                    "j": 17,
+                                    "value": "1",
+                                    "i": 17
+                                },
+                                {
+                                    "j": 18,
+                                    "value": "1",
+                                    "i": 18
+                                }
+                            ],
+                            "n": 18
+                        }
+                    ],
                     "projection_blocks": [
                         {
                             "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
@@ -1133,6 +1358,7 @@
                             ]
                         ]
                     },
+                    "projector_semantics": 1,
                     "group": {
                         "generators": [
                             {
@@ -1292,7 +1518,7 @@
                 "version": "3.0"
             }
         ],
-        "root_hash": "sha256:95bedfc29434a73b3e9c277e76f156fabe7126c3c2cfda19bf52ec90efbd8a3b",
+        "root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
         "schema_version": "3.0",
         "object_store": {
             "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6": {
@@ -1396,6 +1622,116 @@
                         "n": 18
                     },
                     "reconstruction_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                    "projector_matrices": [
+                        {
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "j": 1,
+                                    "value": "1",
+                                    "i": 1
+                                },
+                                {
+                                    "j": 2,
+                                    "value": "1",
+                                    "i": 2
+                                },
+                                {
+                                    "j": 3,
+                                    "value": "1",
+                                    "i": 3
+                                },
+                                {
+                                    "j": 4,
+                                    "value": "1",
+                                    "i": 4
+                                },
+                                {
+                                    "j": 5,
+                                    "value": "1",
+                                    "i": 5
+                                },
+                                {
+                                    "j": 6,
+                                    "value": "1",
+                                    "i": 6
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "j": 7,
+                                    "value": "1",
+                                    "i": 7
+                                },
+                                {
+                                    "j": 8,
+                                    "value": "1",
+                                    "i": 8
+                                },
+                                {
+                                    "j": 9,
+                                    "value": "1",
+                                    "i": 9
+                                },
+                                {
+                                    "j": 10,
+                                    "value": "1",
+                                    "i": 10
+                                },
+                                {
+                                    "j": 11,
+                                    "value": "1",
+                                    "i": 11
+                                },
+                                {
+                                    "j": 12,
+                                    "value": "1",
+                                    "i": 12
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "j": 13,
+                                    "value": "1",
+                                    "i": 13
+                                },
+                                {
+                                    "j": 14,
+                                    "value": "1",
+                                    "i": 14
+                                },
+                                {
+                                    "j": 15,
+                                    "value": "1",
+                                    "i": 15
+                                },
+                                {
+                                    "j": 16,
+                                    "value": "1",
+                                    "i": 16
+                                },
+                                {
+                                    "j": 17,
+                                    "value": "1",
+                                    "i": 17
+                                },
+                                {
+                                    "j": 18,
+                                    "value": "1",
+                                    "i": 18
+                                }
+                            ],
+                            "n": 18
+                        }
+                    ],
                     "projection_blocks": [
                         {
                             "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
@@ -1681,6 +2017,7 @@
                             ]
                         ]
                     },
+                    "projector_semantics": 1,
                     "group": {
                         "generators": [
                             {
@@ -2045,5 +2382,5 @@
             }
         }
     },
-    "certificate_hash": "sha256:d91ffe550b0978d30bf180b320173249e0f5e16c3a3e4bf00c5fd70cc6f9d695"
+    "certificate_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef"
 }

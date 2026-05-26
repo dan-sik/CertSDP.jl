@@ -10,8 +10,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -71,9 +71,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 5.166e-6,
+            "runtime_seconds": 5.708e-6,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_certificate"
@@ -128,8 +128,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -196,8 +196,8 @@
                     "accepted": true,
                     "stage": "chordal_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 9.489925541,
-                    "allocated_bytes": 1051778688,
+                    "runtime_seconds": 9.425494,
+                    "allocated_bytes": 1052073472,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -264,7 +264,7 @@
                     "accepted": true,
                     "stage": "objective_gap",
                     "reason": "accepted",
-                    "runtime_seconds": 0.807760417,
+                    "runtime_seconds": 0.413045041,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -278,23 +278,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:f12f499562617a04defb9aedddc3c683fe89299aa7c228f91d4887ebbc71913e",
+                        "root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
-                        "problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
-                        "certificate_hash": "sha256:2dc35863fee1d1799683c89dc5ffa7c7856b77e2024b20a4aa6f24de3def819c",
+                        "problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
+                        "certificate_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
                         "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                        "dag_root_hash": "sha256:f12f499562617a04defb9aedddc3c683fe89299aa7c228f91d4887ebbc71913e",
-                        "replay_problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
-                        "replay_certificate_hash": "sha256:2dc35863fee1d1799683c89dc5ffa7c7856b77e2024b20a4aa6f24de3def819c",
+                        "dag_root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
+                        "replay_problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
+                        "replay_certificate_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:2dc35863fee1d1799683c89dc5ffa7c7856b77e2024b20a4aa6f24de3def819c",
-                        "roundtrip_hash": "sha256:2dc35863fee1d1799683c89dc5ffa7c7856b77e2024b20a4aa6f24de3def819c"
+                        "hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
+                        "roundtrip_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6"
                     },
                     "shape": {
                         "passed": true,
@@ -332,7 +332,7 @@
                     "accepted": true,
                     "stage": "contradiction",
                     "reason": "accepted",
-                    "runtime_seconds": 0.544790416,
+                    "runtime_seconds": 0.686084291,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -346,23 +346,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:e45418b1d840484a0758cd73e57b71c04b8f55f77106afa37b2ffafe41842e51",
+                        "root_hash": "sha256:2042ebe7675357b8d6180bc0aae3c2f6e06e85cb4923fc894945446de53f8d85",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
-                        "problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
-                        "certificate_hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143",
+                        "problem_hash": "sha256:6cd2fb7645634fb3347806243594bfed2e631b656781db7e7769ebf4d51726f9",
+                        "certificate_hash": "sha256:92daf25b7e2c0566718380704e7a5dc72fde3f70a8273624c18f2ad8bb2e9ce2",
                         "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                        "dag_root_hash": "sha256:e45418b1d840484a0758cd73e57b71c04b8f55f77106afa37b2ffafe41842e51",
-                        "replay_problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
-                        "replay_certificate_hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143",
+                        "dag_root_hash": "sha256:2042ebe7675357b8d6180bc0aae3c2f6e06e85cb4923fc894945446de53f8d85",
+                        "replay_problem_hash": "sha256:6cd2fb7645634fb3347806243594bfed2e631b656781db7e7769ebf4d51726f9",
+                        "replay_certificate_hash": "sha256:92daf25b7e2c0566718380704e7a5dc72fde3f70a8273624c18f2ad8bb2e9ce2",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143",
-                        "roundtrip_hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143"
+                        "hash": "sha256:92daf25b7e2c0566718380704e7a5dc72fde3f70a8273624c18f2ad8bb2e9ce2",
+                        "roundtrip_hash": "sha256:92daf25b7e2c0566718380704e7a5dc72fde3f70a8273624c18f2ad8bb2e9ce2"
                     },
                     "shape": {
                         "passed": true,
@@ -400,7 +400,7 @@
                     "accepted": true,
                     "stage": "coefficient_matching",
                     "reason": "accepted",
-                    "runtime_seconds": 0.599381958,
+                    "runtime_seconds": 0.574920167,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -446,7 +446,7 @@
                     "import_check": {
                         "passed": true,
                         "command": "import_tssos",
-                        "raw_external": "test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json",
+                        "raw_external": "test/fixtures_real/tssos/raw_tssos_sparse_poly_medium.json",
                         "raw_external_passed": true
                     },
                     "deterministic": {
@@ -470,7 +470,7 @@
                     "accepted": true,
                     "stage": "coefficient_matching",
                     "reason": "accepted",
-                    "runtime_seconds": 3.635013667,
+                    "runtime_seconds": 3.549229542,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -538,7 +538,7 @@
                     "accepted": true,
                     "stage": "coefficient_matching",
                     "reason": "accepted",
-                    "runtime_seconds": 0.646487084,
+                    "runtime_seconds": 0.560940541,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -606,7 +606,7 @@
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 3.83312475,
+                    "runtime_seconds": 4.749075584,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -620,23 +620,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                        "root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                        "certificate_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
+                        "certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
                         "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                        "dag_root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                        "dag_root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                         "replay_problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                        "replay_certificate_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
+                        "replay_certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
-                        "roundtrip_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d"
+                        "hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
+                        "roundtrip_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335"
                     },
                     "shape": {
                         "passed": true,
@@ -674,7 +674,7 @@
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 3.173380917,
+                    "runtime_seconds": 8.759812958,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -688,23 +688,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:759e408186402b9248a699820ea720176effd2369f6a5c5f75cede1b8ab8518a",
+                        "root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-                        "certificate_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
+                        "certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
                         "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                        "dag_root_hash": "sha256:759e408186402b9248a699820ea720176effd2369f6a5c5f75cede1b8ab8518a",
+                        "dag_root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
                         "replay_problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-                        "replay_certificate_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
+                        "replay_certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
-                        "roundtrip_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2"
+                        "hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
+                        "roundtrip_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090"
                     },
                     "shape": {
                         "passed": true,
@@ -720,7 +720,7 @@
                     "import_check": {
                         "passed": true,
                         "command": "import_nctssos",
-                        "raw_external": "test/fixtures_external/nctssos/raw_nctssos_trace_medium.json",
+                        "raw_external": "test/fixtures_real/nctssos/raw_nctssos_trace_medium.json",
                         "raw_external_passed": true
                     },
                     "deterministic": {
@@ -744,7 +744,7 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.60246425,
+                    "runtime_seconds": 0.806167417,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -758,23 +758,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:7213d7196f87825371ce076d2adefbadcb4dde1ce3318e94fb29231a112641ee",
+                        "root_hash": "sha256:c28a81c7b6e4c313ec4038c57f43836c970fb1884d97685d37989f73b7ccae7f",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
-                        "certificate_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
+                        "certificate_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
                         "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                        "dag_root_hash": "sha256:7213d7196f87825371ce076d2adefbadcb4dde1ce3318e94fb29231a112641ee",
+                        "dag_root_hash": "sha256:c28a81c7b6e4c313ec4038c57f43836c970fb1884d97685d37989f73b7ccae7f",
                         "replay_problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
-                        "replay_certificate_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
+                        "replay_certificate_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
-                        "roundtrip_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0"
+                        "hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
+                        "roundtrip_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035"
                     },
                     "shape": {
                         "passed": true,
@@ -805,9 +805,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 1051778688,
+            "peak_memory_if_available_bytes": 1052073472,
             "densification_count": 0,
-            "runtime_seconds": 0.206159334,
+            "runtime_seconds": 0.650983792,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_certificate"
@@ -924,7 +924,7 @@
                     "accepted": true,
                     "stage": "block_reconstruction",
                     "reason": "accepted",
-                    "runtime_seconds": 0.53125175,
+                    "runtime_seconds": 0.577277375,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -938,23 +938,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:95bedfc29434a73b3e9c277e76f156fabe7126c3c2cfda19bf52ec90efbd8a3b",
+                        "root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
-                        "certificate_hash": "sha256:d91ffe550b0978d30bf180b320173249e0f5e16c3a3e4bf00c5fd70cc6f9d695",
+                        "certificate_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef",
                         "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                        "dag_root_hash": "sha256:95bedfc29434a73b3e9c277e76f156fabe7126c3c2cfda19bf52ec90efbd8a3b",
+                        "dag_root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
                         "replay_problem_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
-                        "replay_certificate_hash": "sha256:d91ffe550b0978d30bf180b320173249e0f5e16c3a3e4bf00c5fd70cc6f9d695",
+                        "replay_certificate_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:d91ffe550b0978d30bf180b320173249e0f5e16c3a3e4bf00c5fd70cc6f9d695",
-                        "roundtrip_hash": "sha256:d91ffe550b0978d30bf180b320173249e0f5e16c3a3e4bf00c5fd70cc6f9d695"
+                        "hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef",
+                        "roundtrip_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef"
                     },
                     "shape": {
                         "passed": true,
@@ -987,7 +987,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 1.7042e-5,
+            "runtime_seconds": 0.012127542,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_block_diagonalization_certificate"
@@ -1040,8 +1040,8 @@
                     "accepted": true,
                     "stage": "chordal_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 9.489925541,
-                    "allocated_bytes": 1051778688,
+                    "runtime_seconds": 9.425494,
+                    "allocated_bytes": 1052073472,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -1101,9 +1101,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 1051778688,
+            "peak_memory_if_available_bytes": 1052073472,
             "densification_count": 0,
-            "runtime_seconds": 1.0625e-5,
+            "runtime_seconds": 4.583e-6,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_chordal_psd"
@@ -1156,7 +1156,7 @@
                     "accepted": true,
                     "stage": "incidence_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 4.898827083,
+                    "runtime_seconds": 4.87067775,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -1219,7 +1219,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 3.8458e-5,
+            "runtime_seconds": 1.5375e-5,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_block_native_algebraic_certificate"
@@ -1272,8 +1272,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -1333,9 +1333,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 82.129077,
+            "runtime_seconds": 88.470712333,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_certificate"
@@ -1360,8 +1360,8 @@
                 "required_fixtures",
                 "valid:psd_factor_rational_150",
                 "tamper:psd_factor_rational_150/tampered_negative_diagonal.json",
-                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_30BQhQ9QXe.json",
-                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_BKjgnIrIt6.json",
+                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_JwDmTgXM38.json",
+                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_FGLUXeh0Fk.json",
                 "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict"
             ],
             "cli_checks_run": [
@@ -1381,14 +1381,14 @@
                     "fixture": "external_like",
                     "kind": "subprocess_cli",
                     "exit": 0,
-                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_30BQhQ9QXe.json",
+                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_JwDmTgXM38.json",
                     "cwd": "/Users/shani_mac/CertSDP/"
                 },
                 {
                     "fixture": "external_like",
                     "kind": "subprocess_cli",
                     "exit": 0,
-                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_BKjgnIrIt6.json",
+                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_FGLUXeh0Fk.json",
                     "cwd": "/Users/shani_mac/CertSDP/"
                 },
                 {
@@ -1396,7 +1396,7 @@
                     "kind": "subprocess_cli",
                     "exit": 0,
                     "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
-                    "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_T3N6VZ"
+                    "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_2GhWSI"
                 }
             ],
             "score": 10,
@@ -1412,8 +1412,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -1473,9 +1473,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 0.0022015,
+            "runtime_seconds": 0.0019945,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_low_rank_psd"
@@ -1531,7 +1531,7 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.60246425,
+                    "runtime_seconds": 0.806167417,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -1545,23 +1545,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:7213d7196f87825371ce076d2adefbadcb4dde1ce3318e94fb29231a112641ee",
+                        "root_hash": "sha256:c28a81c7b6e4c313ec4038c57f43836c970fb1884d97685d37989f73b7ccae7f",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
-                        "certificate_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
+                        "certificate_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
                         "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                        "dag_root_hash": "sha256:7213d7196f87825371ce076d2adefbadcb4dde1ce3318e94fb29231a112641ee",
+                        "dag_root_hash": "sha256:c28a81c7b6e4c313ec4038c57f43836c970fb1884d97685d37989f73b7ccae7f",
                         "replay_problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
-                        "replay_certificate_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
+                        "replay_certificate_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
-                        "roundtrip_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0"
+                        "hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
+                        "roundtrip_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035"
                     },
                     "shape": {
                         "passed": true,
@@ -1594,7 +1594,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 6.6833e-5,
+            "runtime_seconds": 0.080369333,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_algebraic_low_rank_psd"
@@ -1606,7 +1606,7 @@
                     "passed": true,
                     "accepted": false,
                     "stage": "parse",
-                    "reason": "ArgumentError: root.diagonal[1].element_hash mismatch",
+                    "reason": "ArgumentError: root.sign_certificates[1].sign mismatch",
                     "obligation_id": "schema",
                     "cli_exit": 1,
                     "cli_command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_algebraic_40/tampered_algebraic_sign.json --strict --json"
@@ -1647,8 +1647,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -1708,9 +1708,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 1.5042e-5,
+            "runtime_seconds": 9.417e-6,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_certificate"
@@ -1763,8 +1763,8 @@
                     "accepted": true,
                     "stage": "chordal_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.466309584,
-                    "allocated_bytes": 192213712,
+                    "runtime_seconds": 0.473812292,
+                    "allocated_bytes": 192214224,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -1831,8 +1831,8 @@
                     "accepted": true,
                     "stage": "chordal_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 9.489925541,
-                    "allocated_bytes": 1051778688,
+                    "runtime_seconds": 9.425494,
+                    "allocated_bytes": 1052073472,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -1892,9 +1892,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 1051778688,
+            "peak_memory_if_available_bytes": 1052073472,
             "densification_count": 0,
-            "runtime_seconds": 8.4958e-5,
+            "runtime_seconds": 4.8292e-5,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_chordal_psd"
@@ -1972,7 +1972,7 @@
                     "accepted": true,
                     "stage": "incidence_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 4.898827083,
+                    "runtime_seconds": 4.87067775,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -2035,7 +2035,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 2.3291e-5,
+            "runtime_seconds": 4.3708e-5,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_block_native_algebraic_certificate"
@@ -2088,7 +2088,7 @@
                     "accepted": true,
                     "stage": "coefficient_matching",
                     "reason": "accepted",
-                    "runtime_seconds": 0.599381958,
+                    "runtime_seconds": 0.574920167,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -2134,7 +2134,7 @@
                     "import_check": {
                         "passed": true,
                         "command": "import_tssos",
-                        "raw_external": "test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json",
+                        "raw_external": "test/fixtures_real/tssos/raw_tssos_sparse_poly_medium.json",
                         "raw_external_passed": true
                     },
                     "deterministic": {
@@ -2158,7 +2158,7 @@
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 3.173380917,
+                    "runtime_seconds": 8.759812958,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -2172,23 +2172,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:759e408186402b9248a699820ea720176effd2369f6a5c5f75cede1b8ab8518a",
+                        "root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-                        "certificate_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
+                        "certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
                         "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                        "dag_root_hash": "sha256:759e408186402b9248a699820ea720176effd2369f6a5c5f75cede1b8ab8518a",
+                        "dag_root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
                         "replay_problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-                        "replay_certificate_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
+                        "replay_certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
-                        "roundtrip_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2"
+                        "hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
+                        "roundtrip_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090"
                     },
                     "shape": {
                         "passed": true,
@@ -2204,7 +2204,7 @@
                     "import_check": {
                         "passed": true,
                         "command": "import_nctssos",
-                        "raw_external": "test/fixtures_external/nctssos/raw_nctssos_trace_medium.json",
+                        "raw_external": "test/fixtures_real/nctssos/raw_nctssos_trace_medium.json",
                         "raw_external_passed": true
                     },
                     "deterministic": {
@@ -2223,7 +2223,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 2.375e-5,
+            "runtime_seconds": 1.5625e-5,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_sparse_sos_certificate",
@@ -2247,7 +2247,7 @@
                     "passed": true,
                     "accepted": false,
                     "stage": "candidate_replay",
-                    "reason": "ArgumentError: root.artifact_hash mismatch: supplied sha256:6117a72550505b78c0a22dd46a2105d55eba9067d2bd8d027984cc3540473d9e computed sha256:75f699ac78cf8ed9b4b91af8bb120c8bdb182c10a75d8dc176c8daffc708b9c9",
+                    "reason": "ArgumentError: root.artifact_hash mismatch: supplied sha256:a4f230103aeb9ad876059ef15cbc539d32ff1a1412734b057ddd2c6b80583515 computed sha256:fde4487347fefd62dbfd1f0c3ef5387a5da5f4f445a477a6312e6b815831ccce",
                     "obligation_id": "nctssos_artifact",
                     "cli_exit": 1,
                     "cli_command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/nctssos_trace_medium/tampered_quotient_relation.json --strict --json"
@@ -2302,7 +2302,7 @@
                     "accepted": true,
                     "stage": "coefficient_matching",
                     "reason": "accepted",
-                    "runtime_seconds": 0.646487084,
+                    "runtime_seconds": 0.560940541,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -2370,7 +2370,7 @@
                     "accepted": true,
                     "stage": "coefficient_matching",
                     "reason": "accepted",
-                    "runtime_seconds": 3.635013667,
+                    "runtime_seconds": 3.549229542,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -2438,7 +2438,7 @@
                     "accepted": true,
                     "stage": "coefficient_matching",
                     "reason": "accepted",
-                    "runtime_seconds": 0.599381958,
+                    "runtime_seconds": 0.574920167,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -2484,7 +2484,7 @@
                     "import_check": {
                         "passed": true,
                         "command": "import_tssos",
-                        "raw_external": "test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json",
+                        "raw_external": "test/fixtures_real/tssos/raw_tssos_sparse_poly_medium.json",
                         "raw_external_passed": true
                     },
                     "deterministic": {
@@ -2503,7 +2503,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 0.024573167,
+            "runtime_seconds": 0.020801042,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_sparse_sos_certificate"
@@ -2606,8 +2606,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -2667,9 +2667,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 0.040820291,
+            "runtime_seconds": 0.037045125,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_certificate",
@@ -2725,8 +2725,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -2793,7 +2793,7 @@
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 3.83312475,
+                    "runtime_seconds": 4.749075584,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -2807,23 +2807,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                        "root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                        "certificate_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
+                        "certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
                         "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                        "dag_root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                        "dag_root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                         "replay_problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                        "replay_certificate_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
+                        "replay_certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
-                        "roundtrip_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d"
+                        "hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
+                        "roundtrip_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335"
                     },
                     "shape": {
                         "passed": true,
@@ -2854,9 +2854,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 4.1682805,
+            "runtime_seconds": 6.571349667,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "parse_certificate_json_v3",
@@ -2932,8 +2932,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -2993,9 +2993,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 64.438605375,
+            "runtime_seconds": 132.793636542,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_certificate"
@@ -3039,7 +3039,7 @@
                     "fixture": "paper_bundle_demo",
                     "kind": "bundle_verify",
                     "exit": 0,
-                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) bundle verify /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_6WYDkk"
+                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) bundle verify /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_wW3IM6"
                 }
             ],
             "score": 10,
@@ -3055,8 +3055,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -3123,7 +3123,7 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.60246425,
+                    "runtime_seconds": 0.806167417,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -3137,23 +3137,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:7213d7196f87825371ce076d2adefbadcb4dde1ce3318e94fb29231a112641ee",
+                        "root_hash": "sha256:c28a81c7b6e4c313ec4038c57f43836c970fb1884d97685d37989f73b7ccae7f",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
-                        "certificate_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
+                        "certificate_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
                         "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                        "dag_root_hash": "sha256:7213d7196f87825371ce076d2adefbadcb4dde1ce3318e94fb29231a112641ee",
+                        "dag_root_hash": "sha256:c28a81c7b6e4c313ec4038c57f43836c970fb1884d97685d37989f73b7ccae7f",
                         "replay_problem_hash": "sha256:b2c2cd9c8a9577e3ed72398b5ffb4c7e212be164de0c8744092260cb246bb213",
-                        "replay_certificate_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
+                        "replay_certificate_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0",
-                        "roundtrip_hash": "sha256:03e40ddddf41f34d0d8a6288c29e151da4ddb3288ef1311208c4501387630cf0"
+                        "hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035",
+                        "roundtrip_hash": "sha256:2ef7b1f2158337c340db4160b97c8bb7c902373d6fe1ec4a6092ea70d6c2f035"
                     },
                     "shape": {
                         "passed": true,
@@ -3191,8 +3191,8 @@
                     "accepted": true,
                     "stage": "chordal_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.466309584,
-                    "allocated_bytes": 192213712,
+                    "runtime_seconds": 0.473812292,
+                    "allocated_bytes": 192214224,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -3252,9 +3252,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 2.8875e-5,
+            "runtime_seconds": 1.3916e-5,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_low_rank_psd",
@@ -3279,7 +3279,7 @@
                     "passed": true,
                     "accepted": false,
                     "stage": "parse",
-                    "reason": "ArgumentError: root.diagonal[1].element_hash mismatch",
+                    "reason": "ArgumentError: root.sign_certificates[1].sign mismatch",
                     "obligation_id": "schema",
                     "cli_exit": 1,
                     "cli_command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_algebraic_40/tampered_algebraic_sign.json --strict --json"
@@ -3359,7 +3359,7 @@
                     "accepted": true,
                     "stage": "objective_gap",
                     "reason": "accepted",
-                    "runtime_seconds": 0.807760417,
+                    "runtime_seconds": 0.413045041,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -3373,23 +3373,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:f12f499562617a04defb9aedddc3c683fe89299aa7c228f91d4887ebbc71913e",
+                        "root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
-                        "problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
-                        "certificate_hash": "sha256:2dc35863fee1d1799683c89dc5ffa7c7856b77e2024b20a4aa6f24de3def819c",
+                        "problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
+                        "certificate_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
                         "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                        "dag_root_hash": "sha256:f12f499562617a04defb9aedddc3c683fe89299aa7c228f91d4887ebbc71913e",
-                        "replay_problem_hash": "sha256:27e3f3c6536b87f0590ee1bca696ac5c3b71a3b6a3420eb0c3b116fe7755ae54",
-                        "replay_certificate_hash": "sha256:2dc35863fee1d1799683c89dc5ffa7c7856b77e2024b20a4aa6f24de3def819c",
+                        "dag_root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
+                        "replay_problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
+                        "replay_certificate_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:2dc35863fee1d1799683c89dc5ffa7c7856b77e2024b20a4aa6f24de3def819c",
-                        "roundtrip_hash": "sha256:2dc35863fee1d1799683c89dc5ffa7c7856b77e2024b20a4aa6f24de3def819c"
+                        "hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
+                        "roundtrip_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6"
                     },
                     "shape": {
                         "passed": true,
@@ -3427,7 +3427,7 @@
                     "accepted": true,
                     "stage": "contradiction",
                     "reason": "accepted",
-                    "runtime_seconds": 0.544790416,
+                    "runtime_seconds": 0.686084291,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -3441,23 +3441,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:e45418b1d840484a0758cd73e57b71c04b8f55f77106afa37b2ffafe41842e51",
+                        "root_hash": "sha256:2042ebe7675357b8d6180bc0aae3c2f6e06e85cb4923fc894945446de53f8d85",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
-                        "problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
-                        "certificate_hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143",
+                        "problem_hash": "sha256:6cd2fb7645634fb3347806243594bfed2e631b656781db7e7769ebf4d51726f9",
+                        "certificate_hash": "sha256:92daf25b7e2c0566718380704e7a5dc72fde3f70a8273624c18f2ad8bb2e9ce2",
                         "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                        "dag_root_hash": "sha256:e45418b1d840484a0758cd73e57b71c04b8f55f77106afa37b2ffafe41842e51",
-                        "replay_problem_hash": "sha256:8f96fd6e6707a062c3177aab37dcd3828017911446905a909b799ccecac13d0a",
-                        "replay_certificate_hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143",
+                        "dag_root_hash": "sha256:2042ebe7675357b8d6180bc0aae3c2f6e06e85cb4923fc894945446de53f8d85",
+                        "replay_problem_hash": "sha256:6cd2fb7645634fb3347806243594bfed2e631b656781db7e7769ebf4d51726f9",
+                        "replay_certificate_hash": "sha256:92daf25b7e2c0566718380704e7a5dc72fde3f70a8273624c18f2ad8bb2e9ce2",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143",
-                        "roundtrip_hash": "sha256:b75987aa5c853ec88b971596823f1bade0b46d3f045c4dd986044252a7e88143"
+                        "hash": "sha256:92daf25b7e2c0566718380704e7a5dc72fde3f70a8273624c18f2ad8bb2e9ce2",
+                        "roundtrip_hash": "sha256:92daf25b7e2c0566718380704e7a5dc72fde3f70a8273624c18f2ad8bb2e9ce2"
                     },
                     "shape": {
                         "passed": true,
@@ -3490,7 +3490,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 4.275e-5,
+            "runtime_seconds": 0.027040458,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_primal_dual_optimality",
@@ -3569,8 +3569,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -3637,7 +3637,7 @@
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 3.83312475,
+                    "runtime_seconds": 4.749075584,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -3651,23 +3651,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                        "root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                        "certificate_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
+                        "certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
                         "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                        "dag_root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                        "dag_root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                         "replay_problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                        "replay_certificate_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
+                        "replay_certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
-                        "roundtrip_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d"
+                        "hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
+                        "roundtrip_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335"
                     },
                     "shape": {
                         "passed": true,
@@ -3698,9 +3698,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 0.002328334,
+            "runtime_seconds": 0.019605209,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_proof_dag"
@@ -3760,8 +3760,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -3821,9 +3821,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 4.5291e-5,
+            "runtime_seconds": 6.1542e-5,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_certificate"
@@ -3876,7 +3876,7 @@
                     "accepted": true,
                     "stage": "coefficient_matching",
                     "reason": "accepted",
-                    "runtime_seconds": 0.599381958,
+                    "runtime_seconds": 0.574920167,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -3922,7 +3922,7 @@
                     "import_check": {
                         "passed": true,
                         "command": "import_tssos",
-                        "raw_external": "test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json",
+                        "raw_external": "test/fixtures_real/tssos/raw_tssos_sparse_poly_medium.json",
                         "raw_external_passed": true
                     },
                     "deterministic": {
@@ -3941,7 +3941,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 86.277245542,
+            "runtime_seconds": 88.67637475,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_sparse_sos_certificate"
@@ -3966,8 +3966,8 @@
                 "required_fixtures",
                 "valid:tssos_sparse_industry_medium",
                 "tamper:tssos_sparse_industry_medium/tampered_coefficient_map.json",
-                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_P4JGJ0z0Pk.json",
-                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_VaFchYfwtI.json",
+                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_FszoTQHsBs.json",
+                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_PSzGtOJata.json",
                 "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict"
             ],
             "cli_checks_run": [
@@ -3987,14 +3987,14 @@
                     "fixture": "external_like",
                     "kind": "subprocess_cli",
                     "exit": 0,
-                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_P4JGJ0z0Pk.json",
+                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_FszoTQHsBs.json",
                     "cwd": "/Users/shani_mac/CertSDP/"
                 },
                 {
                     "fixture": "external_like",
                     "kind": "subprocess_cli",
                     "exit": 0,
-                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_VaFchYfwtI.json",
+                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_PSzGtOJata.json",
                     "cwd": "/Users/shani_mac/CertSDP/"
                 },
                 {
@@ -4002,7 +4002,7 @@
                     "kind": "subprocess_cli",
                     "exit": 0,
                     "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
-                    "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_u54ava"
+                    "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_2VunJ2"
                 }
             ],
             "score": 10,
@@ -4018,7 +4018,7 @@
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 0.134447166,
+                    "runtime_seconds": 0.185588208,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -4032,23 +4032,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:aef8bf39861b5c83db1fa65af4cc8d87379cdb061d1981a15e3f0f5a95e2c69d",
+                        "root_hash": "sha256:8cccb5f3aa426d869665e62c84831afc8c32ab4084658a19b57ac4ff35f83ac6",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa",
-                        "certificate_hash": "sha256:2f061f3e1d9dba112aa6309dcb6230dbe9ae94bee3599cb8ba86181cc532ff57",
+                        "certificate_hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6",
                         "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                        "dag_root_hash": "sha256:aef8bf39861b5c83db1fa65af4cc8d87379cdb061d1981a15e3f0f5a95e2c69d",
+                        "dag_root_hash": "sha256:8cccb5f3aa426d869665e62c84831afc8c32ab4084658a19b57ac4ff35f83ac6",
                         "replay_problem_hash": "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa",
-                        "replay_certificate_hash": "sha256:2f061f3e1d9dba112aa6309dcb6230dbe9ae94bee3599cb8ba86181cc532ff57",
+                        "replay_certificate_hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:2f061f3e1d9dba112aa6309dcb6230dbe9ae94bee3599cb8ba86181cc532ff57",
-                        "roundtrip_hash": "sha256:2f061f3e1d9dba112aa6309dcb6230dbe9ae94bee3599cb8ba86181cc532ff57"
+                        "hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6",
+                        "roundtrip_hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6"
                     },
                     "shape": {
                         "passed": true,
@@ -4086,7 +4086,7 @@
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 3.83312475,
+                    "runtime_seconds": 4.749075584,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -4100,23 +4100,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                        "root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                        "certificate_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
+                        "certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
                         "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                        "dag_root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                        "dag_root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                         "replay_problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                        "replay_certificate_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
+                        "replay_certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d",
-                        "roundtrip_hash": "sha256:a4120f277d9ecae821e1ddfc3a60ab1b0a739751c18d07995c01e9839862766d"
+                        "hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
+                        "roundtrip_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335"
                     },
                     "shape": {
                         "passed": true,
@@ -4149,7 +4149,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 0.000218958,
+            "runtime_seconds": 0.021982875,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_quantum_bound_certificate"
@@ -4209,8 +4209,8 @@
                     "accepted": true,
                     "stage": "chordal_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 9.489925541,
-                    "allocated_bytes": 1051778688,
+                    "runtime_seconds": 9.425494,
+                    "allocated_bytes": 1052073472,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -4270,9 +4270,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 1051778688,
+            "peak_memory_if_available_bytes": 1052073472,
             "densification_count": 0,
-            "runtime_seconds": 1.4292e-5,
+            "runtime_seconds": 7.333e-6,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_chordal_psd"
@@ -4325,8 +4325,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -4393,8 +4393,8 @@
                     "accepted": true,
                     "stage": "chordal_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.466309584,
-                    "allocated_bytes": 192213712,
+                    "runtime_seconds": 0.473812292,
+                    "allocated_bytes": 192214224,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -4454,9 +4454,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 9.583e-6,
+            "runtime_seconds": 5.458e-6,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "parse_certificate_json_v3"
@@ -4516,7 +4516,7 @@
                     "accepted": true,
                     "stage": "objective_bound",
                     "reason": "accepted",
-                    "runtime_seconds": 3.173380917,
+                    "runtime_seconds": 8.759812958,
                     "allocated_bytes": 0,
                     "budget_runtime": true,
                     "budget_memory": true,
@@ -4530,23 +4530,23 @@
                     "schema_cli_exit": 0,
                     "dag": {
                         "present": true,
-                        "root_hash": "sha256:759e408186402b9248a699820ea720176effd2369f6a5c5f75cede1b8ab8518a",
+                        "root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
                         "accepted": true,
                         "reason": "accepted"
                     },
                     "hashes": {
                         "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-                        "certificate_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
+                        "certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
                         "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                        "dag_root_hash": "sha256:759e408186402b9248a699820ea720176effd2369f6a5c5f75cede1b8ab8518a",
+                        "dag_root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
                         "replay_problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-                        "replay_certificate_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
+                        "replay_certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
                         "accepted": true
                     },
                     "roundtrip": {
                         "passed": true,
-                        "hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
-                        "roundtrip_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2"
+                        "hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
+                        "roundtrip_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090"
                     },
                     "shape": {
                         "passed": true,
@@ -4562,7 +4562,7 @@
                     "import_check": {
                         "passed": true,
                         "command": "import_nctssos",
-                        "raw_external": "test/fixtures_external/nctssos/raw_nctssos_trace_medium.json",
+                        "raw_external": "test/fixtures_real/nctssos/raw_nctssos_trace_medium.json",
                         "raw_external_passed": true
                     },
                     "deterministic": {
@@ -4581,7 +4581,7 @@
             ],
             "peak_memory_if_available_bytes": 0,
             "densification_count": 0,
-            "runtime_seconds": 82.221876542,
+            "runtime_seconds": 88.723607959,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_quantum_bound_certificate"
@@ -4593,7 +4593,7 @@
                     "passed": true,
                     "accepted": false,
                     "stage": "candidate_replay",
-                    "reason": "ArgumentError: root.artifact_hash mismatch: supplied sha256:6117a72550505b78c0a22dd46a2105d55eba9067d2bd8d027984cc3540473d9e computed sha256:75f699ac78cf8ed9b4b91af8bb120c8bdb182c10a75d8dc176c8daffc708b9c9",
+                    "reason": "ArgumentError: root.artifact_hash mismatch: supplied sha256:a4f230103aeb9ad876059ef15cbc539d32ff1a1412734b057ddd2c6b80583515 computed sha256:fde4487347fefd62dbfd1f0c3ef5387a5da5f4f445a477a6312e6b815831ccce",
                     "obligation_id": "nctssos_artifact",
                     "cli_exit": 1,
                     "cli_command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/nctssos_trace_medium/tampered_quotient_relation.json --strict --json"
@@ -4606,8 +4606,8 @@
                 "required_fixtures",
                 "valid:nctssos_trace_medium",
                 "tamper:nctssos_trace_medium/tampered_quotient_relation.json",
-                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_Ng5C5idQHM.json",
-                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_DA76F4PybA.json",
+                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_RcpQV8dKDA.json",
+                "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_F0Don6rcxA.json",
                 "subprocess_cli:julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict"
             ],
             "cli_checks_run": [
@@ -4627,14 +4627,14 @@
                     "fixture": "external_like",
                     "kind": "subprocess_cli",
                     "exit": 0,
-                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_Ng5C5idQHM.json",
+                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_RcpQV8dKDA.json",
                     "cwd": "/Users/shani_mac/CertSDP/"
                 },
                 {
                     "fixture": "external_like",
                     "kind": "subprocess_cli",
                     "exit": 0,
-                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_DA76F4PybA.json",
+                    "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_F0Don6rcxA.json",
                     "cwd": "/Users/shani_mac/CertSDP/"
                 },
                 {
@@ -4642,7 +4642,7 @@
                     "kind": "subprocess_cli",
                     "exit": 0,
                     "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
-                    "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_n6Cfxp"
+                    "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_IetMLt"
                 }
             ],
             "score": 10,
@@ -4658,8 +4658,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -4719,9 +4719,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 0.000407041,
+            "runtime_seconds": 0.000311917,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "verify_certificate"
@@ -4775,8 +4775,8 @@
                     "accepted": true,
                     "stage": "identity_replay",
                     "reason": "accepted",
-                    "runtime_seconds": 0.1072585,
-                    "allocated_bytes": 211069600,
+                    "runtime_seconds": 0.107205417,
+                    "allocated_bytes": 211070880,
                     "budget_runtime": true,
                     "budget_memory": true,
                     "densification_count": 0,
@@ -4836,9 +4836,9 @@
                     ]
                 }
             ],
-            "peak_memory_if_available_bytes": 211069600,
+            "peak_memory_if_available_bytes": 211070880,
             "densification_count": 0,
-            "runtime_seconds": 0.000218583,
+            "runtime_seconds": 0.003019292,
             "status": "PASS",
             "exact_verifier_functions_called": [
                 "parse_certificate_json_v3"
@@ -4887,7 +4887,7 @@
         "timeout_minutes": 30,
         "julia": "1.12.6",
         "strict": true,
-        "git_commit": "f4dbc95796a67975ffddeb753f659c11d38a8b4b",
+        "git_commit": "e74d11ce4212458888aa8924d7c1a81157716790",
         "ci_detected": true,
         "ci_workflow_hash": "sha256:98be3489d2f7c23029c58ef52191fc97c37c4d833485c02541be856effdd111c",
         "max_memory_gb": 12,
@@ -4901,21 +4901,21 @@
             {
                 "family": "nctssos_import",
                 "fixture_id": "nctssos_trace_medium",
-                "generated_by": "test/fixtures_real/nctssos/generate_raw_nctssos_fixture.jl",
+                "generated_by": "scripts/generate_certsdp3_fixtures.jl",
                 "source_file": "test/fixtures_real/nctssos/raw_nctssos_trace_medium.json",
-                "source_hash": "sha256:03e46221fd1c79544abd0d1c8ac1df58216e3659574f22b652899a15455f695f"
+                "source_hash": "sha256:48092ae00c801d18602895f9e8374da4ce920a349129f0bbd0d3572fc48670f3"
             },
             {
                 "family": "quantum_bound",
                 "fixture_id": "quantum_i3322_medium",
-                "generated_by": "test/fixtures_real/nctssos/generate_raw_nctssos_fixture.jl",
+                "generated_by": "scripts/generate_certsdp3_fixtures.jl",
                 "source_file": "test/fixtures_real/nctssos/raw_quantum_i3322_medium.json",
-                "source_hash": "sha256:a196a689ef993923aced847e982cd84f145850843cb056b9630d69798554652f"
+                "source_hash": "sha256:9ae2b38b8908c9e24d460ec754dadb7bd2a29af1597ea050047f8b832a482f53"
             },
             {
                 "family": "tssos_sparse_sos_import",
                 "fixture_id": "tssos_sparse_industry_medium",
-                "generated_by": "test/fixtures_real/tssos/generate_raw_tssos_fixture.jl",
+                "generated_by": "scripts/generate_certsdp3_fixtures.jl",
                 "source_file": "test/fixtures_real/tssos/raw_tssos_sparse_poly_medium.json",
                 "source_hash": "sha256:90ea172282bb4f8f6139866d3bd8cc19a4e0602b83b467716bd725576b1a59a9"
             }
@@ -4925,13 +4925,13 @@
         "present": true,
         "path": ".github/workflows/certsdp3.yml",
         "hash": "sha256:98be3489d2f7c23029c58ef52191fc97c37c4d833485c02541be856effdd111c",
-        "latest_commit_message": "Make CertSDP 3.0 workflow manual only",
+        "latest_commit_message": "Harden CertSDP 3.0 PASS_10 replay audit",
         "latest_commit_skips_ci": false
     },
     "object_store_report": {
         "fixtures": [
             {
-                "dag_root_hash": "sha256:aef8bf39861b5c83db1fa65af4cc8d87379cdb061d1981a15e3f0f5a95e2c69d",
+                "dag_root_hash": "sha256:8cccb5f3aa426d869665e62c84831afc8c32ab4084658a19b57ac4ff35f83ac6",
                 "fixture_id": "quantum_chsh_level2",
                 "dag_present": true
             },
@@ -4946,7 +4946,7 @@
                 "dag_present": true
             },
             {
-                "dag_root_hash": "sha256:95bedfc29434a73b3e9c277e76f156fabe7126c3c2cfda19bf52ec90efbd8a3b",
+                "dag_root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
                 "fixture_id": "symmetric_sos_cyclic_medium",
                 "dag_present": true
             },
@@ -4956,7 +4956,7 @@
                 "dag_present": true
             },
             {
-                "dag_root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+                "dag_root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
                 "fixture_id": "quantum_i3322_medium",
                 "dag_present": true
             },
@@ -4966,7 +4966,7 @@
                 "dag_present": true
             },
             {
-                "dag_root_hash": "sha256:e45418b1d840484a0758cd73e57b71c04b8f55f77106afa37b2ffafe41842e51",
+                "dag_root_hash": "sha256:2042ebe7675357b8d6180bc0aae3c2f6e06e85cb4923fc894945446de53f8d85",
                 "fixture_id": "farkas_infeasible_lmi_medium",
                 "dag_present": true
             },
@@ -4976,17 +4976,17 @@
                 "dag_present": true
             },
             {
-                "dag_root_hash": "sha256:7213d7196f87825371ce076d2adefbadcb4dde1ce3318e94fb29231a112641ee",
+                "dag_root_hash": "sha256:c28a81c7b6e4c313ec4038c57f43836c970fb1884d97685d37989f73b7ccae7f",
                 "fixture_id": "psd_factor_algebraic_40",
                 "dag_present": true
             },
             {
-                "dag_root_hash": "sha256:f12f499562617a04defb9aedddc3c683fe89299aa7c228f91d4887ebbc71913e",
+                "dag_root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
                 "fixture_id": "primal_dual_portfolio_50",
                 "dag_present": true
             },
             {
-                "dag_root_hash": "sha256:759e408186402b9248a699820ea720176effd2369f6a5c5f75cede1b8ab8518a",
+                "dag_root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
                 "fixture_id": "nctssos_trace_medium",
                 "dag_present": true
             },
@@ -5266,6 +5266,9 @@
         "full": true
     },
     "dag_checker_report": {
+        "proof_relevant_hash_only_count": 0,
+        "proof_relevant_hash_only": [
+        ],
         "checker_count": 59,
         "generic_accepting_checker_present": false,
         "executed_last": [
@@ -5337,6 +5340,367 @@
             "verify_primal_affine",
             "verify_quantum_bound_certificate",
             "verify_sparse_sos_coefficients"
-        ]
+        ],
+        "semantic_classification": {
+            "proof_relevant_hash_only_count": 0,
+            "proof_relevant_hash_only": [
+            ],
+            "checkers": {
+                "check_farkas_contradiction": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "canonical_sparse_matrix_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_low_rank_psd_diagonal_signs": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_putinar_localizing_identity": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_symmetry_block_reconstruction": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_low_rank_psd_identity": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_block_native_inactive_blocks": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_chordal_separator_consistency": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_block_diagonalization_certificate": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_farkas_dual_cone": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_schema": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_sparse_matrix_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_sparse_sos_coefficients": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_symmetry_projector_orthogonality": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_npa_moment_entry": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "symmetry_group_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "npa_problem_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "sparse_sos_problem_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_symmetry_projector_idempotence": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_quantum_objective_bound": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_algebraic_low_rank_psd": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_primal_affine": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_quantum_projection_relation": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "final_accept": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_quantum_bound_certificate": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_chordal_clique_psd": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_dual_objective": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_primal_objective": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_problem_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_sparse_sos_gram_expansion": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_chordal_running_intersection": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_bundle_manifest": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_npa_objective_functional": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_exact_gap": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_exact_gap": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_nc_rewrite_step": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_algebraic_sign": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_algebraic_field": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "block_native_incidence_system_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_block_native_algebraic_certificate": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_field_element": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_low_rank_psd": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_block_native_active_blocks": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_farkas_contradiction": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_primal_affine": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "chordal_structure_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_dual_affine": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_farkas_identity": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_chordal_clique_cover": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_chordal_psd": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_symmetry_orbit_partition": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "orbit_basis_hash": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_dual_affine": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_tssos_import_normalization": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_symmetry_group_closure": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "check_quantum_trace_cyclicity": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "hash": {
+                    "semantics": "diagnostic_only",
+                    "mathematical_replay": false,
+                    "hash_only": false,
+                    "diagnostic_only": true
+                },
+                "check_quantum_commutation_relation": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                },
+                "verify_nc_rewrite_witness": {
+                    "semantics": "mathematical_replay",
+                    "mathematical_replay": true,
+                    "hash_only": false,
+                    "diagnostic_only": false
+                }
+            }
+        }
     }
 }

@@ -1,7 +1,7 @@
 {
     "fixtures": [
         {
-            "dag_root_hash": "sha256:aef8bf39861b5c83db1fa65af4cc8d87379cdb061d1981a15e3f0f5a95e2c69d",
+            "dag_root_hash": "sha256:8cccb5f3aa426d869665e62c84831afc8c32ab4084658a19b57ac4ff35f83ac6",
             "fixture_id": "quantum_chsh_level2",
             "dag_present": true
         },
@@ -16,7 +16,7 @@
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:95bedfc29434a73b3e9c277e76f156fabe7126c3c2cfda19bf52ec90efbd8a3b",
+            "dag_root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
             "fixture_id": "symmetric_sos_cyclic_medium",
             "dag_present": true
         },
@@ -26,7 +26,7 @@
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:1ab579cde1289eefffb5b612024621d1f341bed2b0333446d5afa8d2dc160f80",
+            "dag_root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
             "fixture_id": "quantum_i3322_medium",
             "dag_present": true
         },
@@ -36,7 +36,7 @@
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:e45418b1d840484a0758cd73e57b71c04b8f55f77106afa37b2ffafe41842e51",
+            "dag_root_hash": "sha256:2042ebe7675357b8d6180bc0aae3c2f6e06e85cb4923fc894945446de53f8d85",
             "fixture_id": "farkas_infeasible_lmi_medium",
             "dag_present": true
         },
@@ -46,17 +46,17 @@
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:7213d7196f87825371ce076d2adefbadcb4dde1ce3318e94fb29231a112641ee",
+            "dag_root_hash": "sha256:c28a81c7b6e4c313ec4038c57f43836c970fb1884d97685d37989f73b7ccae7f",
             "fixture_id": "psd_factor_algebraic_40",
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:f12f499562617a04defb9aedddc3c683fe89299aa7c228f91d4887ebbc71913e",
+            "dag_root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
             "fixture_id": "primal_dual_portfolio_50",
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:759e408186402b9248a699820ea720176effd2369f6a5c5f75cede1b8ab8518a",
+            "dag_root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
             "fixture_id": "nctssos_trace_medium",
             "dag_present": true
         },

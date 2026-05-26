@@ -198,23 +198,42 @@ function validate_fixture_shape!(fixture, dir::AbstractString,
         variables >= 20 ||
             push!(failures, "$id must have at least 20 shared variables; got $variables")
     elseif id == "primal_dual_portfolio_50"
-        n = max_json_int(cert_json, Symbol[:n])
-        affine = json_array_length(cert_json, [:primal, :affine_lhs])
-        n >= 50 ||
-            push!(failures, "$id must contain PSD block size >= 50; got $n")
-        affine >= 50 ||
-            push!(failures, "$id must contain at least 50 affine entries; got $affine")
-    elseif id == "farkas_infeasible_lmi_medium"
-        n = 0
-        if haskey(cert_json, :cone_proofs) && !isempty(cert_json[:cone_proofs])
-            first_proof = cert_json[:cone_proofs][1]
-            n = haskey(first_proof, :factor) ? length(first_proof[:factor]) : 0
+        blocks = json_array_length(cert_json, [:problem, :blocks])
+        variables = json_array_length(cert_json, [:problem, :variables])
+        coefficients = 0
+        if haskey(cert_json, :problem)
+            for block in cert_json[:problem][:blocks]
+                for matrix in block[:A]
+                    coefficients += length(matrix[:entries])
+                end
+            end
         end
+        blocks >= 4 ||
+            push!(failures, "$id must contain at least four cone blocks; got $blocks")
+        variables >= 8 ||
+            push!(failures, "$id must contain at least eight variables; got $variables")
+        coefficients >= 30 ||
+            push!(failures, "$id must contain at least 30 affine coefficients; got $coefficients")
+    elseif id == "farkas_infeasible_lmi_medium"
+        blocks = json_array_length(cert_json, [:problem, :blocks])
+        variables = json_array_length(cert_json, [:problem, :variables])
         lhs = json_array_length(cert_json, [:multiplier_identity_lhs])
-        n >= 20 ||
-            push!(failures, "$id must contain PSD block size >= 20; got $n")
-        lhs >= 10 ||
-            push!(failures, "$id must contain at least 10 multiplier entries; got $lhs")
+        coefficients = 0
+        if haskey(cert_json, :problem)
+            for block in cert_json[:problem][:blocks]
+                for matrix in block[:A]
+                    coefficients += length(matrix[:entries])
+                end
+            end
+        end
+        blocks >= 3 ||
+            push!(failures, "$id must contain at least three cone blocks; got $blocks")
+        variables >= 8 ||
+            push!(failures, "$id must contain at least eight variables; got $variables")
+        lhs >= 8 ||
+            push!(failures, "$id must contain at least eight multiplier entries; got $lhs")
+        coefficients >= 24 ||
+            push!(failures, "$id must contain at least 24 affine coefficients; got $coefficients")
     elseif id == "sparse_sos_control_lyapunov"
         variables = json_array_length(cert_json, [:problem, :variables])
         blocks = json_array_length(cert_json, [:sos_blocks])
@@ -366,55 +385,33 @@ function dual_from_json(value)
 end
 
 function validate_primal_dual_certificate(path::AbstractString)
-    parsed = JSON3.read(read(path, String))
-    primal = primal_from_json(parsed[:primal])
-    dual = dual_from_json(parsed[:dual])
-    cert = CertSDP.Kernel.make_primal_dual_optimality_certificate(String(parsed[:problem_hash]),
-                                                                  primal,
-                                                                  dual;
-                                                                  gap=parse_rational(String(parsed[:gap])))
-    cert = CertSDP.Kernel.PrimalDualOptimalityCertificate(cert.problem_hash,
-                                                          cert.primal,
-                                                          cert.dual,
-                                                          cert.gap,
-                                                          String(parsed[:certificate_hash]),
-                                                          cert.dag)
-    report = CertSDP.Kernel.verify_primal_dual_optimality(cert)
-    return attach_expected_certificate_hash(report,
-                                            String(parsed[:certificate_hash]))
+    try
+        cert = CertSDP.Kernel.parse_primal_dual_optimality_certificate_json(read(path, String))
+        report = CertSDP.Kernel.verify_primal_dual_optimality(cert)
+        return attach_expected_certificate_hash(report, cert.certificate_hash)
+    catch err
+        return validation_failure_report(:G,
+                                         :primal_dual_optimality,
+                                         :parse,
+                                         sprint(showerror, err),
+                                         :primal_dual_replay;
+                                         path)
+    end
 end
 
 function validate_farkas_certificate(path::AbstractString)
-    parsed = JSON3.read(read(path, String))
-    proofs = CertSDP.Kernel.ExactLowRankPSDProof[]
-    for proof_json in parsed[:cone_proofs]
-        factor = [[parse_rational(String(entry)) for entry in row]
-                  for row in proof_json[:factor]]
-        diagonal = [parse_rational(String(entry)) for entry in proof_json[:diagonal]]
-        proof = CertSDP.Kernel.ExactLowRankPSDProof(Symbol(String(proof_json[:field])),
-                                                    String(proof_json[:matrix_hash]),
-                                                    factor,
-                                                    diagonal,
-                                                    String(proof_json[:identity_proof_hash]))
-        push!(proofs, proof)
+    try
+        cert = CertSDP.Kernel.parse_farkas_infeasibility_certificate_json(read(path, String))
+        report = CertSDP.Kernel.verify_farkas_infeasibility(cert)
+        return attach_expected_certificate_hash(report, cert.certificate_hash)
+    catch err
+        return validation_failure_report(:G,
+                                         :farkas_infeasibility,
+                                         :parse,
+                                         sprint(showerror, err),
+                                         :farkas_replay;
+                                         path)
     end
-    cert = CertSDP.Kernel.make_farkas_infeasibility_certificate(String(parsed[:problem_hash]),
-                                                               [parse_rational(String(x)) for x in parsed[:multiplier_identity_lhs]],
-                                                               [parse_rational(String(x)) for x in parsed[:multiplier_identity_rhs]],
-                                                               proofs,
-                                                               parse_rational(String(parsed[:contradiction_lhs])),
-                                                               parse_rational(String(parsed[:contradiction_rhs])))
-    cert = CertSDP.Kernel.FarkasInfeasibilityCertificate(cert.problem_hash,
-                                                         cert.multiplier_identity_lhs,
-                                                         cert.multiplier_identity_rhs,
-                                                         cert.cone_proofs,
-                                                         cert.contradiction_lhs,
-                                                         cert.contradiction_rhs,
-                                                         String(parsed[:certificate_hash]),
-                                                         cert.dag)
-    report = CertSDP.Kernel.verify_farkas_infeasibility(cert)
-    return attach_expected_certificate_hash(report,
-                                            String(parsed[:certificate_hash]))
 end
 
 function validate_tssos_artifact(dir::AbstractString)

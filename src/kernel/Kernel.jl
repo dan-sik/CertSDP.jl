@@ -25,6 +25,8 @@ export CERTSDP3_SCHEMA_VERSION,
        BlockNativeActiveBlockProof,
        BlockNativeInactivePSDProof,
        BlockNativeAlgebraicCertificate,
+       ConicAffineBlock,
+       ExactConicProblem,
        PrimalFeasibilityCertificate,
        DualFeasibilityCertificate,
        PrimalDualOptimalityCertificate,
@@ -251,7 +253,7 @@ function ProofNode(id::Symbol,
                      String.(inputs),
                      String(output_hash),
                      checker,
-                     :pending,
+                     status,
                      payload,
                      String.(input_hashes),
                      arithmetic_mode,
@@ -417,8 +419,26 @@ struct BlockNativeAlgebraicCertificate
     certificate_hash::String
 end
 
+struct ConicAffineBlock
+    id::Symbol
+    cone::Symbol
+    B::SparseSymmetricRationalMatrix
+    A::Vector{SparseSymmetricRationalMatrix}
+end
+
+struct ExactConicProblem
+    sense::Symbol
+    variables::Vector{Symbol}
+    objective::Vector{Rational{BigInt}}
+    blocks::Vector{ConicAffineBlock}
+    dual_objective_coefficients::Vector{Rational{BigInt}}
+    problem_hash::String
+end
+
 struct PrimalFeasibilityCertificate
     problem_hash::String
+    problem::Union{Nothing, ExactConicProblem}
+    primal_vector::Vector{Rational{BigInt}}
     affine_lhs::Vector{Rational{BigInt}}
     affine_rhs::Vector{Rational{BigInt}}
     cone_matrices::Vector{SparseSymmetricRationalMatrix}
@@ -428,12 +448,67 @@ end
 
 struct DualFeasibilityCertificate
     problem_hash::String
+    problem::Union{Nothing, ExactConicProblem}
+    dual_variables::Vector{SparseSymmetricRationalMatrix}
     affine_lhs::Vector{Rational{BigInt}}
     affine_rhs::Vector{Rational{BigInt}}
     cone_matrices::Vector{SparseSymmetricRationalMatrix}
     cone_proofs::Vector{ExactLowRankPSDProof}
     objective_value::Rational{BigInt}
 end
+
+PrimalFeasibilityCertificate(problem_hash::String,
+                             affine_lhs::Vector{Rational{BigInt}},
+                             affine_rhs::Vector{Rational{BigInt}},
+                             cone_matrices::Vector{SparseSymmetricRationalMatrix},
+                             cone_proofs::Vector{ExactLowRankPSDProof},
+                             objective_value::Rational{BigInt}) =
+    PrimalFeasibilityCertificate(problem_hash, nothing, Rational{BigInt}[],
+                                 affine_lhs, affine_rhs, cone_matrices,
+                                 cone_proofs, objective_value)
+
+PrimalFeasibilityCertificate(problem_hash::AbstractString,
+                             affine_lhs::AbstractVector,
+                             affine_rhs::AbstractVector,
+                             cone_matrices::AbstractVector{SparseSymmetricRationalMatrix},
+                             cone_proofs::AbstractVector{ExactLowRankPSDProof},
+                             objective_value) =
+    PrimalFeasibilityCertificate(String(problem_hash),
+                                 [_to_big_rational(value, "primal.affine_lhs[$i]")
+                                  for (i, value) in enumerate(affine_lhs)],
+                                 [_to_big_rational(value, "primal.affine_rhs[$i]")
+                                  for (i, value) in enumerate(affine_rhs)],
+                                 SparseSymmetricRationalMatrix[cone_matrices...],
+                                 ExactLowRankPSDProof[cone_proofs...],
+                                 _to_big_rational(objective_value,
+                                                  "primal.objective_value"))
+
+DualFeasibilityCertificate(problem_hash::String,
+                           affine_lhs::Vector{Rational{BigInt}},
+                           affine_rhs::Vector{Rational{BigInt}},
+                           cone_matrices::Vector{SparseSymmetricRationalMatrix},
+                           cone_proofs::Vector{ExactLowRankPSDProof},
+                           objective_value::Rational{BigInt}) =
+    DualFeasibilityCertificate(problem_hash, nothing,
+                               SparseSymmetricRationalMatrix[], affine_lhs,
+                               affine_rhs, cone_matrices, cone_proofs,
+                               objective_value)
+
+DualFeasibilityCertificate(problem_hash::AbstractString,
+                           affine_lhs::AbstractVector,
+                           affine_rhs::AbstractVector,
+                           cone_matrices::AbstractVector{SparseSymmetricRationalMatrix},
+                           cone_proofs::AbstractVector{ExactLowRankPSDProof},
+                           objective_value) =
+    DualFeasibilityCertificate(String(problem_hash),
+                               [_to_big_rational(value, "dual.affine_lhs[$i]")
+                                for (i, value) in enumerate(affine_lhs)],
+                               [_to_big_rational(value, "dual.affine_rhs[$i]")
+                                for (i, value) in enumerate(affine_rhs)],
+                               SparseSymmetricRationalMatrix[cone_matrices...],
+                               ExactLowRankPSDProof[cone_proofs...],
+                               _to_big_rational(objective_value,
+                                                "dual.objective_value"))
 
 struct PrimalDualOptimalityCertificate
     problem_hash::String
@@ -453,6 +528,8 @@ end
 
 struct FarkasInfeasibilityCertificate
     problem_hash::String
+    problem::Union{Nothing, ExactConicProblem}
+    dual_variables::Vector{SparseSymmetricRationalMatrix}
     multiplier_identity_lhs::Vector{Rational{BigInt}}
     multiplier_identity_rhs::Vector{Rational{BigInt}}
     cone_proofs::Vector{ExactLowRankPSDProof}
@@ -461,6 +538,24 @@ struct FarkasInfeasibilityCertificate
     certificate_hash::String
     dag::CertificateDAG
 end
+
+FarkasInfeasibilityCertificate(problem_hash::String,
+                               multiplier_identity_lhs::Vector{Rational{BigInt}},
+                               multiplier_identity_rhs::Vector{Rational{BigInt}},
+                               cone_proofs::Vector{ExactLowRankPSDProof},
+                               contradiction_lhs::Rational{BigInt},
+                               contradiction_rhs::Rational{BigInt},
+                               certificate_hash::String,
+                               dag::CertificateDAG) =
+    FarkasInfeasibilityCertificate(problem_hash, nothing,
+                                   SparseSymmetricRationalMatrix[],
+                                   multiplier_identity_lhs,
+                                   multiplier_identity_rhs,
+                                   cone_proofs,
+                                   contradiction_lhs,
+                                   contradiction_rhs,
+                                   certificate_hash,
+                                   dag)
 
 struct PolynomialTerm
     exponents::Vector{Int}
@@ -527,6 +622,7 @@ struct BlockDiagonalizationCertificate
     group::SymmetryGroupCertificate
     orbit_basis::OrbitBasisCertificate
     projection_blocks::Vector{SparseSymmetricRationalMatrix}
+    projector_matrices::Vector{SparseSymmetricRationalMatrix}
     original_matrix::SparseSymmetricRationalMatrix
     reconstructed_matrix::SparseSymmetricRationalMatrix
     certificate_hash::String
@@ -730,6 +826,73 @@ end
 
 function chordal_proof_hash(proof::ChordalPSDProof)
     return _sha256_payload(_canonical_chordal_proof_payload(proof))
+end
+
+function ConicAffineBlock(id::Symbol,
+                          cone::Symbol,
+                          B::SparseSymmetricRationalMatrix,
+                          A::AbstractVector{SparseSymmetricRationalMatrix})
+    cone in (:PSD, :diagonal_nonnegative, :nonnegative_vector, :equality) ||
+        throw(ArgumentError("unsupported conic block cone `$cone`"))
+    all(matrix -> matrix.n == B.n, A) ||
+        throw(ArgumentError("affine block coefficient dimensions must match B"))
+    return ConicAffineBlock(id, cone, B, SparseSymmetricRationalMatrix[A...])
+end
+
+function ExactConicProblem(sense::Symbol,
+                           variables::AbstractVector{Symbol},
+                           objective,
+                           blocks::AbstractVector{ConicAffineBlock};
+                           dual_objective_coefficients=Rational{BigInt}[])
+    sense in (:min, :max) || throw(ArgumentError("conic problem sense must be :min or :max"))
+    vars = Symbol.(collect(variables))
+    length(unique(vars)) == length(vars) ||
+        throw(ArgumentError("conic problem variables must be unique"))
+    c = [_to_big_rational(value, "objective[$i]")
+         for (i, value) in enumerate(objective)]
+    length(c) == length(vars) ||
+        throw(ArgumentError("objective length must match variables"))
+    parsed_blocks = ConicAffineBlock[blocks...]
+    isempty(parsed_blocks) && throw(ArgumentError("conic problem needs at least one block"))
+    for block in parsed_blocks
+        length(block.A) == length(vars) ||
+            throw(ArgumentError("affine block $(block.id) coefficient count must match variables"))
+    end
+    dual_coeffs = [_to_big_rational(value, "dual_objective_coefficients[$i]")
+                   for (i, value) in enumerate(dual_objective_coefficients)]
+    problem0 = ExactConicProblem(sense, vars, c, parsed_blocks, dual_coeffs, "")
+    return ExactConicProblem(sense, vars, c, parsed_blocks, dual_coeffs,
+                             exact_conic_problem_hash(problem0))
+end
+
+function conic_affine_block_json(block::ConicAffineBlock)
+    return (;
+        id=String(block.id),
+        cone=String(block.cone),
+        B=sparse_matrix_json(block.B),
+        A=[sparse_matrix_json(matrix) for matrix in block.A],
+    )
+end
+
+function exact_conic_problem_json(problem::ExactConicProblem)
+    return (;
+        sense=String(problem.sense),
+        variables=String.(problem.variables),
+        objective=rational_string.(problem.objective),
+        blocks=[conic_affine_block_json(block) for block in problem.blocks],
+        dual_objective_coefficients=rational_string.(problem.dual_objective_coefficients),
+        problem_hash=problem.problem_hash,
+    )
+end
+
+function exact_conic_problem_hash(problem::ExactConicProblem)
+    return _sha256_payload((;
+        sense=String(problem.sense),
+        variables=String.(problem.variables),
+        objective=rational_string.(problem.objective),
+        blocks=[conic_affine_block_json(block) for block in problem.blocks],
+        dual_objective_coefficients=rational_string.(problem.dual_objective_coefficients),
+    ))
 end
 
 function block_native_incidence_block_json(block::BlockNativeIncidenceBlock)
@@ -1043,26 +1206,33 @@ block_native_algebraic_certificate_dag_json(cert::BlockNativeAlgebraicCertificat
     certificate_dag_json(block_native_algebraic_certificate_dag(cert))
 
 function primal_dual_optimality_hash(cert::PrimalDualOptimalityCertificate)
-    payload = (;
-        problem_hash=cert.problem_hash,
-        primal=primal_feasibility_json(cert.primal),
-        dual=dual_feasibility_json(cert.dual),
-        gap=rational_string(cert.gap),
-        dag=certificate_dag_json(cert.dag),
+    payload = Dict{Symbol, Any}(
+        :problem_hash => cert.problem_hash,
+        :primal => primal_feasibility_json(cert.primal),
+        :dual => dual_feasibility_json(cert.dual),
+        :gap => rational_string(cert.gap),
+        :dag => certificate_dag_json(cert.dag),
     )
+    isnothing(cert.primal.problem) ||
+        (payload[:problem] = exact_conic_problem_json(cert.primal.problem))
     return _sha256_payload(payload)
 end
 
 function farkas_infeasibility_hash(cert::FarkasInfeasibilityCertificate)
-    payload = (;
-        problem_hash=cert.problem_hash,
-        multiplier_identity_lhs=rational_string.(cert.multiplier_identity_lhs),
-        multiplier_identity_rhs=rational_string.(cert.multiplier_identity_rhs),
-        cone_proofs=[low_rank_proof_json(proof) for proof in cert.cone_proofs],
-        contradiction_lhs=rational_string(cert.contradiction_lhs),
-        contradiction_rhs=rational_string(cert.contradiction_rhs),
-        dag=certificate_dag_json(cert.dag),
+    payload = Dict{Symbol, Any}(
+        :problem_hash => cert.problem_hash,
+        :multiplier_identity_lhs => rational_string.(cert.multiplier_identity_lhs),
+        :multiplier_identity_rhs => rational_string.(cert.multiplier_identity_rhs),
+        :cone_proofs => [low_rank_proof_json(proof) for proof in cert.cone_proofs],
+        :contradiction_lhs => rational_string(cert.contradiction_lhs),
+        :contradiction_rhs => rational_string(cert.contradiction_rhs),
+        :dag => certificate_dag_json(cert.dag),
     )
+    isnothing(cert.problem) ||
+        (payload[:problem] = exact_conic_problem_json(cert.problem))
+    isempty(cert.dual_variables) ||
+        (payload[:dual_variables] = [sparse_matrix_json(matrix)
+                                     for matrix in cert.dual_variables])
     return _sha256_payload(payload)
 end
 
@@ -1188,7 +1358,8 @@ function BlockDiagonalizationCertificate(problem_hash::AbstractString,
                                          orbit_basis::OrbitBasisCertificate,
                                          projection_blocks::AbstractVector{SparseSymmetricRationalMatrix},
                                          original_matrix::SparseSymmetricRationalMatrix,
-                                         reconstructed_matrix::SparseSymmetricRationalMatrix)
+                                         reconstructed_matrix::SparseSymmetricRationalMatrix;
+                                         projector_matrices::AbstractVector{SparseSymmetricRationalMatrix}=projection_blocks)
     nodes = ProofNode[
         ProofNode(:symmetry_group, :hash, String[], group.action_hash,
                   :symmetry_group_hash, :accepted;
@@ -1206,6 +1377,9 @@ function BlockDiagonalizationCertificate(problem_hash::AbstractString,
                   typed_payload=Dict(:reconstruction_hash => reconstructed_matrix.hash,
                                      :projection_blocks => [sparse_matrix_json(block)
                                                             for block in projection_blocks],
+                                     :projector_matrices => [sparse_matrix_json(block)
+                                                             for block in projector_matrices],
+                                     :projector_semantics => true,
                                      :original_matrix => sparse_matrix_json(original_matrix),
                                      :reconstructed_matrix => sparse_matrix_json(reconstructed_matrix),
                                      :group => symmetry_group_json(group),
@@ -1218,6 +1392,7 @@ function BlockDiagonalizationCertificate(problem_hash::AbstractString,
                                             group,
                                             orbit_basis,
                                             SparseSymmetricRationalMatrix[projection_blocks...],
+                                            SparseSymmetricRationalMatrix[projector_matrices...],
                                             original_matrix,
                                             reconstructed_matrix,
                                             "",
@@ -1226,6 +1401,7 @@ function BlockDiagonalizationCertificate(problem_hash::AbstractString,
                                            group,
                                            orbit_basis,
                                            SparseSymmetricRationalMatrix[projection_blocks...],
+                                           SparseSymmetricRationalMatrix[projector_matrices...],
                                            original_matrix,
                                            reconstructed_matrix,
                                            block_diagonalization_certificate_hash(cert0),
@@ -1278,6 +1454,13 @@ function block_diagonalization_certificate_json(cert::BlockDiagonalizationCertif
         orbit_basis=orbit_basis_json(cert.orbit_basis),
         projection_blocks=[sparse_matrix_json(block)
                            for block in cert.projection_blocks],
+        projector_matrices=[sparse_matrix_json(block)
+                            for block in cert.projector_matrices],
+        projector_semantics=(;
+            idempotence=true,
+            orthogonality=true,
+            completeness=true,
+        ),
         original_matrix=sparse_matrix_json(cert.original_matrix),
         reconstructed_matrix=sparse_matrix_json(cert.reconstructed_matrix),
         proof_dag=certificate_dag_json(cert.dag),
@@ -1292,6 +1475,13 @@ function block_diagonalization_certificate_hash(cert::BlockDiagonalizationCertif
         orbit_basis=orbit_basis_json(cert.orbit_basis),
         projection_blocks=[sparse_matrix_json(block)
                            for block in cert.projection_blocks],
+        projector_matrices=[sparse_matrix_json(block)
+                            for block in cert.projector_matrices],
+        projector_semantics=(;
+            idempotence=true,
+            orthogonality=true,
+            completeness=true,
+        ),
         original_matrix=sparse_matrix_json(cert.original_matrix),
         reconstructed_matrix=sparse_matrix_json(cert.reconstructed_matrix),
         dag=certificate_dag_json(cert.dag),
@@ -1425,51 +1615,65 @@ function quantum_bound_certificate_json(cert::QuantumBoundCertificate)
 end
 
 function primal_feasibility_json(cert::PrimalFeasibilityCertificate)
-    return (;
-        problem_hash=cert.problem_hash,
-        affine_lhs=rational_string.(cert.affine_lhs),
-        affine_rhs=rational_string.(cert.affine_rhs),
-        cone_matrices=[sparse_matrix_json(matrix) for matrix in cert.cone_matrices],
-        cone_proofs=[low_rank_proof_json(proof) for proof in cert.cone_proofs],
-        objective_value=rational_string(cert.objective_value),
+    payload = Dict{Symbol, Any}(
+        :problem_hash => cert.problem_hash,
+        :affine_lhs => rational_string.(cert.affine_lhs),
+        :affine_rhs => rational_string.(cert.affine_rhs),
+        :cone_matrices => [sparse_matrix_json(matrix) for matrix in cert.cone_matrices],
+        :cone_proofs => [low_rank_proof_json(proof) for proof in cert.cone_proofs],
+        :objective_value => rational_string(cert.objective_value),
     )
+    isempty(cert.primal_vector) ||
+        (payload[:primal_vector] = rational_string.(cert.primal_vector))
+    return payload
 end
 
 function primal_dual_optimality_certificate_json(cert::PrimalDualOptimalityCertificate)
-    return (;
-        certsdp_primal_dual_certificate_version=CERTSDP3_SCHEMA_VERSION,
-        problem_hash=cert.problem_hash,
-        primal=primal_feasibility_json(cert.primal),
-        dual=dual_feasibility_json(cert.dual),
-        gap=rational_string(cert.gap),
-        proof_dag=certificate_dag_json(cert.dag),
-        certificate_hash=cert.certificate_hash,
+    payload = Dict{Symbol, Any}(
+        :certsdp_primal_dual_certificate_version => CERTSDP3_SCHEMA_VERSION,
+        :problem_hash => cert.problem_hash,
+        :primal => primal_feasibility_json(cert.primal),
+        :dual => dual_feasibility_json(cert.dual),
+        :gap => rational_string(cert.gap),
+        :proof_dag => certificate_dag_json(cert.dag),
+        :certificate_hash => cert.certificate_hash,
     )
+    isnothing(cert.primal.problem) ||
+        (payload[:problem] = exact_conic_problem_json(cert.primal.problem))
+    return payload
 end
 
 function farkas_infeasibility_certificate_json(cert::FarkasInfeasibilityCertificate)
-    return (;
-        certsdp_farkas_certificate_version=CERTSDP3_SCHEMA_VERSION,
-        problem_hash=cert.problem_hash,
-        multiplier_identity_lhs=rational_string.(cert.multiplier_identity_lhs),
-        multiplier_identity_rhs=rational_string.(cert.multiplier_identity_rhs),
-        cone_proofs=[low_rank_proof_json(proof) for proof in cert.cone_proofs],
-        contradiction_lhs=rational_string(cert.contradiction_lhs),
-        contradiction_rhs=rational_string(cert.contradiction_rhs),
-        proof_dag=certificate_dag_json(cert.dag),
-        certificate_hash=cert.certificate_hash,
+    payload = Dict{Symbol, Any}(
+        :certsdp_farkas_certificate_version => CERTSDP3_SCHEMA_VERSION,
+        :problem_hash => cert.problem_hash,
+        :multiplier_identity_lhs => rational_string.(cert.multiplier_identity_lhs),
+        :multiplier_identity_rhs => rational_string.(cert.multiplier_identity_rhs),
+        :cone_proofs => [low_rank_proof_json(proof) for proof in cert.cone_proofs],
+        :contradiction_lhs => rational_string(cert.contradiction_lhs),
+        :contradiction_rhs => rational_string(cert.contradiction_rhs),
+        :proof_dag => certificate_dag_json(cert.dag),
+        :certificate_hash => cert.certificate_hash,
     )
+    isempty(cert.dual_variables) ||
+        (payload[:dual_variables] = [sparse_matrix_json(matrix) for matrix in cert.dual_variables])
+    isnothing(cert.problem) ||
+        (payload[:problem] = exact_conic_problem_json(cert.problem))
+    return payload
 end
 
 function dual_feasibility_json(cert::DualFeasibilityCertificate)
-    return (;
-        problem_hash=cert.problem_hash,
-        affine_lhs=rational_string.(cert.affine_lhs),
-        affine_rhs=rational_string.(cert.affine_rhs),
-        cone_matrices=[sparse_matrix_json(matrix) for matrix in cert.cone_matrices],
-        cone_proofs=[low_rank_proof_json(proof) for proof in cert.cone_proofs],
-        objective_value=rational_string(cert.objective_value),
+    payload = Dict{Symbol, Any}(
+        :problem_hash => cert.problem_hash,
+        :affine_lhs => rational_string.(cert.affine_lhs),
+        :affine_rhs => rational_string.(cert.affine_rhs),
+        :cone_matrices => [sparse_matrix_json(matrix) for matrix in cert.cone_matrices],
+        :cone_proofs => [low_rank_proof_json(proof) for proof in cert.cone_proofs],
+        :objective_value => rational_string(cert.objective_value),
     )
+    isempty(cert.dual_variables) ||
+        (payload[:dual_variables] = [sparse_matrix_json(matrix) for matrix in cert.dual_variables])
+    return payload
 end
 
 function low_rank_identity_hash(proof::ExactLowRankPSDProof)
@@ -1496,6 +1700,8 @@ end
 function algebraic_low_rank_psd_certificate_hash(matrix::SparseSymmetricRationalMatrix,
                                                  proof::ExactAlgebraicLowRankPSDProof,
                                                  dag::CertificateDAG)
+    sign_certificates = [algebraic_sign_certificate_json(value, proof.field)
+                         for value in proof.diagonal]
     payload = (;
         certsdp_algebraic_psd_factor_version=CERTSDP3_SCHEMA_VERSION,
         matrix=sparse_matrix_json(matrix),
@@ -1503,10 +1709,32 @@ function algebraic_low_rank_psd_certificate_hash(matrix::SparseSymmetricRational
         factor=[[algebraic_element_json(value) for value in row]
                 for row in proof.factor],
         diagonal=[algebraic_element_json(value) for value in proof.diagonal],
+        sign_certificates,
         identity_proof_hash=proof.identity_proof_hash,
         proof_dag=certificate_dag_json(dag),
     )
     return _sha256_payload(payload)
+end
+
+function algebraic_sign_certificate_json(element::AlgebraicElement,
+                                         field::AlgebraicFieldCertificate)
+    reduced = _algebraic_reduce(element.coefficients,
+                                field.minimal_polynomial)
+    root_count = _sturm_root_count(reduced,
+                                   field.isolating_interval[1],
+                                   field.isolating_interval[2])
+    sign = all(==(0//1), reduced) ? :zero :
+           (_poly_eval_sign(reduced, field.isolating_interval[1]) > 0 ? :positive : :negative)
+    payload = (;
+        method="sturm_interval_root_exclusion",
+        field_hash=field.field_hash,
+        expression=rational_string.(reduced),
+        isolating_interval=[rational_string(field.isolating_interval[1]),
+                            rational_string(field.isolating_interval[2])],
+        roots_in_interval=root_count,
+        sign=String(sign),
+    )
+    return merge(payload, (; sign_certificate_hash=_sha256_payload(payload)))
 end
 
 function algebraic_low_rank_psd_certificate_json(matrix::SparseSymmetricRationalMatrix,
@@ -1540,6 +1768,8 @@ function algebraic_low_rank_psd_certificate_json(matrix::SparseSymmetricRational
         factor=[[algebraic_element_json(value) for value in row]
                 for row in proof.factor],
         diagonal=[algebraic_element_json(value) for value in proof.diagonal],
+        sign_certificates=[algebraic_sign_certificate_json(value, proof.field)
+                           for value in proof.diagonal],
         identity_proof_hash=proof.identity_proof_hash,
         proof_dag=certificate_dag_json(dag),
         certificate_hash=hash,
@@ -1553,6 +1783,167 @@ function entries_dict(matrix::SparseSymmetricRationalMatrix)
         map[(i, j)] = value
     end
     return map
+end
+
+function _matrix_inner(a::SparseSymmetricRationalMatrix,
+                       b::SparseSymmetricRationalMatrix)
+    a.n == b.n || throw(DimensionMismatch("matrix inner dimensions differ"))
+    left = entries_dict(a)
+    right = entries_dict(b)
+    result = Rational{BigInt}(0)
+    for (key, value) in left
+        result += value * get(right, key, 0//1)
+    end
+    return result
+end
+
+function _matrix_linear_combination(matrices::AbstractVector{SparseSymmetricRationalMatrix},
+                                    coefficients::AbstractVector)
+    length(matrices) == length(coefficients) ||
+        throw(DimensionMismatch("matrix coefficient count mismatch"))
+    isempty(matrices) && throw(ArgumentError("matrix linear combination needs at least one matrix"))
+    accum = Dict{Tuple{Int, Int}, Rational{BigInt}}()
+    n = matrices[1].n
+    for (matrix, coefficient) in zip(matrices, coefficients)
+        matrix.n == n || throw(DimensionMismatch("matrix dimensions differ"))
+        coeff = _to_big_rational(coefficient, "linear_combination.coefficient")
+        _accumulate_entries!(accum, matrix.entries, coeff)
+    end
+    return _sparse_matrix_from_accumulator(n, accum)
+end
+
+function _matrix_subtract(a::SparseSymmetricRationalMatrix,
+                          b::SparseSymmetricRationalMatrix)
+    a.n == b.n || throw(DimensionMismatch("matrix dimensions differ"))
+    accum = Dict{Tuple{Int, Int}, Rational{BigInt}}()
+    _accumulate_entries!(accum, a.entries, 1//1)
+    _accumulate_entries!(accum, b.entries, -1//1)
+    return _sparse_matrix_from_accumulator(a.n, accum)
+end
+
+function _matrix_equal(a::SparseSymmetricRationalMatrix,
+                       b::SparseSymmetricRationalMatrix)
+    return a.n == b.n && entries_dict(a) == entries_dict(b)
+end
+
+function _identity_matrix(n::Int)
+    return SparseSymmetricRationalMatrix(n, [(i, i, 1//1) for i in 1:n])
+end
+
+function _matrix_multiply(a::SparseSymmetricRationalMatrix,
+                          b::SparseSymmetricRationalMatrix)
+    a.n == b.n || throw(DimensionMismatch("matrix dimensions differ"))
+    left = entries_dict(a)
+    right = entries_dict(b)
+    accum = Dict{Tuple{Int, Int}, Rational{BigInt}}()
+    for i in 1:a.n, j in i:a.n
+        value = Rational{BigInt}(0)
+        for k in 1:a.n
+            value += get(left, (min(i, k), max(i, k)), 0//1) *
+                     get(right, (min(k, j), max(k, j)), 0//1)
+        end
+        value != 0//1 && (accum[(i, j)] = value)
+    end
+    return _sparse_matrix_from_accumulator(a.n, accum)
+end
+
+function _zero_matrix(n::Int)
+    return SparseSymmetricRationalMatrix(n, Tuple{Int, Int, Rational{BigInt}}[])
+end
+
+function _verify_projector_semantics(projectors::AbstractVector{SparseSymmetricRationalMatrix},
+                                     n::Int)
+    isempty(projectors) && return "missing projector matrices"
+    all(matrix -> matrix.n == n, projectors) ||
+        return "projector matrix dimension mismatch"
+    for (i, projector) in enumerate(projectors)
+        _matrix_equal(_matrix_multiply(projector, projector), projector) ||
+            return "projector $i is not idempotent"
+    end
+    zero = _zero_matrix(n)
+    for i in 1:length(projectors), j in (i + 1):length(projectors)
+        _matrix_equal(_matrix_multiply(projectors[i], projectors[j]), zero) ||
+            return "projectors $i and $j are not orthogonal"
+    end
+    completeness = _sum_sparse_matrices(projectors, n)
+    _matrix_equal(completeness, _identity_matrix(n)) ||
+        return "projectors do not sum to identity"
+    return nothing
+end
+
+function _conic_primal_slack(problem::ExactConicProblem,
+                             block::ConicAffineBlock,
+                             x::AbstractVector)
+    return _matrix_subtract(block.B, _matrix_linear_combination(block.A, x))
+end
+
+function _conic_dual_adjoint(problem::ExactConicProblem,
+                             dual_variables::AbstractVector{SparseSymmetricRationalMatrix})
+    length(dual_variables) == length(problem.blocks) ||
+        throw(DimensionMismatch("dual variable block count mismatch"))
+    result = fill(Rational{BigInt}(0), length(problem.variables))
+    for (block, y) in zip(problem.blocks, dual_variables)
+        y.n == block.B.n || throw(DimensionMismatch("dual variable dimension mismatch for $(block.id)"))
+        for j in eachindex(problem.variables)
+            result[j] += _matrix_inner(block.A[j], y)
+        end
+    end
+    return result
+end
+
+function _conic_dual_objective(problem::ExactConicProblem,
+                               dual_variables::AbstractVector{SparseSymmetricRationalMatrix})
+    length(dual_variables) == length(problem.blocks) ||
+        throw(DimensionMismatch("dual variable block count mismatch"))
+    result = Rational{BigInt}(0)
+    for (block, y) in zip(problem.blocks, dual_variables)
+        result += _matrix_inner(block.B, y)
+    end
+    return result
+end
+
+function _conic_primal_objective(problem::ExactConicProblem,
+                                 primal_vector::AbstractVector)
+    length(primal_vector) == length(problem.variables) ||
+        throw(DimensionMismatch("primal vector length mismatch"))
+    result = Rational{BigInt}(0)
+    for (coefficient, value) in zip(problem.objective, primal_vector)
+        result += coefficient * _to_big_rational(value, "primal_vector")
+    end
+    return result
+end
+
+function _conic_primal_slacks(problem::ExactConicProblem,
+                              primal_vector::AbstractVector)
+    return SparseSymmetricRationalMatrix[
+        _conic_primal_slack(problem, block, primal_vector)
+        for block in problem.blocks
+    ]
+end
+
+function _conic_gap(problem::ExactConicProblem,
+                    primal_objective::Rational{BigInt},
+                    dual_objective::Rational{BigInt})
+    return problem.sense === :max ? dual_objective - primal_objective :
+           primal_objective - dual_objective
+end
+
+function _matrix_diagonal_psd_proof(matrix::SparseSymmetricRationalMatrix)
+    entries = entries_dict(matrix)
+    factor = [[i == j ? 1//1 : 0//1 for j in 1:matrix.n] for i in 1:matrix.n]
+    diagonal = Rational{BigInt}[]
+    for i in 1:matrix.n
+        for j in 1:matrix.n
+            i == j && continue
+            get(entries, (min(i, j), max(i, j)), 0//1) == 0//1 ||
+                throw(ArgumentError("automatic PSD proof only supports diagonal matrices"))
+        end
+        value = get(entries, (i, i), 0//1)
+        value >= 0//1 ||
+            throw(ArgumentError("automatic PSD proof requires nonnegative diagonal entries"))
+        push!(diagonal, value)
+    end
+    return ExactLowRankPSDProof(matrix, factor, diagonal)
 end
 
 function Base.getindex(matrix::SparseSymmetricRationalMatrix, i::Integer, j::Integer)
@@ -2167,6 +2558,89 @@ function make_primal_dual_optimality_certificate(problem_hash::AbstractString,
                                             gap_value, "", dag)
     return PrimalDualOptimalityCertificate(String(problem_hash), primal, dual,
                                            gap_value,
+                                          primal_dual_optimality_hash(cert0),
+                                          dag)
+end
+
+function make_primal_dual_optimality_certificate(problem::ExactConicProblem,
+                                                 primal_vector,
+                                                 dual_variables::AbstractVector{SparseSymmetricRationalMatrix};
+                                                 primal_cone_proofs::Union{Nothing, AbstractVector{ExactLowRankPSDProof}}=nothing,
+                                                 dual_cone_proofs::Union{Nothing, AbstractVector{ExactLowRankPSDProof}}=nothing,
+                                                 gap=nothing)
+    x = [_to_big_rational(value, "primal_vector[$i]")
+         for (i, value) in enumerate(primal_vector)]
+    length(x) == length(problem.variables) ||
+        throw(DimensionMismatch("primal vector length does not match problem variables"))
+    ys = SparseSymmetricRationalMatrix[dual_variables...]
+    length(ys) == length(problem.blocks) ||
+        throw(DimensionMismatch("dual variable count does not match problem blocks"))
+    primal_slacks = _conic_primal_slacks(problem, x)
+    dual_adj = _conic_dual_adjoint(problem, ys)
+    dual_adj == problem.objective ||
+        throw(ArgumentError("dual adjoint replay requires A*(y) == c for exact optimality"))
+    primal_proofs = isnothing(primal_cone_proofs) ?
+                    [_matrix_diagonal_psd_proof(matrix) for matrix in primal_slacks] :
+                    ExactLowRankPSDProof[primal_cone_proofs...]
+    dual_proofs = isnothing(dual_cone_proofs) ?
+                  [_matrix_diagonal_psd_proof(matrix) for matrix in ys] :
+                  ExactLowRankPSDProof[dual_cone_proofs...]
+    length(primal_proofs) == length(primal_slacks) ||
+        throw(ArgumentError("primal cone proof count mismatch"))
+    length(dual_proofs) == length(ys) ||
+        throw(ArgumentError("dual cone proof count mismatch"))
+    primal_objective = _conic_primal_objective(problem, x)
+    dual_objective = _conic_dual_objective(problem, ys)
+    gap_value = isnothing(gap) ? _conic_gap(problem, primal_objective, dual_objective) :
+                _to_big_rational(gap, "gap")
+    # Legacy affine arrays stay empty on problem-backed certificates; the replay
+    # obligation is the exact conic problem data above.
+    primal = PrimalFeasibilityCertificate(problem.problem_hash, problem, x,
+                                          Rational{BigInt}[],
+                                          Rational{BigInt}[],
+                                          primal_slacks, primal_proofs,
+                                          primal_objective)
+    dual = DualFeasibilityCertificate(problem.problem_hash, problem, ys,
+                                      Rational{BigInt}[],
+                                      Rational{BigInt}[],
+                                      ys, dual_proofs,
+                                      dual_objective)
+    problem_payload = exact_conic_problem_json(problem)
+    primal_payload = primal_feasibility_json(primal)
+    dual_payload = dual_feasibility_json(dual)
+    primal_hash = _sha256_payload(primal_payload)
+    dual_hash = _sha256_payload(dual_payload)
+    nodes = ProofNode[
+        ProofNode(:primal_affine, :exact_affine_replay, String[],
+                  primal_hash,
+                  :verify_primal_affine, :accepted;
+                  typed_payload=Dict(:problem => problem_payload,
+                                     :primal_hash => primal_hash,
+                                     :primal => primal_payload),
+                  obligation_id=:primal_affine_map),
+        ProofNode(:dual_affine, :exact_affine_adjoint_replay, String[],
+                  dual_hash,
+                  :verify_dual_affine, :accepted;
+                  typed_payload=Dict(:problem => problem_payload,
+                                     :dual_hash => dual_hash,
+                                     :dual => dual_payload),
+                  obligation_id=:dual_affine_map),
+        ProofNode(:objective_gap, :exact_equality,
+                  [primal_hash, dual_hash],
+                  _sha256_payload((; gap=rational_string(gap_value))),
+                  :verify_exact_gap, :accepted;
+                  typed_payload=Dict(:problem => problem_payload,
+                                     :primal_objective => rational_string(primal_objective),
+                                     :dual_objective => rational_string(dual_objective),
+                                     :gap => rational_string(gap_value)),
+                  obligation_id=:exact_gap),
+    ]
+    dag = CertificateDAG(:primal_dual_optimality, nodes, "",
+                         CERTSDP3_SCHEMA_VERSION)
+    cert0 = PrimalDualOptimalityCertificate(problem.problem_hash, primal, dual,
+                                            gap_value, "", dag)
+    return PrimalDualOptimalityCertificate(problem.problem_hash, primal, dual,
+                                           gap_value,
                                            primal_dual_optimality_hash(cert0),
                                            dag)
 end
@@ -2217,6 +2691,195 @@ function make_farkas_infeasibility_certificate(problem_hash::AbstractString,
                                           dag)
 end
 
+function make_farkas_infeasibility_certificate(problem::ExactConicProblem,
+                                               dual_variables::AbstractVector{SparseSymmetricRationalMatrix},
+                                               cone_proofs::AbstractVector{ExactLowRankPSDProof};
+                                               contradiction_lhs=0//1,
+                                               contradiction_rhs=nothing)
+    ys = SparseSymmetricRationalMatrix[dual_variables...]
+    length(ys) == length(problem.blocks) ||
+        throw(DimensionMismatch("dual variable count does not match problem blocks"))
+    lhs = _conic_dual_adjoint(problem, ys)
+    rhs = copy(problem.objective)
+    left = _to_big_rational(contradiction_lhs, "contradiction_lhs")
+    right = isnothing(contradiction_rhs) ? _conic_dual_objective(problem, ys) :
+            _to_big_rational(contradiction_rhs, "contradiction_rhs")
+    identity_hash = _sha256_payload((; lhs=rational_string.(lhs),
+                                      rhs=rational_string.(rhs)))
+    nodes = ProofNode[
+        ProofNode(:farkas_identity, :exact_affine_adjoint_replay, String[],
+                  identity_hash,
+                  :verify_farkas_identity, :accepted;
+                  typed_payload=Dict(:problem => exact_conic_problem_json(problem),
+                                     :dual_variables => [sparse_matrix_json(matrix) for matrix in ys],
+                                     :lhs => rational_string.(lhs),
+                                     :rhs => rational_string.(rhs)),
+                  obligation_id=:farkas_dual_identity),
+        ProofNode(:farkas_contradiction, :exact_order,
+                  [identity_hash],
+                  _sha256_payload((; lhs=rational_string(left),
+                                     rhs=rational_string(right))),
+                  :verify_farkas_contradiction, :accepted;
+                  typed_payload=Dict(:problem => exact_conic_problem_json(problem),
+                                     :dual_variables => [sparse_matrix_json(matrix) for matrix in ys],
+                                     :contradiction_hash => _sha256_payload((; lhs=rational_string(left),
+                                                                               rhs=rational_string(right))),
+                                     :lhs => rational_string(left),
+                                     :rhs => rational_string(right)),
+                  obligation_id=:farkas_contradiction),
+    ]
+    dag = CertificateDAG(:farkas_infeasibility, nodes, "",
+                         CERTSDP3_SCHEMA_VERSION)
+    cert0 = FarkasInfeasibilityCertificate(problem.problem_hash,
+                                           problem,
+                                           ys,
+                                           lhs,
+                                           rhs,
+                                           ExactLowRankPSDProof[cone_proofs...],
+                                           left,
+                                           right,
+                                           "",
+                                           dag)
+    return FarkasInfeasibilityCertificate(problem.problem_hash,
+                                          problem,
+                                          ys,
+                                          lhs,
+                                          rhs,
+                                          ExactLowRankPSDProof[cone_proofs...],
+                                          left,
+                                          right,
+                                          farkas_infeasibility_hash(cert0),
+                                          dag)
+end
+
+function _verify_primal_from_problem(cert::PrimalFeasibilityCertificate)
+    problem = cert.problem
+    isnothing(problem) && return nothing
+    problem.problem_hash == cert.problem_hash ||
+        return _reject(:G, :primal_dual_optimality, :hash,
+                       :problem_hash,
+                       "primal problem hash does not match exact conic problem";
+                       problem_hash=cert.problem_hash)
+    length(cert.primal_vector) == length(problem.variables) ||
+        return _reject(:G, :primal_dual_optimality, :primal_affine,
+                       :primal_vector,
+                       "primal vector length does not match problem variables";
+                       problem_hash=cert.problem_hash)
+    expected_slacks = _conic_primal_slacks(problem, cert.primal_vector)
+    length(expected_slacks) == length(cert.cone_matrices) ||
+        return _reject(:G, :primal_dual_optimality, :primal_affine,
+                       :primal_cone_count,
+                       "primal slack block count does not match problem blocks";
+                       problem_hash=cert.problem_hash)
+    for (i, (expected, supplied)) in enumerate(zip(expected_slacks, cert.cone_matrices))
+        _matrix_equal(expected, supplied) ||
+            return _reject(:G, :primal_dual_optimality, :primal_affine,
+                           Symbol("primal_block_", i),
+                           "primal slack block does not equal B - A(x)";
+                           problem_hash=cert.problem_hash,
+                           details=_first_sparse_difference(entries_dict(supplied),
+                                                            entries_dict(expected)))
+    end
+    objective = _conic_primal_objective(problem, cert.primal_vector)
+    objective == cert.objective_value ||
+        return _reject(:G, :primal_dual_optimality, :primal_objective,
+                       :primal_objective,
+                       "primal objective was not reconstructed from c'x";
+                       problem_hash=cert.problem_hash,
+                       details=Dict{Symbol, Any}(:expected => rational_string(objective),
+                                                 :actual => rational_string(cert.objective_value)))
+    return nothing
+end
+
+function _verify_dual_from_problem(cert::DualFeasibilityCertificate)
+    problem = cert.problem
+    isnothing(problem) && return nothing
+    problem.problem_hash == cert.problem_hash ||
+        return _reject(:G, :primal_dual_optimality, :hash,
+                       :problem_hash,
+                       "dual problem hash does not match exact conic problem";
+                       problem_hash=cert.problem_hash)
+    length(cert.dual_variables) == length(problem.blocks) ||
+        return _reject(:G, :primal_dual_optimality, :dual_affine,
+                       :dual_variables,
+                       "dual variable block count does not match problem blocks";
+                       problem_hash=cert.problem_hash)
+    dual_adj = _conic_dual_adjoint(problem, cert.dual_variables)
+    dual_adj == problem.objective ||
+        return _reject(:G, :primal_dual_optimality, :dual_affine,
+                       :dual_adjoint,
+                       "dual adjoint replay does not satisfy A*(y) == c";
+                       problem_hash=cert.problem_hash,
+                       details=Dict{Symbol, Any}(:expected => rational_string.(problem.objective),
+                                                 :actual => rational_string.(dual_adj)))
+    length(cert.cone_matrices) == length(cert.dual_variables) ||
+        return _reject(:G, :primal_dual_optimality, :dual_affine,
+                       :dual_cone_count,
+                       "dual cone block count does not match dual variable count";
+                       problem_hash=cert.problem_hash,
+                       details=Dict{Symbol, Any}(:expected => length(cert.dual_variables),
+                                                 :actual => length(cert.cone_matrices)))
+    for (i, (expected, supplied)) in enumerate(zip(cert.dual_variables, cert.cone_matrices))
+        _matrix_equal(expected, supplied) ||
+            return _reject(:G, :primal_dual_optimality, :dual_affine,
+                           Symbol("dual_block_", i),
+                           "dual cone block does not equal supplied dual variable";
+                           problem_hash=cert.problem_hash,
+                           details=_first_sparse_difference(entries_dict(supplied),
+                                                            entries_dict(expected)))
+    end
+    objective = _conic_dual_objective(problem, cert.dual_variables)
+    objective == cert.objective_value ||
+        return _reject(:G, :primal_dual_optimality, :dual_objective,
+                       :dual_objective,
+                       "dual objective was not reconstructed from <B,y>";
+                       problem_hash=cert.problem_hash,
+                       details=Dict{Symbol, Any}(:expected => rational_string(objective),
+                                                 :actual => rational_string(cert.objective_value)))
+    return nothing
+end
+
+function _verify_farkas_from_problem(cert::FarkasInfeasibilityCertificate)
+    problem = cert.problem
+    isnothing(problem) && return nothing
+    problem.problem_hash == cert.problem_hash ||
+        return _reject(:G, :farkas_infeasibility, :hash,
+                       :problem_hash,
+                       "Farkas problem hash does not match exact conic problem";
+                       problem_hash=cert.problem_hash,
+                       certificate_hash=cert.certificate_hash)
+    length(cert.dual_variables) == length(problem.blocks) ||
+        return _reject(:G, :farkas_infeasibility, :farkas_identity,
+                       :dual_variables,
+                       "Farkas dual variable block count does not match problem blocks";
+                       problem_hash=cert.problem_hash,
+                       certificate_hash=cert.certificate_hash)
+    lhs = _conic_dual_adjoint(problem, cert.dual_variables)
+    rhs = copy(problem.objective)
+    lhs == cert.multiplier_identity_lhs ||
+        return _reject(:G, :farkas_infeasibility, :farkas_identity,
+                       :dual_multiplier_identity,
+                       "Farkas identity lhs was not reconstructed from A*(y)";
+                       problem_hash=cert.problem_hash,
+                       certificate_hash=cert.certificate_hash)
+    rhs == cert.multiplier_identity_rhs ||
+        return _reject(:G, :farkas_infeasibility, :farkas_identity,
+                       :dual_multiplier_identity,
+                       "Farkas identity rhs does not match problem objective";
+                       problem_hash=cert.problem_hash,
+                       certificate_hash=cert.certificate_hash)
+    contradiction = _conic_dual_objective(problem, cert.dual_variables)
+    contradiction == cert.contradiction_rhs ||
+        return _reject(:G, :farkas_infeasibility, :contradiction,
+                       :normalized_contradiction,
+                       "Farkas contradiction scalar was not reconstructed from <B,y>";
+                       problem_hash=cert.problem_hash,
+                       certificate_hash=cert.certificate_hash,
+                       details=Dict{Symbol, Any}(:expected => rational_string(contradiction),
+                                                 :actual => rational_string(cert.contradiction_rhs)))
+    return nothing
+end
+
 function verify_primal_dual_optimality(cert::PrimalDualOptimalityCertificate)
     try
         cert.problem_hash == cert.primal.problem_hash == cert.dual.problem_hash ||
@@ -2231,18 +2894,33 @@ function verify_primal_dual_optimality(cert::PrimalDualOptimalityCertificate)
                            "primal-dual certificate hash mismatch";
                            problem_hash=cert.problem_hash,
                            certificate_hash=cert.certificate_hash)
-        cert.primal.affine_lhs == cert.primal.affine_rhs ||
-            return _reject(:G, :primal_dual_optimality, :primal_affine,
-                           :primal_affine_constraints,
-                           "primal affine constraints do not match exactly";
-                           problem_hash=cert.problem_hash,
-                           certificate_hash=cert.certificate_hash)
-        cert.dual.affine_lhs == cert.dual.affine_rhs ||
-            return _reject(:G, :primal_dual_optimality, :dual_affine,
-                           :dual_affine_identity,
-                           "dual affine identity does not match exactly";
-                           problem_hash=cert.problem_hash,
-                           certificate_hash=cert.certificate_hash)
+        if !isnothing(cert.primal.problem) || !isnothing(cert.dual.problem)
+            cert.primal.problem === cert.dual.problem ||
+                (!isnothing(cert.primal.problem) && !isnothing(cert.dual.problem) &&
+                 cert.primal.problem.problem_hash == cert.dual.problem.problem_hash) ||
+                return _reject(:G, :primal_dual_optimality, :hash,
+                               :problem_hash,
+                               "primal and dual do not reference the same exact conic problem";
+                               problem_hash=cert.problem_hash,
+                               certificate_hash=cert.certificate_hash)
+            primal_problem_report = _verify_primal_from_problem(cert.primal)
+            isnothing(primal_problem_report) || return primal_problem_report
+            dual_problem_report = _verify_dual_from_problem(cert.dual)
+            isnothing(dual_problem_report) || return dual_problem_report
+        else
+            cert.primal.affine_lhs == cert.primal.affine_rhs ||
+                return _reject(:G, :primal_dual_optimality, :primal_affine,
+                               :primal_affine_constraints,
+                               "primal affine constraints do not match exactly";
+                               problem_hash=cert.problem_hash,
+                               certificate_hash=cert.certificate_hash)
+            cert.dual.affine_lhs == cert.dual.affine_rhs ||
+                return _reject(:G, :primal_dual_optimality, :dual_affine,
+                               :dual_affine_identity,
+                               "dual affine identity does not match exactly";
+                               problem_hash=cert.problem_hash,
+                               certificate_hash=cert.certificate_hash)
+        end
         length(cert.primal.cone_matrices) == length(cert.primal.cone_proofs) ||
             return _reject(:G, :primal_dual_optimality, :primal_cone,
                            :primal_cone_count,
@@ -2273,7 +2951,12 @@ function verify_primal_dual_optimality(cert::PrimalDualOptimalityCertificate)
                                       block_id=Symbol("dual_cone_", i),
                                       certificate_hash=cert.certificate_hash)
         end
-        cert.primal.objective_value - cert.dual.objective_value == cert.gap ||
+        expected_gap = isnothing(cert.primal.problem) ?
+                       cert.primal.objective_value - cert.dual.objective_value :
+                       _conic_gap(cert.primal.problem,
+                                  cert.primal.objective_value,
+                                  cert.dual.objective_value)
+        expected_gap == cert.gap ||
             return _reject(:G, :primal_dual_optimality, :objective_gap,
                            :exact_gap,
                            "declared objective gap does not equal primal-dual difference";
@@ -2309,6 +2992,8 @@ function verify_farkas_infeasibility(cert::FarkasInfeasibilityCertificate)
                            "Farkas certificate hash mismatch";
                            problem_hash=cert.problem_hash,
                            certificate_hash=cert.certificate_hash)
+        problem_report = _verify_farkas_from_problem(cert)
+        isnothing(problem_report) || return problem_report
         cert.multiplier_identity_lhs == cert.multiplier_identity_rhs ||
             return _reject(:G, :farkas_infeasibility,
                            :farkas_identity,
@@ -2582,6 +3267,8 @@ function verify_quantum_bound_certificate(cert::QuantumBoundCertificate)
                                       block_id=Symbol("rewrite_witness_", i),
                                       certificate_hash=cert.certificate_hash)
         end
+        verified_values = _verified_moment_entries(cert.problem,
+                                                   cert.moment_certificate)
         objective = _nc_term_dict(cert.objective_terms)
         coefficients = _nc_term_dict(cert.moment_certificate.coefficient_terms)
         objective == coefficients ||
@@ -2590,13 +3277,16 @@ function verify_quantum_bound_certificate(cert::QuantumBoundCertificate)
                            "quantum objective coefficients do not match moment certificate";
                            problem_hash=cert.problem.problem_hash,
                            certificate_hash=cert.certificate_hash)
-        sum(value for value in values(objective); init=0//1) == cert.bound ||
+        objective_value = _objective_from_verified_moments(cert.objective_terms,
+                                                           verified_values)
+        objective_value == cert.bound ||
             return _reject(:J, :quantum_bound, :objective_bound,
                            :exact_bound,
-                           "quantum objective bound does not replay exactly";
+                           "quantum objective bound does not replay from verified moment entries";
                            problem_hash=cert.problem.problem_hash,
                            certificate_hash=cert.certificate_hash,
-                           details=Dict{Symbol, Any}(:bound => rational_string(cert.bound)))
+                           details=Dict{Symbol, Any}(:computed => rational_string(objective_value),
+                                                     :bound => rational_string(cert.bound)))
         dag_report = verify_proof_dag(cert.dag)
         dag_report.accepted || return dag_report
         return _accept(:J, :quantum_bound, :objective_bound, :exact_bound;
@@ -2773,6 +3463,15 @@ function verify_block_diagonalization_certificate(cert::BlockDiagonalizationCert
                            "symmetry certificate hash mismatch";
                            problem_hash=cert.problem_hash,
                            certificate_hash=cert.certificate_hash)
+        projector_error = _verify_projector_semantics(cert.projector_matrices,
+                                                      cert.original_matrix.n)
+        isnothing(projector_error) ||
+            return _reject(:W, :symmetry_reduction,
+                           :projector_semantics,
+                           :projector_idempotence,
+                           projector_error;
+                           problem_hash=cert.problem_hash,
+                           certificate_hash=cert.certificate_hash)
         for generator in cert.group.generators
             for (orbit_index, orbit) in enumerate(cert.orbit_basis.orbits)
                 mapped = sort!([_monomial_index_after_permutation(cert.orbit_basis,
@@ -2869,6 +3568,58 @@ function _nc_term_dict(terms::AbstractVector{Tuple{Vector{Symbol}, Rational{BigI
         iszero(result[key]) && delete!(result, key)
     end
     return result
+end
+
+function _npa_entry_input_word(problem::NPAProblem, i::Int, j::Int)
+    1 <= i <= length(problem.word_basis) ||
+        throw(BoundsError(problem.word_basis, i))
+    1 <= j <= length(problem.word_basis) ||
+        throw(BoundsError(problem.word_basis, j))
+    return vcat(reverse([_star_symbol(symbol) for symbol in problem.word_basis[i]]),
+                problem.word_basis[j])
+end
+
+function _verified_moment_entries(problem::NPAProblem,
+                                  cert::NCMomentMatrixCertificate)
+    entries = entries_dict(cert.moment_matrix)
+    entry_count = length(entries)
+    entry_count == length(cert.witnesses) ||
+        throw(ArgumentError("moment certificate witness count $(length(cert.witnesses)) does not cover every declared moment entry $entry_count"))
+    values = Dict{Vector{Symbol}, Rational{BigInt}}()
+    seen_entries = Set{Tuple{Int, Int}}()
+    for (witness_index, witness) in enumerate(cert.witnesses)
+        matched = Tuple{Int, Int}[]
+        for ((i, j), value) in entries
+            witness.input_word == _npa_entry_input_word(problem, i, j) &&
+                push!(matched, (i, j))
+        end
+        length(matched) == 1 ||
+            throw(ArgumentError("rewrite witness $witness_index does not match exactly one moment entry"))
+        entry_key = only(matched)
+        entry_key in seen_entries &&
+            throw(ArgumentError("duplicate rewrite witness for moment entry $(entry_key)"))
+        push!(seen_entries, entry_key)
+        report = verify_nc_rewrite_witness(witness, problem.relations)
+        report.accepted || throw(ArgumentError("moment entry rewrite witness rejected: $(report.reason)"))
+        word_key = copy(witness.final_word)
+        value = entries[entry_key]
+        if haskey(values, word_key) && values[word_key] != value
+            throw(ArgumentError("moment normal form $(String.(word_key)) has inconsistent values"))
+        end
+        values[word_key] = value
+    end
+    return values
+end
+
+function _objective_from_verified_moments(objective_terms,
+                                          verified_values::Dict{Vector{Symbol}, Rational{BigInt}})
+    total = Rational{BigInt}(0)
+    for (word, coefficient) in objective_terms
+        haskey(verified_values, word) ||
+            throw(ArgumentError("objective word $(String.(word)) was not verified as a moment normal form"))
+        total += coefficient * verified_values[word]
+    end
+    return total
 end
 
 function _quantum_step_allowed(step::NCRewriteStep,
@@ -3002,6 +3753,11 @@ function verify_proof_dag(dag::CertificateDAG)
                            details=Dict{Symbol, Any}(:first_node => String(outputs[node.output_hash])))
         outputs[node.output_hash] = node.id
     end
+    final_nodes = [node for node in dag.nodes if node.checker === :final_accept]
+    length(final_nodes) == 1 ||
+        return _reject(:E, dag.claim_type, :proof_dag, :final_accept,
+                       "DAG must contain exactly one final_accept node";
+                       certificate_hash=dag.root_hash)
     for node in dag.nodes
         for input in node.inputs
             haskey(outputs, input) ||
@@ -3011,7 +3767,15 @@ function verify_proof_dag(dag::CertificateDAG)
                                details=Dict{Symbol, Any}(:missing_input => input))
         end
     end
+    rejected_statuses = Set(Symbol[:rejected, :skipped, :unknown,
+                                   :stale, :diagnostic_only])
     for node in dag.nodes
+        if node.checker !== :final_accept && node.status in rejected_statuses
+            return _reject(:E, dag.claim_type, :proof_dag, node.id,
+                           "proof-relevant DAG node has rejected status";
+                           certificate_hash=dag.root_hash,
+                           details=Dict{Symbol, Any}(:status => String(node.status)))
+        end
         haskey(dag.object_store, node.output_hash) ||
             return _reject(:E, dag.claim_type, :proof_dag, node.id,
                            "DAG node output is missing from object store";
@@ -3060,13 +3824,14 @@ function certificate_dag_json(dag::CertificateDAG)
 end
 
 function proof_node_json(node::ProofNode)
+    serialized_status = node.status === :accepted ? :pending : node.status
     return (;
         id=String(node.id),
         kind=String(node.kind),
         inputs=node.inputs,
         output_hash=node.output_hash,
         checker=String(node.checker),
-        status=String(node.status),
+        status=String(serialized_status),
         typed_payload=_canonical_json_value(node.typed_payload),
         input_hashes=node.input_hashes,
         arithmetic_mode=String(node.arithmetic_mode),
@@ -3790,21 +4555,42 @@ end
 
 function parse_primal_dual_optimality_certificate_json(json_text::AbstractString)
     parsed = _read_json_document(json_text, "CertSDP primal-dual certificate")
-    _strict_validate_top_object(parsed,
-                                Set(Symbol[:certsdp_primal_dual_certificate_version,
-                                           :problem_hash, :primal, :dual, :gap,
-                                           :proof_dag, :certificate_hash]),
-                                "root")
+    _validate_object_keys(parsed,
+                          Set(Symbol[:certsdp_primal_dual_certificate_version,
+                                     :problem_hash, :primal, :dual, :gap,
+                                     :proof_dag, :certificate_hash]),
+                          Set(Symbol[:problem]),
+                          "root")
     _reject_forbidden_trust_claims(parsed, "root")
     _require_value(parsed, :certsdp_primal_dual_certificate_version,
                    CERTSDP3_SCHEMA_VERSION,
                    "root.certsdp_primal_dual_certificate_version")
     problem_hash = _require_string(parsed, :problem_hash, "root.problem_hash")
+    problem = haskey(parsed, :problem) ?
+              _parse_exact_conic_problem_object(_require_key(parsed, :problem, "root"),
+                                                "root.problem") :
+              nothing
     primal = _parse_primal_feasibility_object(_require_key(parsed, :primal,
                                                            "root"),
                                               "root.primal")
     dual = _parse_dual_feasibility_object(_require_key(parsed, :dual, "root"),
                                           "root.dual")
+    if !isnothing(problem)
+        primal = PrimalFeasibilityCertificate(primal.problem_hash, problem,
+                                              primal.primal_vector,
+                                              primal.affine_lhs,
+                                              primal.affine_rhs,
+                                              primal.cone_matrices,
+                                              primal.cone_proofs,
+                                              primal.objective_value)
+        dual = DualFeasibilityCertificate(dual.problem_hash, problem,
+                                          dual.dual_variables,
+                                          dual.affine_lhs,
+                                          dual.affine_rhs,
+                                          dual.cone_matrices,
+                                          dual.cone_proofs,
+                                          dual.objective_value)
+    end
     problem_hash == primal.problem_hash == dual.problem_hash ||
         throw(ArgumentError("root.problem_hash does not match primal/dual problem hash"))
     dag = _parse_certificate_dag(_require_key(parsed, :proof_dag, "root");
@@ -3827,22 +4613,36 @@ end
 
 function parse_farkas_infeasibility_certificate_json(json_text::AbstractString)
     parsed = _read_json_document(json_text, "CertSDP Farkas certificate")
-    _strict_validate_top_object(parsed,
-                                Set(Symbol[:certsdp_farkas_certificate_version,
-                                           :problem_hash,
-                                           :multiplier_identity_lhs,
-                                           :multiplier_identity_rhs,
-                                           :cone_proofs,
-                                           :contradiction_lhs,
-                                           :contradiction_rhs,
-                                           :proof_dag,
-                                           :certificate_hash]),
-                                "root")
+    _validate_object_keys(parsed,
+                          Set(Symbol[:certsdp_farkas_certificate_version,
+                                     :problem_hash,
+                                     :multiplier_identity_lhs,
+                                     :multiplier_identity_rhs,
+                                     :cone_proofs,
+                                     :contradiction_lhs,
+                                     :contradiction_rhs,
+                                     :proof_dag,
+                                     :certificate_hash]),
+                          Set(Symbol[:problem, :dual_variables]),
+                          "root")
     _reject_forbidden_trust_claims(parsed, "root")
     _require_value(parsed, :certsdp_farkas_certificate_version,
                    CERTSDP3_SCHEMA_VERSION,
                    "root.certsdp_farkas_certificate_version")
     problem_hash = _require_string(parsed, :problem_hash, "root.problem_hash")
+    problem = haskey(parsed, :problem) ?
+              _parse_exact_conic_problem_object(_require_key(parsed, :problem, "root"),
+                                                "root.problem") :
+              nothing
+    dual_variables = haskey(parsed, :dual_variables) ?
+                     SparseSymmetricRationalMatrix[
+                         parse_sparse_matrix_object(matrix_object; strict=true,
+                                                    path="root.dual_variables[$i]")
+                         for (i, matrix_object) in enumerate(_require_key(parsed,
+                                                                          :dual_variables,
+                                                                          "root"))
+                     ] :
+                     SparseSymmetricRationalMatrix[]
     cone_proofs = ExactLowRankPSDProof[]
     for (i, proof_object) in enumerate(_require_key(parsed, :cone_proofs, "root"))
         push!(cone_proofs, _parse_low_rank_proof_object_without_matrix(proof_object;
@@ -3860,6 +4660,8 @@ function parse_farkas_infeasibility_certificate_json(json_text::AbstractString)
     dag = _parse_certificate_dag(_require_key(parsed, :proof_dag, "root");
                                  strict=true)
     cert = FarkasInfeasibilityCertificate(problem_hash,
+                                          problem,
+                                          dual_variables,
                                           lhs,
                                           rhs,
                                           cone_proofs,
@@ -3885,6 +4687,7 @@ function parse_algebraic_low_rank_psd_certificate_json(json_text::AbstractString
     _strict_validate_top_object(parsed,
                                 Set(Symbol[:certsdp_algebraic_psd_factor_version,
                                            :matrix, :field, :factor, :diagonal,
+                                           :sign_certificates,
                                            :identity_proof_hash, :proof_dag,
                                            :certificate_hash]),
                                 "root")
@@ -3912,6 +4715,16 @@ function parse_algebraic_low_rank_psd_certificate_json(json_text::AbstractString
                                                "root.diagonal[$i]")
                 for (i, value) in enumerate(_require_key(parsed, :diagonal,
                                                          "root"))]
+    sign_values = _require_key(parsed, :sign_certificates, "root")
+    _require_array(sign_values, "root.sign_certificates")
+    length(sign_values) == length(diagonal) ||
+        throw(ArgumentError("root.sign_certificates length mismatch"))
+    for (i, sign_certificate) in enumerate(sign_values)
+        _verify_algebraic_sign_certificate_object(sign_certificate,
+                                                  diagonal[i],
+                                                  field,
+                                                  "root.sign_certificates[$i]")
+    end
     proof = ExactAlgebraicLowRankPSDProof(matrix, field, factor, diagonal)
     supplied_identity = _require_string(parsed, :identity_proof_hash,
                                         "root.identity_proof_hash")
@@ -3924,6 +4737,38 @@ function parse_algebraic_low_rank_psd_certificate_json(json_text::AbstractString
     supplied_hash == algebraic_low_rank_psd_certificate_hash(matrix, proof, dag) ||
         throw(ArgumentError("root.certificate_hash mismatch"))
     return matrix, proof, dag, supplied_hash
+end
+
+function _verify_algebraic_sign_certificate_object(object,
+                                                   element::AlgebraicElement,
+                                                   field::AlgebraicFieldCertificate,
+                                                   path::AbstractString)
+    _strict_validate_top_object(object,
+                                Set(Symbol[:method,
+                                           :field_hash,
+                                           :expression,
+                                           :isolating_interval,
+                                           :roots_in_interval,
+                                           :sign,
+                                           :sign_certificate_hash]),
+                                path)
+    _require_string(object, :method, "$path.method") == "sturm_interval_root_exclusion" ||
+        throw(ArgumentError("$path.method is unsupported"))
+    _require_string(object, :field_hash, "$path.field_hash") == field.field_hash ||
+        throw(ArgumentError("$path.field_hash mismatch"))
+    expected = algebraic_sign_certificate_json(element, field)
+    expected_hash = String(expected.sign_certificate_hash)
+    _require_string(object, :sign_certificate_hash, "$path.sign_certificate_hash") == expected_hash ||
+        throw(ArgumentError("$path.sign_certificate_hash mismatch"))
+    String(_require_key(object, :sign, path)) == String(expected.sign) ||
+        throw(ArgumentError("$path.sign mismatch"))
+    Int(_require_key(object, :roots_in_interval, path)) == Int(expected.roots_in_interval) ||
+        throw(ArgumentError("$path.roots_in_interval mismatch"))
+    String.(_require_key(object, :expression, path)) == String.(expected.expression) ||
+        throw(ArgumentError("$path.expression mismatch"))
+    String.(_require_key(object, :isolating_interval, path)) == String.(expected.isolating_interval) ||
+        throw(ArgumentError("$path.isolating_interval mismatch"))
+    return true
 end
 
 function parse_sparse_sos_certificate_json(json_text::AbstractString)
@@ -3967,6 +4812,8 @@ function parse_block_diagonalization_certificate_json(json_text::AbstractString)
                                 Set(Symbol[:certsdp_symmetry_certificate_version,
                                            :problem_hash, :group,
                                            :orbit_basis, :projection_blocks,
+                                           :projector_matrices,
+                                           :projector_semantics,
                                            :original_matrix,
                                            :reconstructed_matrix,
                                            :proof_dag,
@@ -3983,6 +4830,20 @@ function parse_block_diagonalization_certificate_json(json_text::AbstractString)
               for (i, entry) in enumerate(_require_key(parsed,
                                                        :projection_blocks,
                                                        "root"))]
+    projectors = [parse_sparse_matrix_object(entry; strict=true,
+                                             path="root.projector_matrices[$i]")
+                  for (i, entry) in enumerate(_require_key(parsed,
+                                                           :projector_matrices,
+                                                           "root"))]
+    semantics = _require_key(parsed, :projector_semantics, "root")
+    _strict_validate_top_object(semantics,
+                                Set(Symbol[:idempotence,
+                                           :orthogonality,
+                                           :completeness]),
+                                "root.projector_semantics")
+    Bool(semantics[:idempotence]) && Bool(semantics[:orthogonality]) &&
+        Bool(semantics[:completeness]) ||
+        throw(ArgumentError("root.projector_semantics must assert idempotence, orthogonality, and completeness"))
     original = parse_sparse_matrix_object(_require_key(parsed,
                                                        :original_matrix,
                                                        "root");
@@ -4001,6 +4862,7 @@ function parse_block_diagonalization_certificate_json(json_text::AbstractString)
                                            group,
                                            orbit,
                                            blocks,
+                                           projectors,
                                            original,
                                            reconstructed,
                                            _require_string(parsed,
@@ -4326,14 +5188,15 @@ function _parse_block_native_inactive_psd_proof(object, path::AbstractString)
 end
 
 function _parse_primal_feasibility_object(object, path::AbstractString)
-    _strict_validate_top_object(object,
-                                Set(Symbol[:problem_hash,
-                                           :affine_lhs,
-                                           :affine_rhs,
-                                           :cone_matrices,
-                                           :cone_proofs,
-                                           :objective_value]),
-                                path)
+    _validate_object_keys(object,
+                          Set(Symbol[:problem_hash,
+                                     :affine_lhs,
+                                     :affine_rhs,
+                                     :cone_matrices,
+                                     :cone_proofs,
+                                     :objective_value]),
+                          Set(Symbol[:primal_vector]),
+                          path)
     matrices_value = _require_key(object, :cone_matrices, path)
     proofs_value = _require_key(object, :cone_proofs, path)
     _require_array(matrices_value, "$path.cone_matrices")
@@ -4351,8 +5214,14 @@ function _parse_primal_feasibility_object(object, path::AbstractString)
                                      path="$path.cone_proofs[$i]")
         for (i, proof_object) in enumerate(proofs_value)
     ]
+    primal_vector = haskey(object, :primal_vector) ?
+                    [_parse_rational_string(value, "$path.primal_vector[$i]")
+                     for (i, value) in enumerate(_require_key(object, :primal_vector, path))] :
+                    Rational{BigInt}[]
     return PrimalFeasibilityCertificate(_require_string(object, :problem_hash,
                                                         "$path.problem_hash"),
+                                        nothing,
+                                        primal_vector,
                                         [_parse_rational_string(value,
                                                                 "$path.affine_lhs[$i]")
                                          for (i, value) in enumerate(_require_key(object,
@@ -4372,14 +5241,15 @@ function _parse_primal_feasibility_object(object, path::AbstractString)
 end
 
 function _parse_dual_feasibility_object(object, path::AbstractString)
-    _strict_validate_top_object(object,
-                                Set(Symbol[:problem_hash,
-                                           :affine_lhs,
-                                           :affine_rhs,
-                                           :cone_matrices,
-                                           :cone_proofs,
-                                           :objective_value]),
-                                path)
+    _validate_object_keys(object,
+                          Set(Symbol[:problem_hash,
+                                     :affine_lhs,
+                                     :affine_rhs,
+                                     :cone_matrices,
+                                     :cone_proofs,
+                                     :objective_value]),
+                          Set(Symbol[:dual_variables]),
+                          path)
     matrices_value = _require_key(object, :cone_matrices, path)
     proofs_value = _require_key(object, :cone_proofs, path)
     _require_array(matrices_value, "$path.cone_matrices")
@@ -4397,8 +5267,19 @@ function _parse_dual_feasibility_object(object, path::AbstractString)
                                      path="$path.cone_proofs[$i]")
         for (i, proof_object) in enumerate(proofs_value)
     ]
+    dual_variables = haskey(object, :dual_variables) ?
+                     SparseSymmetricRationalMatrix[
+                         parse_sparse_matrix_object(matrix_object; strict=true,
+                                                    path="$path.dual_variables[$i]")
+                         for (i, matrix_object) in enumerate(_require_key(object,
+                                                                          :dual_variables,
+                                                                          path))
+                     ] :
+                     SparseSymmetricRationalMatrix[]
     return DualFeasibilityCertificate(_require_string(object, :problem_hash,
                                                       "$path.problem_hash"),
+                                      nothing,
+                                      dual_variables,
                                       [_parse_rational_string(value,
                                                               "$path.affine_lhs[$i]")
                                        for (i, value) in enumerate(_require_key(object,
@@ -4414,7 +5295,60 @@ function _parse_dual_feasibility_object(object, path::AbstractString)
                                       _parse_rational_string(_require_key(object,
                                                                           :objective_value,
                                                                           path),
-                                                             "$path.objective_value"))
+                                                              "$path.objective_value"))
+end
+
+function _parse_conic_affine_block_object(object, path::AbstractString)
+    _strict_validate_top_object(object,
+                                Set(Symbol[:id, :cone, :B, :A]),
+                                path)
+    B = parse_sparse_matrix_object(_require_key(object, :B, path);
+                                   strict=true,
+                                   path="$path.B")
+    A_value = _require_key(object, :A, path)
+    _require_array(A_value, "$path.A")
+    A = SparseSymmetricRationalMatrix[
+        parse_sparse_matrix_object(matrix; strict=true, path="$path.A[$i]")
+        for (i, matrix) in enumerate(A_value)
+    ]
+    return ConicAffineBlock(Symbol(_require_string(object, :id, "$path.id")),
+                            Symbol(_require_string(object, :cone, "$path.cone")),
+                            B,
+                            A)
+end
+
+function _parse_exact_conic_problem_object(object, path::AbstractString)
+    _validate_object_keys(object,
+                          Set(Symbol[:sense, :variables, :objective,
+                                     :blocks, :problem_hash]),
+                          Set(Symbol[:dual_objective_coefficients]),
+                          path)
+    blocks_value = _require_key(object, :blocks, path)
+    _require_array(blocks_value, "$path.blocks")
+    blocks = ConicAffineBlock[
+        _parse_conic_affine_block_object(block, "$path.blocks[$i]")
+        for (i, block) in enumerate(blocks_value)
+    ]
+    dual_coeffs = haskey(object, :dual_objective_coefficients) ?
+                  [_parse_rational_string(value,
+                                          "$path.dual_objective_coefficients[$i]")
+                   for (i, value) in enumerate(_require_key(object,
+                                                            :dual_objective_coefficients,
+                                                            path))] :
+                  Rational{BigInt}[]
+    problem = ExactConicProblem(Symbol(_require_string(object, :sense,
+                                                       "$path.sense")),
+                                Symbol.(String.(_require_key(object, :variables, path))),
+                                [_parse_rational_string(value, "$path.objective[$i]")
+                                 for (i, value) in enumerate(_require_key(object,
+                                                                          :objective,
+                                                                          path))],
+                                blocks;
+                                dual_objective_coefficients=dual_coeffs)
+    supplied = _require_string(object, :problem_hash, "$path.problem_hash")
+    supplied == problem.problem_hash ||
+        throw(ArgumentError("$path.problem_hash mismatch"))
+    return problem
 end
 
 function _parse_algebraic_field_certificate_object(object, path::AbstractString)
@@ -5211,6 +6145,23 @@ function _strict_validate_top_object(object, allowed::Set{Symbol},
             throw(ArgumentError("$path contains unknown field `$(String(symbol))`"))
     end
     for key in allowed
+        haskey(object, key) || throw(ArgumentError("$path is missing required key `$key`"))
+    end
+    return true
+end
+
+function _validate_object_keys(object,
+                               required::Set{Symbol},
+                               optional::Set{Symbol},
+                               path::AbstractString)
+    _require_object(object, path)
+    allowed = union(required, optional)
+    for key in keys(object)
+        symbol = Symbol(key)
+        symbol in allowed ||
+            throw(ArgumentError("$path contains unknown field `$(String(symbol))`"))
+    end
+    for key in required
         haskey(object, key) || throw(ArgumentError("$path is missing required key `$key`"))
     end
     return true

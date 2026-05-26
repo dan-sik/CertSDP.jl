@@ -1,0 +1,1 @@
+Real affine SDP fixture alias for CertSDP 3.0 audit. Derived from generated exact rational conic SDP fixture; verifier reconstructs primal and dual affine maps from problem_affine_sdp_medium.json and does not trust solver metadata.

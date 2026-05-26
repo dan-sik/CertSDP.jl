@@ -1,0 +1,393 @@
+{
+    "sense": "min",
+    "variables": [
+        "x1",
+        "x2",
+        "x3",
+        "x4",
+        "x5",
+        "x6",
+        "x7",
+        "x8"
+    ],
+    "objective": [
+        "1",
+        "0",
+        "1",
+        "2",
+        "0",
+        "1",
+        "2",
+        "3"
+    ],
+    "blocks": [
+        {
+            "id": "farkas_psd_1",
+            "cone": "PSD",
+            "B": {
+                "n": 2,
+                "entries": [
+                    {
+                        "i": 1,
+                        "j": 1,
+                        "value": "-1"
+                    }
+                ],
+                "hash": "sha256:a478527bcb1bc4c6c93329707fb2d9a1f22821cf5925b4e811daf07c8cbe9baf"
+            },
+            "A": [
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:80170c5bdb970468f85b2480e5fb04ed87c8cf76ed867619a4d76099d9065dab"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:32170b6eb26123038db0e7f164566913daf6f8a0717760f71a43bad3faa0e515"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "2"
+                        }
+                    ],
+                    "hash": "sha256:c7a2ec856c8cb5864c2b5624163e9c2a9f543a9d6767166516a364dd477947f7"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "2"
+                        }
+                    ],
+                    "hash": "sha256:91375c9e7ff0c8a73c03ad3f6eca9bbc7983cb36dd33166e53400bb82f7e7f23"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "2"
+                        }
+                    ],
+                    "hash": "sha256:924ec3fddd0fdc859e22c350a83c6762bc250b1b0fffae91e8f39a2a2822b024"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "2"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:eb6f52e7b8d42348efd5ec6f093d5e309ad8a10541ab298c9ef0fcbabc7daedc"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "3"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:db412bbb92dd3aa4a94e6b065b4509ae3f23192e11b4d894d0b7b84d4f74f29e"
+                }
+            ]
+        },
+        {
+            "id": "farkas_psd_2",
+            "cone": "PSD",
+            "B": {
+                "n": 2,
+                "entries": [
+                ],
+                "hash": "sha256:0570a072ebde6e8f3aaccdf8fe7ad936b0a1636f9e45357b86ca7f3596462f9e"
+            },
+            "A": [
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "2"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:eb6f52e7b8d42348efd5ec6f093d5e309ad8a10541ab298c9ef0fcbabc7daedc"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "3"
+                        }
+                    ],
+                    "hash": "sha256:97c8c068c6fec6dd8662da83706a9e2e0d7e1c3dcbdc6fb9c441af1a0a40130d"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:32170b6eb26123038db0e7f164566913daf6f8a0717760f71a43bad3faa0e515"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:80170c5bdb970468f85b2480e5fb04ed87c8cf76ed867619a4d76099d9065dab"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "2"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "2"
+                        }
+                    ],
+                    "hash": "sha256:505fbeae7dc8312d4dcee5090b7352263d8ee29da077b5c96ee9222723eef199"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "3"
+                        }
+                    ],
+                    "hash": "sha256:e5a4fc3a59fd67e5e57933c569d6acc7216a1bbb8fe1814c9223de76cac28afa"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "3"
+                        }
+                    ],
+                    "hash": "sha256:ffd6e1a478d10043107a5544c2aa3b987bcf18a269921f3496c056ac0ab618f2"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5"
+                }
+            ]
+        },
+        {
+            "id": "farkas_psd_3",
+            "cone": "PSD",
+            "B": {
+                "n": 2,
+                "entries": [
+                ],
+                "hash": "sha256:0570a072ebde6e8f3aaccdf8fe7ad936b0a1636f9e45357b86ca7f3596462f9e"
+            },
+            "A": [
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "2"
+                        }
+                    ],
+                    "hash": "sha256:91375c9e7ff0c8a73c03ad3f6eca9bbc7983cb36dd33166e53400bb82f7e7f23"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "3"
+                        }
+                    ],
+                    "hash": "sha256:e5a4fc3a59fd67e5e57933c569d6acc7216a1bbb8fe1814c9223de76cac28afa"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "2"
+                        }
+                    ],
+                    "hash": "sha256:924ec3fddd0fdc859e22c350a83c6762bc250b1b0fffae91e8f39a2a2822b024"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "2"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "2"
+                        }
+                    ],
+                    "hash": "sha256:505fbeae7dc8312d4dcee5090b7352263d8ee29da077b5c96ee9222723eef199"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:80170c5bdb970468f85b2480e5fb04ed87c8cf76ed867619a4d76099d9065dab"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "1"
+                        }
+                    ],
+                    "hash": "sha256:32170b6eb26123038db0e7f164566913daf6f8a0717760f71a43bad3faa0e515"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "2"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "3"
+                        }
+                    ],
+                    "hash": "sha256:33ee09e877e000f4888d39de0e33876883bddf0c8d620c94d31eb7266ebe4f43"
+                },
+                {
+                    "n": 2,
+                    "entries": [
+                        {
+                            "i": 1,
+                            "j": 1,
+                            "value": "1"
+                        },
+                        {
+                            "i": 2,
+                            "j": 2,
+                            "value": "4"
+                        }
+                    ],
+                    "hash": "sha256:f34055a6b728ebcebaac6252e63e0aa4d63585258c62fa3fd22750686f961c3b"
+                }
+            ]
+        }
+    ],
+    "dual_objective_coefficients": [
+    ],
+    "problem_hash": "sha256:6cd2fb7645634fb3347806243594bfed2e631b656781db7e7769ebf4d51726f9"
+}

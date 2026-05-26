@@ -1,4 +1,7 @@
 {
+    "proof_relevant_hash_only_count": 0,
+    "proof_relevant_hash_only": [
+    ],
     "checker_count": 59,
     "generic_accepting_checker_present": false,
     "executed_last": [
@@ -70,5 +73,366 @@
         "verify_primal_affine",
         "verify_quantum_bound_certificate",
         "verify_sparse_sos_coefficients"
-    ]
+    ],
+    "semantic_classification": {
+        "proof_relevant_hash_only_count": 0,
+        "proof_relevant_hash_only": [
+        ],
+        "checkers": {
+            "check_farkas_contradiction": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "canonical_sparse_matrix_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_low_rank_psd_diagonal_signs": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_putinar_localizing_identity": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_symmetry_block_reconstruction": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_low_rank_psd_identity": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_block_native_inactive_blocks": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_chordal_separator_consistency": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_block_diagonalization_certificate": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_farkas_dual_cone": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_schema": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_sparse_matrix_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_sparse_sos_coefficients": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_symmetry_projector_orthogonality": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_npa_moment_entry": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "symmetry_group_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "npa_problem_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "sparse_sos_problem_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_symmetry_projector_idempotence": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_quantum_objective_bound": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_algebraic_low_rank_psd": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_primal_affine": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_quantum_projection_relation": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "final_accept": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_quantum_bound_certificate": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_chordal_clique_psd": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_dual_objective": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_primal_objective": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_problem_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_sparse_sos_gram_expansion": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_chordal_running_intersection": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_bundle_manifest": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_npa_objective_functional": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_exact_gap": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_exact_gap": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_nc_rewrite_step": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_algebraic_sign": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_algebraic_field": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "block_native_incidence_system_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_block_native_algebraic_certificate": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_field_element": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_low_rank_psd": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_block_native_active_blocks": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_farkas_contradiction": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_primal_affine": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "chordal_structure_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_dual_affine": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_farkas_identity": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_chordal_clique_cover": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_chordal_psd": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_symmetry_orbit_partition": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "orbit_basis_hash": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_dual_affine": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_tssos_import_normalization": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_symmetry_group_closure": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_quantum_trace_cyclicity": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "hash": {
+                "semantics": "diagnostic_only",
+                "mathematical_replay": false,
+                "hash_only": false,
+                "diagnostic_only": true
+            },
+            "check_quantum_commutation_relation": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "verify_nc_rewrite_witness": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            }
+        }
+    }
 }

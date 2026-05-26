@@ -1,0 +1,1 @@
+Quantum NPA fixture alias for CertSDP 3.0 audit. Normalized certificate replays all declared moment entries from word adjoints, multiplication, relation reduction, PSD proof, and objective reconstruction.

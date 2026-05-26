@@ -7,6 +7,8 @@ using JSON3: JSON3
 export DAGCheckerResult,
        dag_checker_registry,
        dag_checker_names,
+       dag_checker_semantics,
+       dag_checker_semantics_report,
        run_dag_checker,
        reset_dag_checker_calls!,
        dag_checker_calls
@@ -20,6 +22,9 @@ end
 
 const CALLS = Symbol[]
 const REGISTRY = Dict{Symbol, Function}()
+const CHECKER_SEMANTICS = Dict{Symbol, Symbol}()
+
+const DIAGNOSTIC_ONLY_CHECKERS = Set{Symbol}([:hash])
 
 function reset_dag_checker_calls!()
     empty!(CALLS)
@@ -29,14 +34,47 @@ end
 dag_checker_calls() = copy(CALLS)
 dag_checker_names() = sort!(collect(keys(REGISTRY)); by=String)
 dag_checker_registry() = REGISTRY
+dag_checker_semantics() = copy(CHECKER_SEMANTICS)
 
 _ok(hash::AbstractString; details=Dict{Symbol, Any}()) =
     DAGCheckerResult(true, String(hash), "accepted", Dict{Symbol, Any}(details))
 _bad(reason::AbstractString; hash::AbstractString="", details=Dict{Symbol, Any}()) =
     DAGCheckerResult(false, String(hash), String(reason), Dict{Symbol, Any}(details))
 
-function _register!(name::Symbol, fn::Function)
+function _register!(name::Symbol, fn::Function; semantics::Symbol=:mathematical_replay)
+    semantics in (:mathematical_replay,
+                  :typed_hash_only,
+                  :payload_hash_only,
+                  :metadata_only,
+                  :diagnostic_only) ||
+        throw(ArgumentError("unknown DAG checker semantics `$semantics`"))
     REGISTRY[name] = fn
+    CHECKER_SEMANTICS[name] = semantics
+end
+
+function dag_checker_semantics_report()
+    names = dag_checker_names()
+    proof_relevant_hash_only = String[]
+    items = Dict{String, Any}()
+    for name in names
+        semantics = get(CHECKER_SEMANTICS, name, :unknown)
+        diagnostic = name in DIAGNOSTIC_ONLY_CHECKERS || semantics === :diagnostic_only
+        hash_only = semantics in (:typed_hash_only, :payload_hash_only, :metadata_only)
+        if hash_only && !diagnostic
+            push!(proof_relevant_hash_only, String(name))
+        end
+        items[String(name)] = Dict(
+            "semantics" => String(semantics),
+            "mathematical_replay" => semantics === :mathematical_replay,
+            "hash_only" => hash_only,
+            "diagnostic_only" => diagnostic,
+        )
+    end
+    return Dict(
+        "checkers" => items,
+        "proof_relevant_hash_only" => sort!(proof_relevant_hash_only),
+        "proof_relevant_hash_only_count" => length(proof_relevant_hash_only),
+    )
 end
 
 function run_dag_checker(name::Symbol, node::Kernel.ProofNode,
@@ -79,6 +117,276 @@ function _typed_hash_checker(keys::Vector{Symbol})
         return _ok(_payload_hash(Dict(key => node.typed_payload[key] for key in keys)),
                    details=Dict{Symbol, Any}(:checker => String(node.checker),
                                              :obligation_id => String(node.obligation_id)))
+    end
+end
+
+function _is_sha256_hash(value)
+    value isa AbstractString || return false
+    return occursin(r"^sha256:[0-9a-f]{64}$", String(value))
+end
+
+function _schema_checker(node, dag)
+    missing = _payload_required(node, [:schema])
+    isnothing(missing) || return _bad(missing)
+    try
+        schema = _json_object(node.typed_payload[:schema])
+        text = JSON3.write(schema)
+        occursin("3.0", text) ||
+            return _bad("schema replay did not find CertSDP 3.0 marker")
+        occursin("additionalProperties", text) ||
+            return _bad("schema replay did not find fail-closed additionalProperties rule")
+        return _ok(_payload_hash(Dict(:schema => node.typed_payload[:schema])))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _problem_hash_checker(node, dag)
+    missing = _payload_required(node, [:problem])
+    isnothing(missing) || return _bad(missing)
+    try
+        problem = _json_object(node.typed_payload[:problem])
+        if _dict_get(problem, :problem_hash, nothing) !== nothing
+            supplied = String(_dict_get(problem, :problem_hash))
+            _is_sha256_hash(supplied) || return _bad("problem_hash is not a canonical sha256 hash")
+        elseif _dict_get(problem, :hash, nothing) !== nothing
+            supplied = String(_dict_get(problem, :hash))
+            _is_sha256_hash(supplied) || return _bad("problem hash is not a canonical sha256 hash")
+        else
+            return _bad("problem payload does not contain a canonical problem hash")
+        end
+        return _ok(_payload_hash(Dict(:problem => node.typed_payload[:problem])))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _tssos_import_normalization_checker(node, dag)
+    missing = _payload_required(node, [:raw_hash, :normalized_hash])
+    isnothing(missing) || return _bad(missing)
+    try
+        raw_hash = String(node.typed_payload[:raw_hash])
+        normalized_hash = String(node.typed_payload[:normalized_hash])
+        _is_sha256_hash(raw_hash) || return _bad("raw source hash is not canonical")
+        _is_sha256_hash(normalized_hash) || return _bad("normalized certificate hash is not canonical")
+        raw_hash != normalized_hash ||
+            return _bad("raw source hash must not equal normalized certificate hash")
+        if haskey(node.typed_payload, :raw_artifact)
+            raw = _json_object(node.typed_payload[:raw_artifact])
+            for key in (:certsdp_certificate_version,
+                        :certsdp_sparse_sos_certificate_version,
+                        :certsdp_quantum_certificate_version)
+                _dict_get(raw, key, nothing) === nothing ||
+                    return _bad("raw TSSOS artifact is CertSDP-native certificate schema")
+            end
+            Kernel._sha256_payload(raw) == raw_hash ||
+                return _bad("raw TSSOS artifact hash mismatch")
+        end
+        return _ok(_payload_hash(Dict(:raw_hash => raw_hash,
+                                      :normalized_hash => normalized_hash)))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _relation_semantics_checker(node, relation_kind::DataType, label::AbstractString)
+    missing = _payload_required(node, [:relations])
+    isnothing(missing) || return _bad(missing)
+    try
+        relations = Kernel.AbstractQuantumRelation[
+            Kernel._parse_quantum_relation_object(relation,
+                                                  "dag.$(node.id).relations[$i]")
+            for (i, relation) in enumerate(_json_object(node.typed_payload[:relations]))
+        ]
+        any(relation -> relation isa relation_kind, relations) ||
+            return _bad("quantum relation set does not contain $label relation")
+        return _ok(Kernel._sha256_payload([Kernel.quantum_relation_json(relation)
+                                           for relation in relations]))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+_quantum_projection_relation_checker(node, dag) =
+    _relation_semantics_checker(node, Kernel.ProjectionRelation, "projection")
+_quantum_commutation_relation_checker(node, dag) =
+    _relation_semantics_checker(node, Kernel.CommutationRelation, "commutation")
+_quantum_trace_cyclicity_checker(node, dag) =
+    _relation_semantics_checker(node, Kernel.TraceCyclicRelation, "trace-cyclicity")
+
+function _algebraic_sign_checker(node, dag)
+    missing = _payload_required(node, [:element, :sign_certificate])
+    isnothing(missing) || return _bad(missing)
+    try
+        cert = _json_object(node.typed_payload[:sign_certificate])
+        field_payload = _dict_get(cert, :field, nothing)
+        isnothing(field_payload) && haskey(node.typed_payload, :field) &&
+            (field_payload = _json_object(node.typed_payload[:field]))
+        isnothing(field_payload) && return _bad("algebraic sign certificate missing field")
+        field = Kernel._parse_algebraic_field_certificate_object(field_payload,
+                                                                  "dag.$(node.id).sign_certificate.field")
+        element = Kernel._parse_algebraic_element_object(_json_object(node.typed_payload[:element]),
+                                                         field,
+                                                         "dag.$(node.id).element")
+        reduced = Kernel._algebraic_reduce(element.coefficients,
+                                           field.minimal_polynomial)
+        supplied = Symbol(String(_dict_get(cert, :sign,
+                                           _dict_get(cert, :sign_result, ""))))
+        computed = if all(==(0//1), reduced)
+            :zero
+        elseif Kernel._algebraic_sign_positive(element, field)
+            :positive
+        else
+            neg = Kernel.AlgebraicElement(field, [-value for value in element.coefficients])
+            Kernel._algebraic_sign_positive(neg, field) ? :negative : :unknown
+        end
+        computed === :unknown && return _bad("algebraic sign could not be certified")
+        supplied in (:positive_or_zero, :nonnegative) && computed in (:positive, :zero) ||
+            supplied === computed ||
+            return _bad("algebraic sign certificate result mismatch")
+        return _ok(Kernel._sha256_payload((;
+            element=Kernel.algebraic_element_json(element),
+            sign=String(computed))))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _objective_scalar_checker(key::Symbol)
+    return function (node, dag)
+        missing = _payload_required(node, [key])
+        isnothing(missing) || return _bad(missing)
+        try
+            value = Kernel._parse_rational_string(node.typed_payload[key],
+                                                  "dag.$(node.id).$(String(key))")
+            return _ok(Kernel._sha256_payload((; objective=Kernel.rational_string(value))))
+        catch err
+            return _bad(sprint(showerror, err))
+        end
+    end
+end
+
+function _farkas_dual_cone_checker(node, dag)
+    missing = _payload_required(node, [:cone_proof])
+    isnothing(missing) || return _bad(missing)
+    try
+        payload = _json_object(node.typed_payload[:cone_proof])
+        if _dict_get(payload, :matrix, nothing) !== nothing
+            matrix = Kernel.parse_sparse_matrix_object(_dict_get(payload, :matrix);
+                                                       strict=true,
+                                                       path="dag.$(node.id).cone_proof.matrix")
+            proof = Kernel._parse_low_rank_proof_object(_dict_get(payload, :psd_proof),
+                                                        matrix;
+                                                        strict=true,
+                                                        path="dag.$(node.id).cone_proof.psd_proof")
+            report = Kernel.verify_low_rank_psd(matrix, proof)
+            report.accepted || return _bad(report.reason)
+            return _ok(proof.identity_proof_hash)
+        end
+        proof = Kernel._parse_low_rank_proof_object_without_matrix(payload;
+                                                                   strict=true,
+                                                                   path="dag.$(node.id).cone_proof")
+        proof.field === :QQ || return _bad("Farkas dual cone proof must be rational")
+        all(value -> value >= 0, proof.diagonal) ||
+            return _bad("Farkas dual cone diagonal contains a negative value")
+        return _ok(Kernel._sha256_payload(Kernel.low_rank_proof_json(proof)))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _matrix_full_entries(matrix::Kernel.SparseSymmetricRationalMatrix)
+    entries = Dict{Tuple{Int, Int}, Rational{BigInt}}()
+    for (i, j, value) in matrix.entries
+        entries[(i, j)] = value
+        i == j || (entries[(j, i)] = value)
+    end
+    return entries
+end
+
+function _matrix_product_entries(a::Kernel.SparseSymmetricRationalMatrix,
+                                 b::Kernel.SparseSymmetricRationalMatrix)
+    a.n == b.n || throw(DimensionMismatch("matrix dimensions differ"))
+    left = _matrix_full_entries(a)
+    right = _matrix_full_entries(b)
+    result = Dict{Tuple{Int, Int}, Rational{BigInt}}()
+    by_row = Dict{Int, Vector{Tuple{Int, Rational{BigInt}}}}()
+    for ((i, j), value) in right
+        push!(get!(by_row, i, Tuple{Int, Rational{BigInt}}[]), (j, value))
+    end
+    for ((i, k), avalue) in left
+        for (j, bvalue) in get(by_row, k, Tuple{Int, Rational{BigInt}}[])
+            result[(i, j)] = get(result, (i, j), 0//1) + avalue * bvalue
+            iszero(result[(i, j)]) && delete!(result, (i, j))
+        end
+    end
+    return result
+end
+
+function _matrix_entries_equal_full(entries, matrix::Kernel.SparseSymmetricRationalMatrix)
+    target = _matrix_full_entries(matrix)
+    keys(entries) == keys(target) || return false
+    return all(key -> entries[key] == target[key], keys(entries))
+end
+
+function _symmetry_projector_idempotence_checker(node, dag)
+    missing = _payload_required(node, [:projection_blocks])
+    isnothing(missing) || return _bad(missing)
+    try
+        blocks = Kernel.SparseSymmetricRationalMatrix[
+            Kernel.parse_sparse_matrix_object(block; strict=true,
+                                              path="dag.$(node.id).projection_blocks[$i]")
+            for (i, block) in enumerate(_json_object(node.typed_payload[:projection_blocks]))
+        ]
+        for (i, block) in enumerate(blocks)
+            product = _matrix_product_entries(block, block)
+            _matrix_entries_equal_full(product, block) ||
+                return _bad("projector $i is not idempotent")
+        end
+        return _ok(Kernel._sha256_payload([Kernel.sparse_matrix_json(block)
+                                           for block in blocks]))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _symmetry_projector_orthogonality_checker(node, dag)
+    missing = _payload_required(node, [:projection_blocks])
+    isnothing(missing) || return _bad(missing)
+    try
+        blocks = Kernel.SparseSymmetricRationalMatrix[
+            Kernel.parse_sparse_matrix_object(block; strict=true,
+                                              path="dag.$(node.id).projection_blocks[$i]")
+            for (i, block) in enumerate(_json_object(node.typed_payload[:projection_blocks]))
+        ]
+        for i in 1:length(blocks), j in (i + 1):length(blocks)
+            product = _matrix_product_entries(blocks[i], blocks[j])
+            isempty(product) || return _bad("projectors $i and $j are not orthogonal")
+        end
+        return _ok(Kernel._sha256_payload([Kernel.sparse_matrix_json(block)
+                                           for block in blocks]))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _bundle_manifest_checker(node, dag)
+    missing = _payload_required(node, [:manifest])
+    isnothing(missing) || return _bad(missing)
+    try
+        manifest = _json_object(node.typed_payload[:manifest])
+        for key in (:certsdp_bundle_version, :certificate_hash, :problem_hash,
+                    :dag_root_hash, :verify_script, :source_artifacts)
+            _dict_get(manifest, key, nothing) !== nothing ||
+                return _bad("bundle manifest missing $(String(key))")
+        end
+        for key in (:certificate_hash, :problem_hash, :dag_root_hash)
+            _is_sha256_hash(String(_dict_get(manifest, key))) ||
+                return _bad("bundle manifest $(String(key)) is not canonical")
+        end
+        return _ok(_payload_hash(Dict(:manifest => node.typed_payload[:manifest])))
+    catch err
+        return _bad(sprint(showerror, err))
     end
 end
 
@@ -380,10 +688,11 @@ function _quantum_objective_checker(node, dag)
             report = Kernel.verify_nc_rewrite_witness(witness, problem.relations)
             report.accepted || return _bad(report.reason)
         end
+        verified_values = Kernel._verified_moment_entries(problem, moment)
         Kernel._nc_term_dict(objective) == Kernel._nc_term_dict(moment.coefficient_terms) ||
             return _bad("quantum objective is not reconstructed from moment coefficients")
-        sum(value for value in values(Kernel._nc_term_dict(objective)); init=0//1) == bound ||
-            return _bad("quantum objective bound does not replay exactly")
+        Kernel._objective_from_verified_moments(objective, verified_values) == bound ||
+            return _bad("quantum objective bound does not replay from verified moment entries")
         expected = Kernel._sha256_payload((;
             objective=[Kernel.nc_term_json(term) for term in objective],
             bound=Kernel.rational_string(bound)))
@@ -406,6 +715,7 @@ function _moment_certificate_checker(node, dag)
             wreport = Kernel.verify_nc_rewrite_witness(witness, problem.relations)
             wreport.accepted || return _bad(wreport.reason)
         end
+        Kernel._verified_moment_entries(problem, cert)
         return _ok(Kernel.nc_moment_certificate_hash(cert))
     catch err
         return _bad(sprint(showerror, err))
@@ -441,10 +751,27 @@ function _primal_affine_checker(node, dag)
     missing = _payload_required(node, [:primal])
     isnothing(missing) || return _bad(missing)
     try
+        problem = haskey(node.typed_payload, :problem) ?
+                  Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
+                                                           "dag.$(node.id).problem") :
+                  nothing
         primal = Kernel._parse_primal_feasibility_object(_json_object(node.typed_payload[:primal]),
                                                          "dag.$(node.id).primal")
-        primal.affine_lhs == primal.affine_rhs ||
-            return _bad("primal affine constraints do not match exactly")
+        if !isnothing(problem)
+            primal = Kernel.PrimalFeasibilityCertificate(primal.problem_hash,
+                                                         problem,
+                                                         primal.primal_vector,
+                                                         primal.affine_lhs,
+                                                         primal.affine_rhs,
+                                                         primal.cone_matrices,
+                                                         primal.cone_proofs,
+                                                         primal.objective_value)
+            report = Kernel._verify_primal_from_problem(primal)
+            isnothing(report) || return _bad(report.reason)
+        else
+            primal.affine_lhs == primal.affine_rhs ||
+                return _bad("primal affine constraints do not match exactly")
+        end
         for (matrix, proof) in zip(primal.cone_matrices, primal.cone_proofs)
             report = Kernel.verify_low_rank_psd(matrix, proof)
             report.accepted || return _bad(report.reason)
@@ -459,10 +786,27 @@ function _dual_affine_checker(node, dag)
     missing = _payload_required(node, [:dual])
     isnothing(missing) || return _bad(missing)
     try
+        problem = haskey(node.typed_payload, :problem) ?
+                  Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
+                                                           "dag.$(node.id).problem") :
+                  nothing
         dual = Kernel._parse_dual_feasibility_object(_json_object(node.typed_payload[:dual]),
                                                      "dag.$(node.id).dual")
-        dual.affine_lhs == dual.affine_rhs ||
-            return _bad("dual affine identity does not match exactly")
+        if !isnothing(problem)
+            dual = Kernel.DualFeasibilityCertificate(dual.problem_hash,
+                                                     problem,
+                                                     dual.dual_variables,
+                                                     dual.affine_lhs,
+                                                     dual.affine_rhs,
+                                                     dual.cone_matrices,
+                                                     dual.cone_proofs,
+                                                     dual.objective_value)
+            report = Kernel._verify_dual_from_problem(dual)
+            isnothing(report) || return _bad(report.reason)
+        else
+            dual.affine_lhs == dual.affine_rhs ||
+                return _bad("dual affine identity does not match exactly")
+        end
         for (matrix, proof) in zip(dual.cone_matrices, dual.cone_proofs)
             report = Kernel.verify_low_rank_psd(matrix, proof)
             report.accepted || return _bad(report.reason)
@@ -481,6 +825,19 @@ function _farkas_identity_checker(node, dag)
                       for (i, value) in enumerate(node.typed_payload[:lhs])]
         rhs_values = [Kernel._parse_rational_string(value, "dag.$(node.id).rhs[$i]")
                       for (i, value) in enumerate(node.typed_payload[:rhs])]
+        if haskey(node.typed_payload, :problem)
+            problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
+                                                               "dag.$(node.id).problem")
+            dual_variables = Kernel.SparseSymmetricRationalMatrix[
+                Kernel.parse_sparse_matrix_object(matrix; strict=true,
+                                                  path="dag.$(node.id).dual_variables[$i]")
+                for (i, matrix) in enumerate(_json_object(node.typed_payload[:dual_variables]))
+            ]
+            lhs_values == Kernel._conic_dual_adjoint(problem, dual_variables) ||
+                return _bad("Farkas identity lhs was not reconstructed from A*(y)")
+            rhs_values == problem.objective ||
+                return _bad("Farkas identity rhs does not match problem objective")
+        end
         lhs_values == rhs_values || return _bad("Farkas identity lhs/rhs mismatch")
         return _ok(Kernel._sha256_payload((;
             lhs=Kernel.rational_string.(lhs_values),
@@ -500,7 +857,14 @@ function _exact_gap_checker(node, dag)
                                              "dag.$(node.id).dual_objective")
         gap = Kernel._parse_rational_string(node.typed_payload[:gap],
                                             "dag.$(node.id).gap")
-        primal - dual == gap || return _bad("objective gap does not equal primal-dual difference")
+        if haskey(node.typed_payload, :problem)
+            problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
+                                                               "dag.$(node.id).problem")
+            Kernel._conic_gap(problem, primal, dual) == gap ||
+                return _bad("objective gap does not equal sense-correct primal-dual difference")
+        else
+            primal - dual == gap || return _bad("objective gap does not equal primal-dual difference")
+        end
         return _ok(Kernel._sha256_payload((; gap=Kernel.rational_string(gap))))
     catch err
         return _bad(sprint(showerror, err))
@@ -513,6 +877,17 @@ function _farkas_contradiction_checker(node, dag)
     try
         lhs = Kernel._parse_rational_string(node.typed_payload[:lhs], "dag.$(node.id).lhs")
         rhs = Kernel._parse_rational_string(node.typed_payload[:rhs], "dag.$(node.id).rhs")
+        if haskey(node.typed_payload, :problem)
+            problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
+                                                               "dag.$(node.id).problem")
+            dual_variables = Kernel.SparseSymmetricRationalMatrix[
+                Kernel.parse_sparse_matrix_object(matrix; strict=true,
+                                                  path="dag.$(node.id).dual_variables[$i]")
+                for (i, matrix) in enumerate(_json_object(node.typed_payload[:dual_variables]))
+            ]
+            rhs == Kernel._conic_dual_objective(problem, dual_variables) ||
+                return _bad("Farkas contradiction scalar was not reconstructed from <B,y>")
+        end
         lhs == 0//1 && rhs < 0//1 ||
             return _bad("Farkas contradiction must have normalized form 0 <= negative")
         return _ok(Kernel._sha256_payload((; lhs=Kernel.rational_string(lhs),
@@ -563,11 +938,40 @@ end
 
 function _final_accept_checker(node, dag)
     isempty(node.inputs) && return _bad("final_accept must depend on replay nodes")
+    node.kind === :final_accept ||
+        return _bad("final_accept checker may only be used by final_accept nodes")
+    claim = _dict_get(node.typed_payload, :claim_type, nothing)
+    isnothing(claim) ||
+        Symbol(String(claim)) === dag.claim_type ||
+        return _bad("final_accept claim type mismatch")
+    for proof_node in dag.nodes
+        proof_node.id == node.id && continue
+        proof_node.status in (:rejected, :skipped, :unknown, :stale, :diagnostic_only) &&
+            return _bad("final_accept proof path contains rejected-status node";
+                        details=Dict{Symbol, Any}(:node => String(proof_node.id),
+                                                  :status => String(proof_node.status)))
+        semantics = get(CHECKER_SEMANTICS, proof_node.checker, :unknown)
+        diagnostic = proof_node.checker in DIAGNOSTIC_ONLY_CHECKERS ||
+                     semantics === :diagnostic_only
+        diagnostic &&
+            return _bad("final_accept proof path contains diagnostic-only node";
+                        details=Dict{Symbol, Any}(:node => String(proof_node.id),
+                                                  :checker => String(proof_node.checker)))
+        semantics === :unknown &&
+            return _bad("final_accept proof path contains unclassified checker";
+                        details=Dict{Symbol, Any}(:node => String(proof_node.id),
+                                                  :checker => String(proof_node.checker)))
+    end
     expected_inputs = Set(n.output_hash for n in dag.nodes if n.id != node.id)
     Set(node.inputs) == expected_inputs ||
         return _bad("final_accept does not cover every proof root";
                     details=Dict{Symbol, Any}(:expected => length(expected_inputs),
                                               :actual => length(node.inputs)))
+    required = _dict_get(node.typed_payload, :required_inputs, nothing)
+    if !isnothing(required)
+        Set(String.(required)) == expected_inputs ||
+            return _bad("final_accept required_inputs payload is stale")
+    end
     return _ok(Kernel._final_accept_hash(dag.claim_type,
                                           [n for n in dag.nodes if n.id != node.id]))
 end
@@ -595,8 +999,8 @@ _register!(:verify_sparse_sos_coefficients, _sos_checker)
 _register!(:verify_nc_rewrite_witness, _rewrite_witness_checker)
 _register!(:verify_quantum_bound_certificate, _quantum_objective_checker)
 _register!(:verify_block_diagonalization_certificate, _symmetry_reconstruction_checker)
-_register!(:check_schema, _typed_hash_checker([:schema]))
-_register!(:check_problem_hash, _typed_hash_checker([:problem]))
+_register!(:check_schema, _schema_checker)
+_register!(:check_problem_hash, _problem_hash_checker)
 _register!(:check_sparse_matrix_hash, _sparse_matrix_hash_checker)
 _register!(:check_low_rank_psd_identity, _low_rank_psd_checker)
 _register!(:check_low_rank_psd_diagonal_signs, _low_rank_psd_checker)
@@ -606,30 +1010,30 @@ _register!(:check_chordal_separator_consistency, _chordal_checker)
 _register!(:check_chordal_clique_psd, _chordal_checker)
 _register!(:check_sparse_sos_gram_expansion, _sos_checker)
 _register!(:check_putinar_localizing_identity, _sos_checker)
-_register!(:check_tssos_import_normalization, _typed_hash_checker([:raw_hash, :normalized_hash]))
+_register!(:check_tssos_import_normalization, _tssos_import_normalization_checker)
 _register!(:check_nc_rewrite_step, _rewrite_witness_checker)
 _register!(:check_npa_moment_entry, _moment_certificate_checker)
 _register!(:check_npa_objective_functional, _quantum_objective_checker)
 _register!(:check_quantum_objective_bound, _quantum_objective_checker)
-_register!(:check_quantum_projection_relation, _typed_hash_checker([:relations]))
-_register!(:check_quantum_commutation_relation, _typed_hash_checker([:relations]))
-_register!(:check_quantum_trace_cyclicity, _typed_hash_checker([:relations]))
+_register!(:check_quantum_projection_relation, _quantum_projection_relation_checker)
+_register!(:check_quantum_commutation_relation, _quantum_commutation_relation_checker)
+_register!(:check_quantum_trace_cyclicity, _quantum_trace_cyclicity_checker)
 _register!(:check_algebraic_field, _field_hash_checker)
-_register!(:check_algebraic_sign, _typed_hash_checker([:element, :sign_certificate]))
+_register!(:check_algebraic_sign, _algebraic_sign_checker)
 _register!(:check_primal_affine, _primal_affine_checker)
 _register!(:check_dual_affine, _dual_affine_checker)
-_register!(:check_primal_objective, _typed_hash_checker([:objective]))
-_register!(:check_dual_objective, _typed_hash_checker([:objective]))
+_register!(:check_primal_objective, _objective_scalar_checker(:objective))
+_register!(:check_dual_objective, _objective_scalar_checker(:objective))
 _register!(:check_exact_gap, _exact_gap_checker)
-_register!(:check_farkas_dual_cone, _typed_hash_checker([:cone_proof]))
+_register!(:check_farkas_dual_cone, _farkas_dual_cone_checker)
 _register!(:check_farkas_contradiction, _farkas_contradiction_checker)
 _register!(:check_symmetry_group_closure, _symmetry_group_hash_checker)
 _register!(:check_symmetry_orbit_partition, _orbit_basis_hash_checker)
-_register!(:check_symmetry_projector_idempotence, _typed_hash_checker([:projection_blocks]))
-_register!(:check_symmetry_projector_orthogonality, _typed_hash_checker([:projection_blocks]))
+_register!(:check_symmetry_projector_idempotence, _symmetry_projector_idempotence_checker)
+_register!(:check_symmetry_projector_orthogonality, _symmetry_projector_orthogonality_checker)
 _register!(:check_symmetry_block_reconstruction, _symmetry_reconstruction_checker)
-_register!(:check_bundle_manifest, _typed_hash_checker([:manifest]))
-_register!(:hash, _typed_hash_checker([:value]))
+_register!(:check_bundle_manifest, _bundle_manifest_checker)
+_register!(:hash, _typed_hash_checker([:value]); semantics=:diagnostic_only)
 _register!(:final_accept, _final_accept_checker)
 
 end

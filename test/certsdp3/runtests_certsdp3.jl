@@ -25,6 +25,7 @@ end
     include("no_densification_budget.jl")
     include("proof_dag_roundtrip.jl")
     include("proof_dag_tamper.jl")
+    include("test_no_hash_only_proof_checkers.jl")
     include("diagnostics_report.jl")
     include("cli_replay_explain.jl")
     include("block_native_incidence.jl")
