@@ -190,14 +190,14 @@
             "fixture": "external_like",
             "kind": "subprocess_cli",
             "exit": 0,
-            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_FszoTQHsBs.json",
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_ktoBolKjoD.json",
             "cwd": "/Users/shani_mac/CertSDP/"
         },
         {
             "fixture": "external_like",
             "kind": "subprocess_cli",
             "exit": 0,
-            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_PSzGtOJata.json",
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_01oTeT8TqF.json",
             "cwd": "/Users/shani_mac/CertSDP/"
         },
         {
@@ -205,7 +205,7 @@
             "kind": "subprocess_cli",
             "exit": 0,
             "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
-            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_2VunJ2"
+            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_Fhh4UN"
         },
         {
             "fixture": "quantum_chsh_level2",
@@ -241,14 +241,14 @@
             "fixture": "external_like",
             "kind": "subprocess_cli",
             "exit": 0,
-            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_RcpQV8dKDA.json",
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_6NcxifCj2f.json",
             "cwd": "/Users/shani_mac/CertSDP/"
         },
         {
             "fixture": "external_like",
             "kind": "subprocess_cli",
             "exit": 0,
-            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_F0Don6rcxA.json",
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_U9chYTkX8F.json",
             "cwd": "/Users/shani_mac/CertSDP/"
         },
         {
@@ -256,7 +256,7 @@
             "kind": "subprocess_cli",
             "exit": 0,
             "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
-            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_IetMLt"
+            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_hj4vuv"
         },
         {
             "fixture": "psd_factor_algebraic_40",
@@ -334,14 +334,14 @@
             "fixture": "external_like",
             "kind": "subprocess_cli",
             "exit": 0,
-            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_JwDmTgXM38.json",
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import tssos /Users/shani_mac/CertSDP/test/fixtures_external/tssos/raw_tssos_sparse_poly_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_K5gds3aHK9.json",
             "cwd": "/Users/shani_mac/CertSDP/"
         },
         {
             "fixture": "external_like",
             "kind": "subprocess_cli",
             "exit": 0,
-            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_FGLUXeh0Fk.json",
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) import nctssos /Users/shani_mac/CertSDP/test/fixtures_external/nctssos/raw_nctssos_trace_medium.json --out /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_o9uBo3sjib.json",
             "cwd": "/Users/shani_mac/CertSDP/"
         },
         {
@@ -349,7 +349,7 @@
             "kind": "subprocess_cli",
             "exit": 0,
             "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) replay /Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json --strict",
-            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_2GhWSI"
+            "cwd": "/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_KOB1zF"
         },
         {
             "fixture": "psd_factor_rational_150",
@@ -511,7 +511,7 @@
             "fixture": "paper_bundle_demo",
             "kind": "bundle_verify",
             "exit": 0,
-            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) bundle verify /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_wW3IM6"
+            "command": "julia --project=/Users/shani_mac/CertSDP/ --startup-file=no -e using CertSDP; exit(CertSDP.main(ARGS)) bundle verify /var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_6p4SV7"
         },
         {
             "fixture": "psd_factor_rational_150",

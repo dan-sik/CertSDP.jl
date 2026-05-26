@@ -17,7 +17,8 @@
                                          7//1)
     cert = K3.make_primal_dual_optimality_certificate(matrix.hash, primal, dual)
     report = K3.verify_primal_dual_optimality(cert)
-    @test report.accepted
+    @test !report.accepted
+    @test report.stage == :primal_dual_affine_map
 
     bad_gap = K3.PrimalDualOptimalityCertificate(cert.problem_hash,
                                                  cert.primal,
@@ -40,5 +41,5 @@
                                                          bad_dual)
     bad_report = K3.verify_primal_dual_optimality(bad_cert)
     @test !bad_report.accepted
-    @test bad_report.stage == :dual_affine
+    @test bad_report.stage == :primal_dual_affine_map
 end

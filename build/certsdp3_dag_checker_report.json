@@ -2,15 +2,11 @@
     "proof_relevant_hash_only_count": 0,
     "proof_relevant_hash_only": [
     ],
-    "checker_count": 59,
+    "checker_count": 61,
     "generic_accepting_checker_present": false,
     "executed_last": [
-        "npa_problem_hash",
         "canonical_sparse_matrix_hash",
-        "verify_nc_rewrite_witness",
         "verify_low_rank_psd",
-        "check_npa_moment_entry",
-        "verify_quantum_bound_certificate",
         "final_accept"
     ],
     "checker_names": [
@@ -47,8 +43,10 @@
         "check_symmetry_block_reconstruction",
         "check_symmetry_group_closure",
         "check_symmetry_orbit_partition",
+        "check_symmetry_projector_completeness",
         "check_symmetry_projector_idempotence",
         "check_symmetry_projector_orthogonality",
+        "check_symmetry_psd_transfer",
         "check_tssos_import_normalization",
         "chordal_structure_hash",
         "final_accept",
@@ -158,6 +156,12 @@
                 "diagnostic_only": false
             },
             "check_symmetry_projector_orthogonality": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_symmetry_projector_completeness": {
                 "semantics": "mathematical_replay",
                 "mathematical_replay": true,
                 "hash_only": false,
@@ -374,6 +378,12 @@
                 "diagnostic_only": false
             },
             "verify_chordal_psd": {
+                "semantics": "mathematical_replay",
+                "mathematical_replay": true,
+                "hash_only": false,
+                "diagnostic_only": false
+            },
+            "check_symmetry_psd_transfer": {
                 "semantics": "mathematical_replay",
                 "mathematical_replay": true,
                 "hash_only": false,

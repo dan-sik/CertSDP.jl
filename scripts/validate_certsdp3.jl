@@ -28,9 +28,14 @@ const REQUIRED_INDEX_KEYS = Set(Symbol[
     :densification_budget,
 ])
 
+const OPTIONAL_INDEX_KEYS = Set(Symbol[
+    :external_capture,
+])
+
 const VALID_GATE_IDS = Set(String.([
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
     "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+    "QA",
 ]))
 
 const P0_VALIDATION_GATES = Set(String.([
@@ -63,7 +68,7 @@ end
 function require_index_schema!(fixture, failures::Vector{String}, index::Int)
     keys_seen = object_keys(fixture)
     missing = setdiff(REQUIRED_INDEX_KEYS, keys_seen)
-    unknown = setdiff(keys_seen, REQUIRED_INDEX_KEYS)
+    unknown = setdiff(keys_seen, union(REQUIRED_INDEX_KEYS, OPTIONAL_INDEX_KEYS))
     isempty(missing) ||
         push!(failures, "fixture index entry $index missing keys: $(join(sort!(String.(collect(missing))), ", "))")
     isempty(unknown) ||
@@ -78,6 +83,11 @@ function require_index_schema!(fixture, failures::Vector{String}, index::Int)
     end
     haskey(fixture, :tamper_files) && isempty(fixture[:tamper_files]) &&
         push!(failures, "fixture index entry $index has no tamper_files")
+    if haskey(fixture, :source_class) &&
+       String(fixture[:source_class]) == "true_external_raw" &&
+       get(fixture, :external_capture, false) != true
+        push!(failures, "fixture index entry $index true_external_raw missing external_capture=true")
+    end
     return nothing
 end
 

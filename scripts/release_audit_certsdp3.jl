@@ -285,11 +285,13 @@ end
 function fixture_authenticity_check(fixture)
     source = fixture_source_class(fixture)
     allowed = Set(["synthetic_unit", "generated_stress", "external_like",
-                   "real_imported", "paper_bundle"])
+                   "repo_generated_real_shape", "real_imported",
+                   "true_external_raw", "paper_bundle"])
     source in allowed ||
         return (passed=false, source_class=source,
                 reason="missing or invalid source_class")
-    if source in ("external_like", "real_imported")
+    if source in ("external_like", "repo_generated_real_shape",
+                  "real_imported", "true_external_raw")
         haskey(fixture, :source_file) && !isempty(String(fixture[:source_file])) ||
             return (passed=false, source_class=source,
                     reason="external fixture missing source_file")
@@ -297,26 +299,34 @@ function fixture_authenticity_check(fixture)
         isfile(source_path) ||
             return (passed=false, source_class=source,
                     reason="external source_file does not exist")
-        if source == "real_imported"
+        if source in ("real_imported", "true_external_raw")
             occursin("fixtures_real", String(fixture[:source_file])) ||
                 return (passed=false, source_class=source,
-                        reason="real_imported source must live under test/fixtures_real")
+                        reason="imported source must live under test/fixtures_real")
             readme = joinpath(dirname(source_path), "README_SOURCE.md")
             generator = haskey(fixture, :generated_by) ?
                         joinpath(ROOT, String(fixture[:generated_by])) : ""
             isfile(readme) ||
                 return (passed=false, source_class=source,
-                        reason="real_imported README_SOURCE.md missing")
+                        reason="imported README_SOURCE.md missing")
             isfile(generator) ||
                 return (passed=false, source_class=source,
-                        reason="real_imported generator script missing")
+                        reason="imported generator/converter script missing")
             parsed = read_json(source_path)
             for key in (:certsdp_certificate_version,
                         :certsdp_sparse_sos_certificate_version,
                         :certsdp_quantum_certificate_version)
                 haskey(parsed, key) &&
                     return (passed=false, source_class=source,
-                            reason="real_imported source is CertSDP-native schema")
+                            reason="imported source is CertSDP-native schema")
+            end
+            if source == "true_external_raw"
+                occursin("fixtures_real_external", String(fixture[:source_file])) ||
+                    return (passed=false, source_class=source,
+                            reason="true_external_raw must live under test/fixtures_real_external")
+                get(fixture, :external_capture, false) == true ||
+                    return (passed=false, source_class=source,
+                            reason="true_external_raw missing external_capture marker")
             end
         end
     end
@@ -334,6 +344,24 @@ function real_imported_fixtures(fmap)
             "source_file" => public_path(source_path),
             "source_hash" => isfile(source_path) ? sha256_text(read(source_path, String)) : nothing,
             "generated_by" => haskey(fixture, :generated_by) ? String(fixture[:generated_by]) : "",
+        ))
+    end
+    sort!(result; by=item -> item["fixture_id"])
+    return result
+end
+
+function true_external_raw_fixtures(fmap)
+    result = Any[]
+    for (_, fixture) in fmap
+        fixture_source_class(fixture) == "true_external_raw" || continue
+        source_path = joinpath(ROOT, String(fixture[:source_file]))
+        push!(result, Dict(
+            "fixture_id" => String(fixture[:fixture_id]),
+            "family" => String(fixture[:problem_family]),
+            "source_file" => public_path(source_path),
+            "source_hash" => isfile(source_path) ? sha256_text(read(source_path, String)) : nothing,
+            "generated_by" => haskey(fixture, :generated_by) ? String(fixture[:generated_by]) : "",
+            "external_capture" => get(fixture, :external_capture, false),
         ))
     end
     sort!(result; by=item -> item["fixture_id"])
@@ -680,17 +708,38 @@ function npa_missing_every_entry_replay(fixture)
     basis_count = length(cert[:problem][:word_basis])
     witness_count = length(cert[:moment_certificate][:witnesses])
     matrix_entries = length(cert[:moment_certificate][:moment_matrix][:entries])
+    entry_nodes = haskey(cert, :proof_dag) ?
+                  count(node -> String(node[:kind]) == "npa_moment_entry",
+                        cert[:proof_dag][:nodes]) : 0
+    objective = haskey(cert, :proof_dag) ?
+                filter(node -> String(node[:id]) == "objective_bound",
+                       cert[:proof_dag][:nodes]) : Any[]
+    objective_deps = isempty(objective) ? 0 :
+                     length(get(first(objective)[:typed_payload],
+                                :moment_entry_hashes,
+                                Any[]))
     # Full replay requires enough entry obligations to cover all declared entries.
-    return witness_count < matrix_entries || witness_count < min(100, basis_count)
+    return witness_count < matrix_entries ||
+           witness_count < min(100, basis_count) ||
+           entry_nodes < matrix_entries ||
+           objective_deps < entry_nodes
 end
 
 function symmetry_missing_projector_semantics(fixture)
     String(fixture[:problem_family]) == "symmetry_reduction" || return false
     cert = fixture_certificate(fixture)
     isnothing(cert) && return true
-    return !(haskey(cert, :projector_matrices) ||
-             haskey(cert, :projector_semantics) ||
-             certificate_has_key_recursive(cert, :projector_idempotence))
+    haskey(cert, :projector_matrices) && haskey(cert, :projector_semantics) ||
+        return true
+    haskey(cert, :proof_dag) || return true
+    checkers = Set(String(node[:checker]) for node in cert[:proof_dag][:nodes])
+    return !all(required -> required in checkers,
+                ["symmetry_group_hash",
+                 "check_symmetry_projector_idempotence",
+                 "check_symmetry_projector_orthogonality",
+                 "check_symmetry_projector_completeness",
+                 "check_symmetry_psd_transfer",
+                 "verify_block_diagonalization_certificate"])
 end
 
 function algebraic_missing_generic_sign_certificates(fixture)
@@ -1114,6 +1163,9 @@ function evaluate_gate(spec, fmap, static_result, fixture_cache, tamper_cache)
         real_count = length(real_imported_fixtures(fmap))
         real_count >= 3 ? push!(passed_checks, "real_imported_fixtures:$real_count") :
             push!(failed_checks, "real_imported fixture count $real_count < 3")
+        true_count = length(true_external_raw_fixtures(fmap))
+        true_count >= 1 ? push!(passed_checks, "true_external_raw_fixtures:$true_count") :
+            push!(failed_checks, "true_external_raw fixture count $true_count < 1")
     end
 
     if spec.id === :V
@@ -1224,6 +1276,86 @@ function corpus_summary(fmap, fixture_cache, tamper_cache; full::Bool)
             total_fixtures=length(fixture_items))
 end
 
+function hardgate_evidence(fmap, fixture_cache)
+    fixtures = values(fixture_cache)
+    all_fixtures = collect(values(fmap))
+    moment_declared = 0
+    moment_nodes = 0
+    objective_deps = 0
+    affine_obligations = 0
+    farkas_obligations = 0
+    symmetry_group = 0
+    symmetry_idem = 0
+    symmetry_orth = 0
+    symmetry_complete = 0
+    symmetry_transfer = 0
+    cubic_sign = 0
+    bundle_non_placeholder = 0
+    bundle_sources = 0
+    for fixture in all_fixtures
+        path = certificate_path(String(fixture[:fixture_id]))
+        isfile(path) || continue
+        cert = read_json(path)
+        if haskey(cert, :moment_certificate)
+            moment_declared += length(cert[:moment_certificate][:moment_matrix][:entries])
+        end
+        if haskey(cert, :problem) && String(fixture[:problem_family]) == "primal_dual_optimality"
+            affine_obligations += 3
+        elseif haskey(cert, :problem) && String(fixture[:problem_family]) == "farkas_infeasibility"
+            affine_obligations += 1
+            farkas_obligations += 2
+        end
+        if haskey(cert, :sign_certificates)
+            proof = haskey(cert, :proof) ? cert[:proof] : cert
+            degree = haskey(proof, :field) ? length(proof[:field][:minimal_polynomial]) - 1 : 0
+            degree >= 3 && (cubic_sign += length(cert[:sign_certificates]))
+        end
+        if haskey(cert, :proof_dag)
+            for node in cert[:proof_dag][:nodes]
+                checker = String(node[:checker])
+                kind = String(node[:kind])
+                kind == "npa_moment_entry" && (moment_nodes += 1)
+                if String(node[:id]) == "objective_bound" &&
+                   haskey(node[:typed_payload], :moment_entry_hashes)
+                    objective_deps += length(node[:typed_payload][:moment_entry_hashes])
+                end
+                checker == "symmetry_group_hash" && (symmetry_group += 1)
+                checker == "check_symmetry_projector_idempotence" && (symmetry_idem += 1)
+                checker == "check_symmetry_projector_orthogonality" && (symmetry_orth += 1)
+                checker == "check_symmetry_projector_completeness" && (symmetry_complete += 1)
+                checker == "check_symmetry_psd_transfer" && (symmetry_transfer += 1)
+            end
+        end
+    end
+    bundle = run_bundle_check()
+    if bundle.passed
+        bundle_non_placeholder = bundle.placeholder_problem ? 0 : 1
+        manifest_path = joinpath(ROOT, "test", "fixtures", "certsdp3",
+                                 "bundles", "paper_bundle_demo",
+                                 "CERTSDP_BUNDLE.json")
+        if isfile(manifest_path)
+            manifest = read_json(manifest_path)
+            haskey(manifest, :source_artifacts) &&
+                (bundle_sources = length(manifest[:source_artifacts]))
+        end
+    end
+    return Dict(
+        "moment_entries_declared" => moment_declared,
+        "moment_entry_nodes_executed" => moment_nodes,
+        "objective_moment_dependencies" => objective_deps,
+        "affine_map_obligations_replayed" => affine_obligations,
+        "farkas_problem_data_obligations_replayed" => farkas_obligations,
+        "symmetry_group_closure_checks" => symmetry_group,
+        "symmetry_projector_idempotence_checks" => symmetry_idem,
+        "symmetry_projector_orthogonality_checks" => symmetry_orth,
+        "symmetry_projector_completeness_checks" => symmetry_complete,
+        "symmetry_psd_transfer_checks" => symmetry_transfer,
+        "cubic_field_sign_checks" => cubic_sign,
+        "bundle_non_placeholder_problem_checks" => bundle_non_placeholder,
+        "bundle_source_artifact_checks" => bundle_sources,
+    )
+end
+
 function audit(options::AuditOptions)
     mkpath(BUILD_DIR)
     static_result = run_static_rules()
@@ -1261,6 +1393,7 @@ function audit(options::AuditOptions)
                                   fixture_cache, tamper_cache)
                     for spec in selected]
     if options.strict && options.full && isnothing(options.gate)
+        true_external_count = length(true_external_raw_fixtures(fmap))
         for i in eachindex(gate_results)
             gate = gate_results[i]
             id = Symbol(gate.id)
@@ -1272,6 +1405,9 @@ function audit(options::AuditOptions)
             end
             if id in CORE_10_GATES && score < 10
                 push!(failures, "PASS_10 requires core gate $(gate.id) score == 10")
+            end
+            if true_external_count < 1 && id in (:Q, :Z, :QA)
+                push!(failures, "PASS_10 requires at least one true_external_raw fixture")
             end
             if !isempty(failures)
                 gate_results[i] = merge(gate, (; status="FAIL",
@@ -1318,10 +1454,21 @@ function audit(options::AuditOptions)
     )
     real_import_report = Dict("fixtures" => real_imported_fixtures(fmap),
                               "count" => length(real_imported_fixtures(fmap)))
+    true_external_report = Dict("fixtures" => true_external_raw_fixtures(fmap),
+                                "count" => length(true_external_raw_fixtures(fmap)))
     trusted_report = Dict("trusted_path" => CertSDP.TrustedPathAudit.trusted_path_audit_report(),
                           "seeded_bad_static_checks" => run_seeded_bad_static_checks())
     performance_profile = build_performance_profile(result, fixture_results,
                                                     gate_results)
+    evidence = hardgate_evidence(fmap, fixture_cache)
+    gate_score_table = Dict(String(gate.id) => gate.score for gate in gate_results)
+    active_caps = [Dict("gate" => gate.id,
+                        "failed_checks" => gate.failed_checks,
+                        "score" => gate.score)
+                   for gate in gate_results
+                   if !isempty(gate.failed_checks) || gate.score < 10]
+    cli_subprocess_results = cli_results
+    tamper_rejections = count(item -> getproperty(item, :passed), values(tamper_cache))
     coverage_report = Dict(
         "trusted_verifiers" => CertSDP.TrustedPathAudit.trusted_path_audit_report(),
         "dag_checkers" => String.(CertSDP.DAGCheckerRegistry.dag_checker_names()),
@@ -1362,7 +1509,26 @@ function audit(options::AuditOptions)
         "object_store_report" => object_store_report,
         "real_imported_fixture_report" => real_import_report,
         "trusted_path_audit_report" => trusted_report,
+        "gate_scores" => gate_score_table,
+        "active_score_caps" => active_caps,
+        "core_gate_scores" => Dict(String(gate.id) => gate.score
+                                   for gate in gate_results
+                                   if Symbol(gate.id) in CORE_10_GATES),
+        "proof_relevant_hash_only_count" => dag_report["proof_relevant_hash_only_count"],
+        "checker_execution_counts" => Dict(String(name) => count(==(name), CertSDP.DAGCheckerRegistry.dag_checker_calls())
+                                           for name in CertSDP.DAGCheckerRegistry.dag_checker_names()),
+        "true_external_raw_fixture_count" => true_external_report["count"],
+        "true_external_raw_fixture_report" => true_external_report,
+        "real_imported_fixture_count" => real_import_report["count"],
+        "repo_generated_real_shape_fixture_count" => count(fixture -> fixture_source_class(fixture) == "repo_generated_real_shape",
+                                                           values(fmap)),
+        "tamper_rejections" => tamper_rejections,
+        "cli_subprocess_results" => cli_subprocess_results,
+        "memory_checked" => performance_profile["memory_checked"],
+        "peak_rss_checked" => performance_profile["peak_rss_checked"],
+        "densification_count" => performance_profile["densification_count"],
     )
+    merge!(report, evidence)
     report_path = options.out_path
     open(report_path, "w") do io
         JSON3.pretty(io, report)

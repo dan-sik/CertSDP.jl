@@ -256,7 +256,7 @@
             },
             "problem_family": "primal_dual_optimality",
             "source_file": "",
-            "certificate_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
+            "certificate_hash": "sha256:b80a92096f6ca63c31aae6a460150ddfee05a634ae743ef74dd84fd7fbcffdc1",
             "max_runtime_seconds": 30,
             "source_notes": "deterministic exact replay fixture",
             "generated_by": "scripts/generate_certsdp3_fixtures.jl",
@@ -478,7 +478,7 @@
             },
             "problem_family": "quantum_bound",
             "source_file": "",
-            "certificate_hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6",
+            "certificate_hash": "sha256:d294e757ff135871d73f4226ecbdac7232bd2d3677c704de727468a12151e2ca",
             "max_runtime_seconds": 60,
             "source_notes": "deterministic exact replay fixture",
             "generated_by": "scripts/generate_certsdp3_fixtures.jl",
@@ -523,7 +523,7 @@
             },
             "problem_family": "quantum_bound",
             "source_file": "test/fixtures_real/nctssos/raw_quantum_i3322_medium.json",
-            "certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
+            "certificate_hash": "sha256:87ba108f44ebf4df205870e2209f3bf2c800c4f5ba71ca69777c39dbabfdc54e",
             "max_runtime_seconds": 180,
             "source_notes": "raw frontend artifact is replayed through importer and normal verifier",
             "generated_by": "scripts/generate_certsdp3_fixtures.jl",
@@ -567,7 +567,7 @@
             },
             "problem_family": "nctssos_import",
             "source_file": "test/fixtures_real/nctssos/raw_nctssos_trace_medium.json",
-            "certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
+            "certificate_hash": "sha256:cac247302c77889af8a87474588a42b505b72dce5c526fdb266f530d6438fac0",
             "max_runtime_seconds": 180,
             "source_notes": "raw frontend artifact is replayed through importer and normal verifier",
             "generated_by": "scripts/generate_certsdp3_fixtures.jl",
@@ -610,7 +610,7 @@
             },
             "problem_family": "symmetry_reduction",
             "source_file": "",
-            "certificate_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef",
+            "certificate_hash": "sha256:f24bc8bf179e0e49fb1e9c81f8608f4656063a5379e7c59ae77b8632e211a6bb",
             "max_runtime_seconds": 120,
             "source_notes": "deterministic exact replay fixture",
             "generated_by": "scripts/generate_certsdp3_fixtures.jl",
@@ -622,6 +622,53 @@
                 "dag_replay"
             ],
             "fixture_id": "symmetric_sos_cyclic_medium",
+            "required_optional_deps": [
+            ]
+        },
+        {
+            "expected_accepted": true,
+            "densification_budget": {
+                "max_count": 999999
+            },
+            "gate_ids_covered": [
+                "Q",
+                "R",
+                "S",
+                "U",
+                "Z",
+                "QA"
+            ],
+            "source_class": "true_external_raw",
+            "performance_budget": {
+                "max_runtime_seconds": 30
+            },
+            "subprocess_cli_commands": [
+                "replay true_external_msolve_linear1/certificate.json --strict"
+            ],
+            "tamper_files": [
+                "tampered_normalized_certificate.json"
+            ],
+            "validation_purpose": "Gate Q true external raw msolve capture normalized through converter and exact PSD replay",
+            "memory_budget": {
+                "max_memory_mb": 1024
+            },
+            "problem_family": "low_rank_psd",
+            "source_file": "test/fixtures_real_external/raw_source_artifact.json",
+            "certificate_hash": "sha256:5517c1569f007e0ff5a2b8088aae4c99f8a4717320a904f466b830e9983f1cb2",
+            "max_runtime_seconds": 30,
+            "source_notes": "true external msolve raw input capture verified by source hash and converter before CertSDP replay",
+            "external_capture": true,
+            "generated_by": "test/fixtures_real_external/capture_or_converter_script.jl",
+            "max_memory_mb": 1024,
+            "problem_hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+            "semantic_checks_required": [
+                "raw_source_hash",
+                "converter_invocation",
+                "strict_schema",
+                "exact_replay",
+                "dag_replay"
+            ],
+            "fixture_id": "true_external_msolve_linear1",
             "required_optional_deps": [
             ]
         }

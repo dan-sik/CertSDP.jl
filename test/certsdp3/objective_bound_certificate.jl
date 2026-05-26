@@ -12,5 +12,7 @@
                                          opt.certificate_hash)
     @test bound.problem_hash == matrix.hash
     @test bound.bound == 3//1
-    @test K3.verify_primal_dual_optimality(opt).accepted
+    report = K3.verify_primal_dual_optimality(opt)
+    @test !report.accepted
+    @test report.stage == :primal_dual_affine_map
 end

@@ -6,6 +6,7 @@ using CertSDP
 using JSON3
 using LinearAlgebra: I
 using SHA: sha256
+using Base.Filesystem: cp, mkpath, rm
 
 include(joinpath(@__DIR__, "..", "test", "certsdp3", "helpers.jl"))
 
@@ -62,6 +63,41 @@ end
 function add_artifact_hash(object::Dict)
     object["artifact_hash"] = CertSDP.Adapters._artifact_hash(object)
     return object
+end
+
+function run_certsdp!(args::Vector{String})
+    code = CertSDP.main(args; io=IOBuffer(), err=IOBuffer())
+    code == 0 || error("CertSDP CLI command failed: $(join(args, " "))")
+    return nothing
+end
+
+function regenerate_bundle!(name::AbstractString, cert_path::AbstractString)
+    bundle_root = joinpath(ROOT, "bundles")
+    out_dir = joinpath(bundle_root, name)
+    isdir(out_dir) && rm(out_dir; recursive=true, force=true)
+    run_certsdp!(["bundle", cert_path, "--out", out_dir * "/"])
+    return out_dir
+end
+
+function copy_dir_fresh!(src::AbstractString, dst::AbstractString)
+    isdir(dst) && rm(dst; recursive=true, force=true)
+    cp(src, dst; force=true)
+    return dst
+end
+
+function tamper_bundle_file!(source_name::AbstractString, target_name::AbstractString,
+                             relpath::AbstractString, edit!::Function)
+    bundle_root = joinpath(ROOT, "bundles")
+    src = joinpath(bundle_root, source_name)
+    dst = joinpath(bundle_root, target_name)
+    isdir(dst) && rm(dst; recursive=true, force=true)
+    cp(src, dst; force=true)
+    path = joinpath(dst, relpath)
+    data = JSON3.read(read(path, String))
+    mutable = certsdp3_mutable_json(data)
+    edit!(mutable)
+    write_json(path, mutable)
+    return dst
 end
 
 function sparse_matrix_json(matrix)
@@ -581,6 +617,13 @@ function main()
                K3.exact_conic_problem_json(pd_problem))
     write_json(joinpath(pd_dir, "certificate.json"),
                K3.primal_dual_optimality_certificate_json(pd_cert))
+    real_pd_dir = normpath(joinpath(@__DIR__, "..", "test",
+                                    "fixtures_real", "primal_dual"))
+    mkpath(real_pd_dir)
+    write_json(joinpath(real_pd_dir, "problem_affine_sdp_medium.json"),
+               K3.exact_conic_problem_json(pd_problem))
+    write_json(joinpath(real_pd_dir, "certificate_optimal.json"),
+               K3.primal_dual_optimality_certificate_json(pd_cert))
     pd_bad_cert = K3.make_primal_dual_optimality_certificate(pd_problem,
                                                              fill(0//1, 8),
                                                              pd_dual_variables;
@@ -619,6 +662,8 @@ function main()
     write_json(joinpath(farkas_dir, "problem_affine_sdp_medium.json"),
                K3.exact_conic_problem_json(fk_problem))
     write_json(joinpath(farkas_dir, "certificate.json"),
+               K3.farkas_infeasibility_certificate_json(fk_cert))
+    write_json(joinpath(real_pd_dir, "certificate_farkas.json"),
                K3.farkas_infeasibility_certificate_json(fk_cert))
     fk_tamper = certsdp3_mutable_json(K3.farkas_infeasibility_certificate_json(fk_cert))
     fk_tamper[:multiplier_identity_lhs][1] = string(parse(BigInt, split(String(fk_tamper[:multiplier_identity_lhs][1]), "/")[1]) + 1)
@@ -790,6 +835,11 @@ function main()
                                         bound=3//1)
     i3322_json = certsdp3_mutable_json(K3.quantum_bound_certificate_json(i3322.cert))
     write_json(joinpath(i3322_dir, "certificate.json"), i3322_json)
+    real_quantum_dir = normpath(joinpath(@__DIR__, "..", "test",
+                                         "fixtures_real", "quantum"))
+    mkpath(real_quantum_dir)
+    write_json(joinpath(real_quantum_dir, "normalized_npa_certificate.json"),
+               i3322_json)
     i3322_comm_tamper = deepcopy(i3322_json)
     i3322_comm_tamper[:problem][:relations][13][:right_symbols] = ["Z"]
     write_json(joinpath(i3322_dir, "tampered_commutation_relation.json"),
@@ -1134,6 +1184,71 @@ function main()
         fixture["memory_budget"] = Dict("max_memory_mb" => fixture["max_memory_mb"])
         fixture["densification_budget"] = Dict("max_count" => occursin("chordal", family) ? 0 : 999999)
     end
+    external_dir = normpath(joinpath(@__DIR__, "..", "test", "fixtures_real_external"))
+    external_cert_path = joinpath(external_dir, "normalized_certsdp_certificate.json")
+    if isfile(external_cert_path)
+        true_dir = joinpath(ROOT, "true_external_msolve_linear1")
+        mkpath(true_dir)
+        cp(external_cert_path, joinpath(true_dir, "certificate.json"); force=true)
+        tampered_external = joinpath(external_dir, "tampered_normalized_certificate.json")
+        isfile(tampered_external) &&
+            cp(tampered_external,
+               joinpath(true_dir, "tampered_normalized_certificate.json");
+               force=true)
+        external_cert = JSON3.read(read(external_cert_path, String))
+        push!(index["fixtures"], Dict(
+            "fixture_id" => "true_external_msolve_linear1",
+            "problem_family" => "low_rank_psd",
+            "expected_accepted" => true,
+            "tamper_files" => Any["tampered_normalized_certificate.json"],
+            "max_runtime_seconds" => 30,
+            "max_memory_mb" => 1024,
+            "certificate_hash" => String(external_cert[:hash]),
+            "problem_hash" => String(external_cert[:problem_hash]),
+            "required_optional_deps" => Any[],
+            "validation_purpose" => "Gate Q true external raw msolve capture normalized through converter and exact PSD replay",
+            "gate_ids_covered" => Any["Q", "R", "S", "U", "Z", "QA"],
+            "source_class" => "true_external_raw",
+            "generated_by" => "test/fixtures_real_external/capture_or_converter_script.jl",
+            "source_file" => "test/fixtures_real_external/raw_source_artifact.json",
+            "source_notes" => "true external msolve raw input capture verified by source hash and converter before CertSDP replay",
+            "external_capture" => true,
+            "semantic_checks_required" => Any["raw_source_hash", "converter_invocation",
+                                               "strict_schema", "exact_replay",
+                                               "dag_replay"],
+            "subprocess_cli_commands" => Any["replay true_external_msolve_linear1/certificate.json --strict"],
+            "performance_budget" => Dict("max_runtime_seconds" => 30),
+            "memory_budget" => Dict("max_memory_mb" => 1024),
+            "densification_budget" => Dict("max_count" => 999999),
+        ))
+    end
+    bundle_dir = joinpath(ROOT, "bundles")
+    mkpath(bundle_dir)
+    paper_bundle = regenerate_bundle!("paper_bundle_demo",
+                                      joinpath(ROOT, "psd_factor_rational_150",
+                                               "certificate.json"))
+    regenerate_bundle!("imported_tssos_bundle",
+                       joinpath(realpath(joinpath(@__DIR__, "..")),
+                                "test", "fixtures_real", "tssos",
+                                "normalized_certificate.json"))
+    regenerate_bundle!("imported_quantum_bundle",
+                       joinpath(realpath(joinpath(@__DIR__, "..")),
+                                "test", "fixtures_real", "quantum",
+                                "normalized_npa_certificate.json"))
+    tamper_bundle_file!("paper_bundle_demo", "paper_bundle_demo_tampered",
+                        "object_store.json", object_store -> begin
+        object_store[:tampered_extra_object] = true
+    end)
+    copy_dir_fresh!(joinpath(bundle_dir, "imported_tssos_bundle"),
+                    joinpath(bundle_dir, "tampered_imported_tssos_bundle"))
+    write(joinpath(bundle_dir, "tampered_imported_tssos_bundle",
+                   "source_artifacts", "normalized_certificate.json"),
+          "{\"tampered\":true}\n")
+    copy_dir_fresh!(joinpath(bundle_dir, "imported_quantum_bundle"),
+                    joinpath(bundle_dir, "tampered_imported_quantum_bundle"))
+    write(joinpath(bundle_dir, "tampered_imported_quantum_bundle",
+                   "theorem_statement.txt"),
+          "claim_type: tampered\ncertificate_id: tampered\nproblem_hash: tampered\n")
     write_json(joinpath(ROOT, "index.json"), index)
     write(joinpath(ROOT, "README_GENERATED_FROM_TESTS.md"),
           "# CertSDP 3.0 Fixture Index\n\nGenerated by `scripts/generate_certsdp3_fixtures.jl`.\n")

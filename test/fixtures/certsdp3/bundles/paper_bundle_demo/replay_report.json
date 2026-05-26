@@ -1,17 +1,17 @@
 {
     "certsdp_report_version": "3.0",
     "accepted": true,
-    "gate": "H",
-    "family": "sparse_sos",
-    "stage": "coefficient_matching",
+    "gate": "D",
+    "family": "psd_factor",
+    "stage": "identity_replay",
     "reason": "accepted",
-    "obligation_id": "polynomial_identity",
-    "problem_hash": "sha256:d0afc08c9704e6713bb5e6b911b074d8713101bac4e65f0377c8294f09ba87e9",
-    "certificate_hash": "sha256:28d6063b6d01c95306c93e8729bd398013167c3a54fa0081ff7a6c8706f4ce76",
+    "obligation_id": "matrix_identity",
+    "problem_hash": "sha256:e1e399a25f2c4d405b6a2b0e26217e53e6e2b81390369ff86a4d3aa0980d1328",
+    "certificate_hash": "sha256:87afdfb78bc450d5ebe41701483e425e62d95e984b992a93341fd8baab112624",
     "block_id": null,
     "clique_id": null,
     "separator_id": null,
-    "artifact_path": "test/fixtures_real/tssos/normalized_certificate.json",
+    "artifact_path": "/Users/shani_mac/CertSDP/test/fixtures/certsdp3/psd_factor_rational_150/certificate.json",
     "details": {
     }
 }

@@ -1,7 +1,7 @@
 {
     "fixtures": [
         {
-            "dag_root_hash": "sha256:8cccb5f3aa426d869665e62c84831afc8c32ab4084658a19b57ac4ff35f83ac6",
+            "dag_root_hash": "sha256:e8f6413d37a0c1f5560b617ea0bef8ea6942835ec85683cc13df8ee3ed760db6",
             "fixture_id": "quantum_chsh_level2",
             "dag_present": true
         },
@@ -16,7 +16,7 @@
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
+            "dag_root_hash": "sha256:eace1290a021f73039a93d44c98045531192c35153d54cf67fbc608ade6126f1",
             "fixture_id": "symmetric_sos_cyclic_medium",
             "dag_present": true
         },
@@ -26,7 +26,7 @@
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
+            "dag_root_hash": "sha256:e79dcac535008660d916104e0cf36cdd18f744481f8c3d7e10ded6e9cab8b737",
             "fixture_id": "quantum_i3322_medium",
             "dag_present": true
         },
@@ -51,12 +51,12 @@
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
+            "dag_root_hash": "sha256:1e1f0d496d64a8fdc4a7efd3e6c25a4de3051c338899ebea5ccd6c5c076c421f",
             "fixture_id": "primal_dual_portfolio_50",
             "dag_present": true
         },
         {
-            "dag_root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
+            "dag_root_hash": "sha256:d36ce4ca9681cfb8da95f52fef30f50ae8c817023654825a9b3acf90c6424166",
             "fixture_id": "nctssos_trace_medium",
             "dag_present": true
         },

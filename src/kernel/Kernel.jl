@@ -1360,6 +1360,25 @@ function BlockDiagonalizationCertificate(problem_hash::AbstractString,
                                          original_matrix::SparseSymmetricRationalMatrix,
                                          reconstructed_matrix::SparseSymmetricRationalMatrix;
                                          projector_matrices::AbstractVector{SparseSymmetricRationalMatrix}=projection_blocks)
+    projector_payload = [sparse_matrix_json(block) for block in projector_matrices]
+    idempotence_hash = _sha256_payload((;
+        theorem="projector_idempotence",
+        projectors=projector_payload))
+    orthogonality_hash = _sha256_payload((;
+        theorem="projector_orthogonality",
+        projectors=projector_payload))
+    completeness_hash = _sha256_payload((;
+        theorem="projector_completeness",
+        dimension=original_matrix.n,
+        projectors=projector_payload))
+    reconstruction_hash = reconstructed_matrix.hash
+    psd_transfer_hash = _sha256_payload((;
+        theorem="symmetry_psd_transfer",
+        original_matrix=sparse_matrix_json(original_matrix),
+        dependencies=sort(String[idempotence_hash,
+                                 orthogonality_hash,
+                                 completeness_hash,
+                                 reconstruction_hash])))
     nodes = ProofNode[
         ProofNode(:symmetry_group, :hash, String[], group.action_hash,
                   :symmetry_group_hash, :accepted;
@@ -1370,21 +1389,52 @@ function BlockDiagonalizationCertificate(problem_hash::AbstractString,
                   typed_payload=Dict(:orbit_basis => orbit_basis_json(orbit_basis),
                                      :group_hash => group.action_hash),
                   obligation_id=:symmetry_orbit_partition),
-        ProofNode(:block_reconstruction, :exact_identity,
+        ProofNode(:projector_idempotence, :exact_identity,
                   [orbit_basis.orbit_hash],
-                  reconstructed_matrix.hash,
+                  idempotence_hash,
+                  :check_symmetry_projector_idempotence, :accepted;
+                  typed_payload=Dict(:projection_blocks => projector_payload),
+                  obligation_id=:symmetry_projector_idempotence),
+        ProofNode(:projector_orthogonality, :exact_identity,
+                  [orbit_basis.orbit_hash],
+                  orthogonality_hash,
+                  :check_symmetry_projector_orthogonality, :accepted;
+                  typed_payload=Dict(:projection_blocks => projector_payload),
+                  obligation_id=:symmetry_projector_orthogonality),
+        ProofNode(:projector_completeness, :exact_identity,
+                  [idempotence_hash, orthogonality_hash],
+                  completeness_hash,
+                  :check_symmetry_projector_completeness, :accepted;
+                  typed_payload=Dict(:projector_matrices => projector_payload,
+                                     :dimension => original_matrix.n),
+                  obligation_id=:symmetry_projector_completeness),
+        ProofNode(:block_reconstruction, :exact_identity,
+                  [orbit_basis.orbit_hash, completeness_hash],
+                  reconstruction_hash,
                   :verify_block_diagonalization_certificate, :accepted;
-                  typed_payload=Dict(:reconstruction_hash => reconstructed_matrix.hash,
+                  typed_payload=Dict(:reconstruction_hash => reconstruction_hash,
                                      :projection_blocks => [sparse_matrix_json(block)
                                                             for block in projection_blocks],
-                                     :projector_matrices => [sparse_matrix_json(block)
-                                                             for block in projector_matrices],
+                                     :projector_matrices => projector_payload,
                                      :projector_semantics => true,
                                      :original_matrix => sparse_matrix_json(original_matrix),
                                      :reconstructed_matrix => sparse_matrix_json(reconstructed_matrix),
                                      :group => symmetry_group_json(group),
                                      :orbit_basis => orbit_basis_json(orbit_basis)),
                   obligation_id=:symmetry_block_reconstruction),
+        ProofNode(:psd_transfer_theorem, :theorem_replay,
+                  [idempotence_hash,
+                   orthogonality_hash,
+                   completeness_hash,
+                   reconstruction_hash],
+                  psd_transfer_hash,
+                  :check_symmetry_psd_transfer, :accepted;
+                  typed_payload=Dict(:projector_idempotence_hash => idempotence_hash,
+                                     :projector_orthogonality_hash => orthogonality_hash,
+                                     :projector_completeness_hash => completeness_hash,
+                                     :block_reconstruction_hash => reconstruction_hash,
+                                     :original_matrix => sparse_matrix_json(original_matrix)),
+                  obligation_id=:symmetry_psd_transfer),
     ]
     dag = CertificateDAG(:symmetry_reduction, nodes, "",
                          CERTSDP3_SCHEMA_VERSION)
@@ -1552,6 +1602,24 @@ end
 
 function nc_term_json(term::Tuple{Vector{Symbol}, Rational{BigInt}})
     return (; word=String.(term[1]), coefficient=rational_string(term[2]))
+end
+
+function npa_relation_system_hash(relations::AbstractVector{<:AbstractQuantumRelation})
+    return _sha256_payload([quantum_relation_json(relation) for relation in relations])
+end
+
+function npa_moment_entry_output_hash(row_index::Integer,
+                                      col_index::Integer,
+                                      block_id::AbstractString,
+                                      normal_form::AbstractVector{Symbol},
+                                      matrix_entry::Rational{BigInt})
+    return _sha256_payload((;
+        row_index=Int(row_index),
+        col_index=Int(col_index),
+        block_id=String(block_id),
+        normal_form=String.(normal_form),
+        matrix_entry=rational_string(matrix_entry),
+    ))
 end
 
 function nc_moment_certificate_hash(cert::NCMomentMatrixCertificate)
@@ -2529,22 +2597,25 @@ function make_primal_dual_optimality_certificate(problem_hash::AbstractString,
                                                  dual::DualFeasibilityCertificate;
                                                  gap=primal.objective_value - dual.objective_value)
     gap_value = _to_big_rational(gap, "gap")
+    primal_legacy_hash = _sha256_payload((; role="legacy_primal_without_problem",
+                                           payload=primal_feasibility_json(primal)))
+    dual_legacy_hash = _sha256_payload((; role="legacy_dual_without_problem",
+                                         payload=dual_feasibility_json(dual)))
     nodes = ProofNode[
         ProofNode(:primal_affine, :exact_equality, String[],
-                  _sha256_payload(primal_feasibility_json(primal)),
+                  primal_legacy_hash,
                   :verify_primal_affine, :accepted;
-                  typed_payload=Dict(:primal_hash => _sha256_payload(primal_feasibility_json(primal)),
+                  typed_payload=Dict(:primal_hash => primal_legacy_hash,
                                      :primal => primal_feasibility_json(primal)),
                   obligation_id=:primal_affine_map),
         ProofNode(:dual_affine, :exact_equality, String[],
-                  _sha256_payload(dual_feasibility_json(dual)),
+                  dual_legacy_hash,
                   :verify_dual_affine, :accepted;
-                  typed_payload=Dict(:dual_hash => _sha256_payload(dual_feasibility_json(dual)),
+                  typed_payload=Dict(:dual_hash => dual_legacy_hash,
                                      :dual => dual_feasibility_json(dual)),
                   obligation_id=:dual_affine_map),
         ProofNode(:objective_gap, :exact_equality,
-                  [_sha256_payload(primal_feasibility_json(primal)),
-                   _sha256_payload(dual_feasibility_json(dual))],
+                  [primal_legacy_hash, dual_legacy_hash],
                   _sha256_payload((; gap=rational_string(gap_value))),
                   :verify_exact_gap, :accepted;
                   typed_payload=Dict(:primal_objective => rational_string(primal.objective_value),
@@ -2630,6 +2701,8 @@ function make_primal_dual_optimality_certificate(problem::ExactConicProblem,
                   _sha256_payload((; gap=rational_string(gap_value))),
                   :verify_exact_gap, :accepted;
                   typed_payload=Dict(:problem => problem_payload,
+                                     :primal_vector => rational_string.(x),
+                                     :dual_variables => [sparse_matrix_json(matrix) for matrix in ys],
                                      :primal_objective => rational_string(primal_objective),
                                      :dual_objective => rational_string(dual_objective),
                                      :gap => rational_string(gap_value)),
@@ -2894,33 +2967,24 @@ function verify_primal_dual_optimality(cert::PrimalDualOptimalityCertificate)
                            "primal-dual certificate hash mismatch";
                            problem_hash=cert.problem_hash,
                            certificate_hash=cert.certificate_hash)
-        if !isnothing(cert.primal.problem) || !isnothing(cert.dual.problem)
-            cert.primal.problem === cert.dual.problem ||
-                (!isnothing(cert.primal.problem) && !isnothing(cert.dual.problem) &&
-                 cert.primal.problem.problem_hash == cert.dual.problem.problem_hash) ||
-                return _reject(:G, :primal_dual_optimality, :hash,
-                               :problem_hash,
-                               "primal and dual do not reference the same exact conic problem";
-                               problem_hash=cert.problem_hash,
-                               certificate_hash=cert.certificate_hash)
-            primal_problem_report = _verify_primal_from_problem(cert.primal)
-            isnothing(primal_problem_report) || return primal_problem_report
-            dual_problem_report = _verify_dual_from_problem(cert.dual)
-            isnothing(dual_problem_report) || return dual_problem_report
-        else
-            cert.primal.affine_lhs == cert.primal.affine_rhs ||
-                return _reject(:G, :primal_dual_optimality, :primal_affine,
-                               :primal_affine_constraints,
-                               "primal affine constraints do not match exactly";
-                               problem_hash=cert.problem_hash,
-                               certificate_hash=cert.certificate_hash)
-            cert.dual.affine_lhs == cert.dual.affine_rhs ||
-                return _reject(:G, :primal_dual_optimality, :dual_affine,
-                               :dual_affine_identity,
-                               "dual affine identity does not match exactly";
-                               problem_hash=cert.problem_hash,
-                               certificate_hash=cert.certificate_hash)
-        end
+        (!isnothing(cert.primal.problem) && !isnothing(cert.dual.problem)) ||
+            return _reject(:G, :primal_dual_optimality,
+                           :primal_dual_affine_map,
+                           :problem_data,
+                           "exact conic problem object is required; supplied lhs/rhs arrays are not proof";
+                           problem_hash=cert.problem_hash,
+                           certificate_hash=cert.certificate_hash)
+        cert.primal.problem === cert.dual.problem ||
+            cert.primal.problem.problem_hash == cert.dual.problem.problem_hash ||
+            return _reject(:G, :primal_dual_optimality, :hash,
+                           :problem_hash,
+                           "primal and dual do not reference the same exact conic problem";
+                           problem_hash=cert.problem_hash,
+                           certificate_hash=cert.certificate_hash)
+        primal_problem_report = _verify_primal_from_problem(cert.primal)
+        isnothing(primal_problem_report) || return primal_problem_report
+        dual_problem_report = _verify_dual_from_problem(cert.dual)
+        isnothing(dual_problem_report) || return dual_problem_report
         length(cert.primal.cone_matrices) == length(cert.primal.cone_proofs) ||
             return _reject(:G, :primal_dual_optimality, :primal_cone,
                            :primal_cone_count,
@@ -2951,9 +3015,7 @@ function verify_primal_dual_optimality(cert::PrimalDualOptimalityCertificate)
                                       block_id=Symbol("dual_cone_", i),
                                       certificate_hash=cert.certificate_hash)
         end
-        expected_gap = isnothing(cert.primal.problem) ?
-                       cert.primal.objective_value - cert.dual.objective_value :
-                       _conic_gap(cert.primal.problem,
+        expected_gap = _conic_gap(cert.primal.problem,
                                   cert.primal.objective_value,
                                   cert.dual.objective_value)
         expected_gap == cert.gap ||
@@ -2990,6 +3052,13 @@ function verify_farkas_infeasibility(cert::FarkasInfeasibilityCertificate)
             return _reject(:G, :farkas_infeasibility, :hash,
                            :certificate_hash,
                            "Farkas certificate hash mismatch";
+                           problem_hash=cert.problem_hash,
+                           certificate_hash=cert.certificate_hash)
+        isnothing(cert.problem) &&
+            return _reject(:G, :farkas_infeasibility,
+                           :farkas_problem_data,
+                           :problem_data,
+                           "exact conic problem object is required; supplied lhs/rhs arrays are not proof";
                            problem_hash=cert.problem_hash,
                            certificate_hash=cert.certificate_hash)
         problem_report = _verify_farkas_from_problem(cert)
@@ -3099,6 +3168,62 @@ function NCMomentMatrixCertificate(problem::NPAProblem,
                                      nc_moment_certificate_hash(cert0))
 end
 
+function _npa_moment_entry_records(problem::NPAProblem,
+                                   cert::NCMomentMatrixCertificate)
+    entries = sort!(collect(entries_dict(cert.moment_matrix)); by=item -> (item[1][1], item[1][2]))
+    length(entries) == length(cert.witnesses) ||
+        throw(ArgumentError("moment certificate witness count $(length(cert.witnesses)) does not cover every declared moment entry $(length(entries))"))
+    used = Set{Int}()
+    records = Vector{NamedTuple}()
+    relation_hash = npa_relation_system_hash(problem.relations)
+    for ((row_index, col_index), value) in entries
+        row_word = problem.word_basis[row_index]
+        col_word = problem.word_basis[col_index]
+        adjoint_row = reverse([_star_symbol(symbol) for symbol in row_word])
+        product_word = vcat(adjoint_row, col_word)
+        matches = findall(witness -> witness.input_word == product_word, cert.witnesses)
+        length(matches) == 1 ||
+            throw(ArgumentError("moment entry ($row_index,$col_index) does not have exactly one rewrite witness"))
+        witness_index = only(matches)
+        witness_index in used &&
+            throw(ArgumentError("rewrite witness $witness_index is reused across moment entries"))
+        push!(used, witness_index)
+        witness = cert.witnesses[witness_index]
+        report = verify_nc_rewrite_witness(witness, problem.relations)
+        report.accepted ||
+            throw(ArgumentError("moment entry ($row_index,$col_index) witness rejected: $(report.reason)"))
+        block_id = "moment_block_1"
+        output_hash = npa_moment_entry_output_hash(row_index, col_index,
+                                                   block_id,
+                                                   witness.final_word,
+                                                   value)
+        payload = Dict{Symbol, Any}(
+            :row_index => row_index,
+            :col_index => col_index,
+            :row_word => String.(row_word),
+            :col_word => String.(col_word),
+            :adjoint_row_word => String.(adjoint_row),
+            :product_word => String.(product_word),
+            :relations => [quantum_relation_json(relation) for relation in problem.relations],
+            :relation_system_hash => relation_hash,
+            :rewrite_witness_id => "witness_$witness_index",
+            :rewrite_witness => nc_rewrite_witness_json(witness),
+            :expected_normal_form => String.(witness.final_word),
+            :expected_moment_value => rational_string(value),
+            :matrix_entry_value => rational_string(value),
+            :block_id => block_id,
+        )
+        push!(records, (row_index=row_index,
+                        col_index=col_index,
+                        witness_index=witness_index,
+                        output_hash=output_hash,
+                        payload=payload))
+    end
+    length(used) == length(cert.witnesses) ||
+        throw(ArgumentError("moment certificate contains rewrite witnesses not tied to declared matrix entries"))
+    return records
+end
+
 function make_quantum_bound_certificate(problem::NPAProblem,
                                         moment_certificate::NCMomentMatrixCertificate,
                                         objective_terms,
@@ -3111,6 +3236,20 @@ function make_quantum_bound_certificate(problem::NPAProblem,
                      _to_big_rational(term[2], "quantum_objective_terms[$i]")))
     end
     bound_value = _to_big_rational(bound, "quantum_bound")
+    entry_records = _npa_moment_entry_records(problem, moment_certificate)
+    entry_nodes = ProofNode[
+        ProofNode(Symbol("npa_moment_entry_$(record.row_index)_$(record.col_index)"),
+                  :npa_moment_entry,
+                  [problem.problem_hash, moment_certificate.moment_matrix.hash],
+                  record.output_hash,
+                  :check_npa_moment_entry,
+                  :accepted;
+                  typed_payload=record.payload,
+                  arithmetic_mode=:symbolic_sparse,
+                  obligation_id=Symbol("npa_moment_entry_$(record.row_index)_$(record.col_index)"))
+        for record in entry_records
+    ]
+    entry_hashes = [record.output_hash for record in entry_records]
     nodes = ProofNode[
         ProofNode(:npa_problem, :hash, String[],
                   problem.problem_hash, :npa_problem_hash, :accepted;
@@ -3139,18 +3278,8 @@ function make_quantum_bound_certificate(problem::NPAProblem,
                   typed_payload=Dict(:matrix => sparse_matrix_json(moment_certificate.moment_matrix),
                                      :proof => low_rank_proof_json(moment_certificate.psd_proof)),
                   obligation_id=:moment_psd),
-        ProofNode(:moment_certificate, :npa_moment_matrix,
-                  [_sha256_payload([nc_rewrite_witness_json(witness)
-                                    for witness in moment_certificate.witnesses]),
-                   moment_certificate.psd_proof.identity_proof_hash],
-                  moment_certificate.certificate_hash,
-                  :check_npa_moment_entry, :accepted;
-                  typed_payload=Dict(:problem => npa_problem_json(problem),
-                                     :moment_certificate => nc_moment_certificate_json(moment_certificate)),
-                  arithmetic_mode=:symbolic_sparse,
-                  obligation_id=:npa_moment_entries),
         ProofNode(:objective_bound, :exact_equality,
-                  [moment_certificate.certificate_hash],
+                  entry_hashes,
                   _sha256_payload((; objective=[nc_term_json(term)
                                                 for term in terms],
                                      bound=rational_string(bound_value))),
@@ -3158,10 +3287,12 @@ function make_quantum_bound_certificate(problem::NPAProblem,
                   typed_payload=Dict(:problem => npa_problem_json(problem),
                                      :moment_certificate => nc_moment_certificate_json(moment_certificate),
                                      :objective_terms => [nc_term_json(term) for term in terms],
-                                     :bound => rational_string(bound_value)),
+                                     :bound => rational_string(bound_value),
+                                     :moment_entry_hashes => entry_hashes),
                   arithmetic_mode=:symbolic_sparse,
                   obligation_id=:npa_objective_functional),
     ]
+    nodes = vcat(nodes[1:4], entry_nodes, nodes[5:end])
     dag = CertificateDAG(:quantum_bound, nodes, "", CERTSDP3_SCHEMA_VERSION)
     cert0 = QuantumBoundCertificate(problem, moment_certificate, terms,
                                     bound_value, "", dag)

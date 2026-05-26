@@ -143,7 +143,7 @@
         ]
     },
     "problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
-    "certificate_hash": "sha256:58dff826cd789683aadfb3d081bd43e3737503eb1d4600cc3a5261a2f1f3df16",
+    "certificate_hash": "sha256:6f4233e2d7c84827d498f65590473c9a1aa7ac955ef5a71c36922831f78263a9",
     "proof_dag": {
         "claim_type": "primal_dual_optimality",
         "nodes": [
@@ -1569,6 +1569,62 @@
                 "typed_payload": {
                     "dual_objective": "0",
                     "primal_objective": "0",
+                    "dual_variables": [
+                        {
+                            "n": 2,
+                            "hash": "sha256:c7a2ec856c8cb5864c2b5624163e9c2a9f543a9d6767166516a364dd477947f7",
+                            "entries": [
+                                {
+                                    "value": "2",
+                                    "j": 1,
+                                    "i": 1
+                                }
+                            ]
+                        },
+                        {
+                            "n": 2,
+                            "hash": "sha256:ffd6e1a478d10043107a5544c2aa3b987bcf18a269921f3496c056ac0ab618f2",
+                            "entries": [
+                                {
+                                    "value": "3",
+                                    "j": 2,
+                                    "i": 2
+                                }
+                            ]
+                        },
+                        {
+                            "n": 2,
+                            "hash": "sha256:80170c5bdb970468f85b2480e5fb04ed87c8cf76ed867619a4d76099d9065dab",
+                            "entries": [
+                                {
+                                    "value": "1",
+                                    "j": 1,
+                                    "i": 1
+                                }
+                            ]
+                        },
+                        {
+                            "n": 2,
+                            "hash": "sha256:91375c9e7ff0c8a73c03ad3f6eca9bbc7983cb36dd33166e53400bb82f7e7f23",
+                            "entries": [
+                                {
+                                    "value": "2",
+                                    "j": 2,
+                                    "i": 2
+                                }
+                            ]
+                        }
+                    ],
+                    "primal_vector": [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
                     "problem": {
                         "problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
                         "dual_objective_coefficients": [
@@ -2141,7 +2197,7 @@
                 ]
             }
         ],
-        "root_hash": "sha256:f70af07e86d6a1fbf96e5ded4fde763001c259c9898ac68eab9a0e907ba1d30f",
+        "root_hash": "sha256:0035d4da4a945f65d5ab3f4254ea886ce8291bfea3427fb99a2114b581bea8c5",
         "object_store": {
             "sha256:1df47aa8355dd0aaf2799c2d2f603bd97415f209cdc04efe6bd4de27e23e4505": {
                 "kind": "exact_equality",
@@ -2149,6 +2205,62 @@
                 "payload": {
                     "dual_objective": "0",
                     "primal_objective": "0",
+                    "dual_variables": [
+                        {
+                            "n": 2,
+                            "hash": "sha256:c7a2ec856c8cb5864c2b5624163e9c2a9f543a9d6767166516a364dd477947f7",
+                            "entries": [
+                                {
+                                    "value": "2",
+                                    "j": 1,
+                                    "i": 1
+                                }
+                            ]
+                        },
+                        {
+                            "n": 2,
+                            "hash": "sha256:ffd6e1a478d10043107a5544c2aa3b987bcf18a269921f3496c056ac0ab618f2",
+                            "entries": [
+                                {
+                                    "value": "3",
+                                    "j": 2,
+                                    "i": 2
+                                }
+                            ]
+                        },
+                        {
+                            "n": 2,
+                            "hash": "sha256:80170c5bdb970468f85b2480e5fb04ed87c8cf76ed867619a4d76099d9065dab",
+                            "entries": [
+                                {
+                                    "value": "1",
+                                    "j": 1,
+                                    "i": 1
+                                }
+                            ]
+                        },
+                        {
+                            "n": 2,
+                            "hash": "sha256:91375c9e7ff0c8a73c03ad3f6eca9bbc7983cb36dd33166e53400bb82f7e7f23",
+                            "entries": [
+                                {
+                                    "value": "2",
+                                    "j": 2,
+                                    "i": 2
+                                }
+                            ]
+                        }
+                    ],
+                    "primal_vector": [
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0"
+                    ],
                     "problem": {
                         "problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
                         "dual_objective_coefficients": [

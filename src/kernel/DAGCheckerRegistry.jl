@@ -343,8 +343,9 @@ function _symmetry_projector_idempotence_checker(node, dag)
             _matrix_entries_equal_full(product, block) ||
                 return _bad("projector $i is not idempotent")
         end
-        return _ok(Kernel._sha256_payload([Kernel.sparse_matrix_json(block)
-                                           for block in blocks]))
+        return _ok(Kernel._sha256_payload((;
+            theorem="projector_idempotence",
+            projectors=[Kernel.sparse_matrix_json(block) for block in blocks])))
     catch err
         return _bad(sprint(showerror, err))
     end
@@ -363,8 +364,31 @@ function _symmetry_projector_orthogonality_checker(node, dag)
             product = _matrix_product_entries(blocks[i], blocks[j])
             isempty(product) || return _bad("projectors $i and $j are not orthogonal")
         end
-        return _ok(Kernel._sha256_payload([Kernel.sparse_matrix_json(block)
-                                           for block in blocks]))
+        return _ok(Kernel._sha256_payload((;
+            theorem="projector_orthogonality",
+            projectors=[Kernel.sparse_matrix_json(block) for block in blocks])))
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _symmetry_projector_completeness_checker(node, dag)
+    missing = _payload_required(node, [:projector_matrices, :dimension])
+    isnothing(missing) || return _bad(missing)
+    try
+        n = Int(node.typed_payload[:dimension])
+        projectors = Kernel.SparseSymmetricRationalMatrix[
+            Kernel.parse_sparse_matrix_object(block; strict=true,
+                                              path="dag.$(node.id).projector_matrices[$i]")
+            for (i, block) in enumerate(_json_object(node.typed_payload[:projector_matrices]))
+        ]
+        summed = Kernel._sum_sparse_matrices(projectors, n)
+        Kernel._matrix_equal(summed, Kernel._identity_matrix(n)) ||
+            return _bad("projectors do not sum to identity")
+        return _ok(Kernel._sha256_payload((;
+            theorem="projector_completeness",
+            dimension=n,
+            projectors=[Kernel.sparse_matrix_json(block) for block in projectors])))
     catch err
         return _bad(sprint(showerror, err))
     end
@@ -442,10 +466,55 @@ function _symmetry_group_hash_checker(node, dag)
     isnothing(missing) || return _bad(missing)
     try
         group = Kernel._parse_symmetry_group_object(_json_object(node.typed_payload[:group]))
+        _symmetry_generated_group(group)
         return _ok(Kernel.symmetry_group_hash(group))
     catch err
         return _bad(sprint(showerror, err))
     end
+end
+
+function _compose_perm(a::Vector{Int}, b::Vector{Int})
+    length(a) == length(b) || throw(DimensionMismatch("permutation dimensions differ"))
+    return [a[b[i]] for i in eachindex(a)]
+end
+
+function _identity_perm(n::Int)
+    return collect(1:n)
+end
+
+function _symmetry_generated_group(group::Kernel.SymmetryGroupCertificate)
+    n = length(group.variables)
+    generators = [generator.image for generator in group.generators]
+    all(sort(generator) == collect(1:n) for generator in generators) ||
+        throw(ArgumentError("symmetry generator is not a permutation"))
+    id = _identity_perm(n)
+    seen = Set{Tuple{Vararg{Int}}}()
+    queue = Vector{Vector{Int}}([id])
+    while !isempty(queue)
+        current = popfirst!(queue)
+        key = Tuple(current)
+        key in seen && continue
+        push!(seen, key)
+        for generator in generators
+            composed = _compose_perm(generator, current)
+            Tuple(composed) in seen || push!(queue, composed)
+        end
+        length(seen) > 10000 &&
+            throw(ArgumentError("generated symmetry group is too large for fixture replay"))
+    end
+    id_key = Tuple(id)
+    id_key in seen || throw(ArgumentError("generated symmetry group lacks identity"))
+    elements = [collect(key) for key in seen]
+    for a in elements, b in elements
+        Tuple(_compose_perm(a, b)) in seen ||
+            throw(ArgumentError("generated symmetry group is not closed"))
+    end
+    for a in elements
+        any(b -> _compose_perm(a, b) == id && _compose_perm(b, a) == id,
+            elements) ||
+            throw(ArgumentError("generated symmetry group element lacks inverse"))
+    end
+    return elements
 end
 
 function _orbit_basis_hash_checker(node, dag)
@@ -693,6 +762,17 @@ function _quantum_objective_checker(node, dag)
             return _bad("quantum objective is not reconstructed from moment coefficients")
         Kernel._objective_from_verified_moments(objective, verified_values) == bound ||
             return _bad("quantum objective bound does not replay from verified moment entries")
+        moment_entry_hashes = haskey(node.typed_payload, :moment_entry_hashes) ?
+                              String.(node.typed_payload[:moment_entry_hashes]) :
+                              String[]
+        isempty(moment_entry_hashes) &&
+            return _bad("quantum objective checker must declare moment-entry dependencies")
+        Set(moment_entry_hashes) == Set(node.inputs) ||
+            return _bad("quantum objective dependency list does not match moment-entry nodes")
+        entry_nodes = [proof_node for proof_node in dag.nodes
+                       if proof_node.kind === :npa_moment_entry]
+        Set(n.output_hash for n in entry_nodes) == Set(moment_entry_hashes) ||
+            return _bad("quantum objective does not depend on every NPA moment-entry node")
         expected = Kernel._sha256_payload((;
             objective=[Kernel.nc_term_json(term) for term in objective],
             bound=Kernel.rational_string(bound)))
@@ -702,21 +782,58 @@ function _quantum_objective_checker(node, dag)
     end
 end
 
-function _moment_certificate_checker(node, dag)
-    missing = _payload_required(node, [:problem, :moment_certificate])
+function _moment_entry_checker(node, dag)
+    missing = _payload_required(node, [:row_index, :col_index, :row_word,
+                                       :col_word, :adjoint_row_word,
+                                       :product_word, :relations,
+                                       :relation_system_hash,
+                                       :rewrite_witness_id,
+                                       :rewrite_witness,
+                                       :expected_normal_form,
+                                       :expected_moment_value,
+                                       :matrix_entry_value,
+                                       :block_id])
     isnothing(missing) || return _bad(missing)
     try
-        problem = Kernel._parse_npa_problem_object(_json_object(node.typed_payload[:problem]))
-        cert = Kernel._parse_nc_moment_certificate_object(_json_object(node.typed_payload[:moment_certificate]),
-                                                          problem)
-        report = Kernel.verify_low_rank_psd(cert.moment_matrix, cert.psd_proof)
+        row_index = Int(node.typed_payload[:row_index])
+        col_index = Int(node.typed_payload[:col_index])
+        row_word = Symbol.(String.(node.typed_payload[:row_word]))
+        col_word = Symbol.(String.(node.typed_payload[:col_word]))
+        adjoint_row = Symbol.(String.(node.typed_payload[:adjoint_row_word]))
+        product_word = Symbol.(String.(node.typed_payload[:product_word]))
+        expected_normal = Symbol.(String.(node.typed_payload[:expected_normal_form]))
+        expected_value = Kernel._parse_rational_string(node.typed_payload[:expected_moment_value],
+                                                       "dag.$(node.id).expected_moment_value")
+        matrix_value = Kernel._parse_rational_string(node.typed_payload[:matrix_entry_value],
+                                                     "dag.$(node.id).matrix_entry_value")
+        relations = Kernel.AbstractQuantumRelation[
+            Kernel._parse_quantum_relation_object(relation,
+                                                  "dag.$(node.id).relations[$i]")
+            for (i, relation) in enumerate(_json_object(node.typed_payload[:relations]))
+        ]
+        relation_hash = Kernel.npa_relation_system_hash(relations)
+        String(node.typed_payload[:relation_system_hash]) == relation_hash ||
+            return _bad("moment entry relation system hash mismatch")
+        computed_adjoint = reverse([Kernel._star_symbol(symbol) for symbol in row_word])
+        computed_adjoint == adjoint_row ||
+            return _bad("moment entry adjoint(row_word) mismatch")
+        vcat(computed_adjoint, col_word) == product_word ||
+            return _bad("moment entry product word mismatch")
+        witness = Kernel._parse_nc_rewrite_witness_object(_json_object(node.typed_payload[:rewrite_witness]),
+                                                          "dag.$(node.id).rewrite_witness")
+        witness.input_word == product_word ||
+            return _bad("moment entry witness input does not match adjoint(row)*col")
+        report = Kernel.verify_nc_rewrite_witness(witness, relations)
         report.accepted || return _bad(report.reason)
-        for witness in cert.witnesses
-            wreport = Kernel.verify_nc_rewrite_witness(witness, problem.relations)
-            wreport.accepted || return _bad(wreport.reason)
-        end
-        Kernel._verified_moment_entries(problem, cert)
-        return _ok(Kernel.nc_moment_certificate_hash(cert))
+        witness.final_word == expected_normal ||
+            return _bad("moment entry witness final word does not match expected normal form")
+        expected_value == matrix_value ||
+            return _bad("moment entry expected value does not match matrix entry")
+        return _ok(Kernel.npa_moment_entry_output_hash(row_index,
+                                                       col_index,
+                                                       String(node.typed_payload[:block_id]),
+                                                       expected_normal,
+                                                       matrix_value))
     catch err
         return _bad(sprint(showerror, err))
     end
@@ -755,23 +872,19 @@ function _primal_affine_checker(node, dag)
                   Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
                                                            "dag.$(node.id).problem") :
                   nothing
+        isnothing(problem) && return _bad("stage=:primal_dual_affine_map exact conic problem object missing")
         primal = Kernel._parse_primal_feasibility_object(_json_object(node.typed_payload[:primal]),
                                                          "dag.$(node.id).primal")
-        if !isnothing(problem)
-            primal = Kernel.PrimalFeasibilityCertificate(primal.problem_hash,
-                                                         problem,
-                                                         primal.primal_vector,
-                                                         primal.affine_lhs,
-                                                         primal.affine_rhs,
-                                                         primal.cone_matrices,
-                                                         primal.cone_proofs,
-                                                         primal.objective_value)
-            report = Kernel._verify_primal_from_problem(primal)
-            isnothing(report) || return _bad(report.reason)
-        else
-            primal.affine_lhs == primal.affine_rhs ||
-                return _bad("primal affine constraints do not match exactly")
-        end
+        primal = Kernel.PrimalFeasibilityCertificate(primal.problem_hash,
+                                                     problem,
+                                                     primal.primal_vector,
+                                                     primal.affine_lhs,
+                                                     primal.affine_rhs,
+                                                     primal.cone_matrices,
+                                                     primal.cone_proofs,
+                                                     primal.objective_value)
+        report = Kernel._verify_primal_from_problem(primal)
+        isnothing(report) || return _bad(report.reason)
         for (matrix, proof) in zip(primal.cone_matrices, primal.cone_proofs)
             report = Kernel.verify_low_rank_psd(matrix, proof)
             report.accepted || return _bad(report.reason)
@@ -790,23 +903,19 @@ function _dual_affine_checker(node, dag)
                   Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
                                                            "dag.$(node.id).problem") :
                   nothing
+        isnothing(problem) && return _bad("stage=:primal_dual_affine_map exact conic problem object missing")
         dual = Kernel._parse_dual_feasibility_object(_json_object(node.typed_payload[:dual]),
                                                      "dag.$(node.id).dual")
-        if !isnothing(problem)
-            dual = Kernel.DualFeasibilityCertificate(dual.problem_hash,
-                                                     problem,
-                                                     dual.dual_variables,
-                                                     dual.affine_lhs,
-                                                     dual.affine_rhs,
-                                                     dual.cone_matrices,
-                                                     dual.cone_proofs,
-                                                     dual.objective_value)
-            report = Kernel._verify_dual_from_problem(dual)
-            isnothing(report) || return _bad(report.reason)
-        else
-            dual.affine_lhs == dual.affine_rhs ||
-                return _bad("dual affine identity does not match exactly")
-        end
+        dual = Kernel.DualFeasibilityCertificate(dual.problem_hash,
+                                                 problem,
+                                                 dual.dual_variables,
+                                                 dual.affine_lhs,
+                                                 dual.affine_rhs,
+                                                 dual.cone_matrices,
+                                                 dual.cone_proofs,
+                                                 dual.objective_value)
+        report = Kernel._verify_dual_from_problem(dual)
+        isnothing(report) || return _bad(report.reason)
         for (matrix, proof) in zip(dual.cone_matrices, dual.cone_proofs)
             report = Kernel.verify_low_rank_psd(matrix, proof)
             report.accepted || return _bad(report.reason)
@@ -825,19 +934,21 @@ function _farkas_identity_checker(node, dag)
                       for (i, value) in enumerate(node.typed_payload[:lhs])]
         rhs_values = [Kernel._parse_rational_string(value, "dag.$(node.id).rhs[$i]")
                       for (i, value) in enumerate(node.typed_payload[:rhs])]
-        if haskey(node.typed_payload, :problem)
-            problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
-                                                               "dag.$(node.id).problem")
-            dual_variables = Kernel.SparseSymmetricRationalMatrix[
-                Kernel.parse_sparse_matrix_object(matrix; strict=true,
-                                                  path="dag.$(node.id).dual_variables[$i]")
-                for (i, matrix) in enumerate(_json_object(node.typed_payload[:dual_variables]))
-            ]
-            lhs_values == Kernel._conic_dual_adjoint(problem, dual_variables) ||
-                return _bad("Farkas identity lhs was not reconstructed from A*(y)")
-            rhs_values == problem.objective ||
-                return _bad("Farkas identity rhs does not match problem objective")
-        end
+        haskey(node.typed_payload, :problem) ||
+            return _bad("stage=:farkas_problem_data exact conic problem object missing")
+        haskey(node.typed_payload, :dual_variables) ||
+            return _bad("stage=:farkas_problem_data Farkas dual variables missing")
+        problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
+                                                           "dag.$(node.id).problem")
+        dual_variables = Kernel.SparseSymmetricRationalMatrix[
+            Kernel.parse_sparse_matrix_object(matrix; strict=true,
+                                              path="dag.$(node.id).dual_variables[$i]")
+            for (i, matrix) in enumerate(_json_object(node.typed_payload[:dual_variables]))
+        ]
+        lhs_values == Kernel._conic_dual_adjoint(problem, dual_variables) ||
+            return _bad("Farkas identity lhs was not reconstructed from A*(y)")
+        rhs_values == problem.objective ||
+            return _bad("Farkas identity rhs does not match problem objective")
         lhs_values == rhs_values || return _bad("Farkas identity lhs/rhs mismatch")
         return _ok(Kernel._sha256_payload((;
             lhs=Kernel.rational_string.(lhs_values),
@@ -857,14 +968,30 @@ function _exact_gap_checker(node, dag)
                                              "dag.$(node.id).dual_objective")
         gap = Kernel._parse_rational_string(node.typed_payload[:gap],
                                             "dag.$(node.id).gap")
-        if haskey(node.typed_payload, :problem)
-            problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
-                                                               "dag.$(node.id).problem")
-            Kernel._conic_gap(problem, primal, dual) == gap ||
-                return _bad("objective gap does not equal sense-correct primal-dual difference")
-        else
-            primal - dual == gap || return _bad("objective gap does not equal primal-dual difference")
-        end
+        haskey(node.typed_payload, :problem) ||
+            return _bad("stage=:primal_dual_affine_map exact conic problem object missing")
+        haskey(node.typed_payload, :primal_vector) ||
+            return _bad("stage=:primal_dual_affine_map primal vector missing from gap replay")
+        haskey(node.typed_payload, :dual_variables) ||
+            return _bad("stage=:primal_dual_affine_map dual variables missing from gap replay")
+        problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
+                                                           "dag.$(node.id).problem")
+        primal_vector = [Kernel._parse_rational_string(value,
+                                                       "dag.$(node.id).primal_vector[$i]")
+                         for (i, value) in enumerate(node.typed_payload[:primal_vector])]
+        dual_variables = Kernel.SparseSymmetricRationalMatrix[
+            Kernel.parse_sparse_matrix_object(matrix; strict=true,
+                                              path="dag.$(node.id).dual_variables[$i]")
+            for (i, matrix) in enumerate(_json_object(node.typed_payload[:dual_variables]))
+        ]
+        computed_primal = Kernel._conic_primal_objective(problem, primal_vector)
+        computed_dual = Kernel._conic_dual_objective(problem, dual_variables)
+        primal == computed_primal ||
+            return _bad("primal objective was not reconstructed from c'x")
+        dual == computed_dual ||
+            return _bad("dual objective was not reconstructed from <B,y>")
+        Kernel._conic_gap(problem, computed_primal, computed_dual) == gap ||
+            return _bad("objective gap does not equal sense-correct primal-dual difference")
         return _ok(Kernel._sha256_payload((; gap=Kernel.rational_string(gap))))
     catch err
         return _bad(sprint(showerror, err))
@@ -877,17 +1004,19 @@ function _farkas_contradiction_checker(node, dag)
     try
         lhs = Kernel._parse_rational_string(node.typed_payload[:lhs], "dag.$(node.id).lhs")
         rhs = Kernel._parse_rational_string(node.typed_payload[:rhs], "dag.$(node.id).rhs")
-        if haskey(node.typed_payload, :problem)
-            problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
-                                                               "dag.$(node.id).problem")
-            dual_variables = Kernel.SparseSymmetricRationalMatrix[
-                Kernel.parse_sparse_matrix_object(matrix; strict=true,
-                                                  path="dag.$(node.id).dual_variables[$i]")
-                for (i, matrix) in enumerate(_json_object(node.typed_payload[:dual_variables]))
-            ]
-            rhs == Kernel._conic_dual_objective(problem, dual_variables) ||
-                return _bad("Farkas contradiction scalar was not reconstructed from <B,y>")
-        end
+        haskey(node.typed_payload, :problem) ||
+            return _bad("stage=:farkas_problem_data exact conic problem object missing")
+        haskey(node.typed_payload, :dual_variables) ||
+            return _bad("stage=:farkas_problem_data Farkas dual variables missing")
+        problem = Kernel._parse_exact_conic_problem_object(_json_object(node.typed_payload[:problem]),
+                                                           "dag.$(node.id).problem")
+        dual_variables = Kernel.SparseSymmetricRationalMatrix[
+            Kernel.parse_sparse_matrix_object(matrix; strict=true,
+                                              path="dag.$(node.id).dual_variables[$i]")
+            for (i, matrix) in enumerate(_json_object(node.typed_payload[:dual_variables]))
+        ]
+        rhs == Kernel._conic_dual_objective(problem, dual_variables) ||
+            return _bad("Farkas contradiction scalar was not reconstructed from <B,y>")
         lhs == 0//1 && rhs < 0//1 ||
             return _bad("Farkas contradiction must have normalized form 0 <= negative")
         return _ok(Kernel._sha256_payload((; lhs=Kernel.rational_string(lhs),
@@ -931,6 +1060,34 @@ function _symmetry_reconstruction_checker(node, dag)
         original.entries == reconstructed.entries ||
             return _bad("block diagonal reconstruction does not match original matrix")
         return _ok(reconstructed.hash)
+    catch err
+        return _bad(sprint(showerror, err))
+    end
+end
+
+function _symmetry_psd_transfer_checker(node, dag)
+    missing = _payload_required(node, [:projector_idempotence_hash,
+                                       :projector_orthogonality_hash,
+                                       :projector_completeness_hash,
+                                       :block_reconstruction_hash,
+                                       :original_matrix])
+    isnothing(missing) || return _bad(missing)
+    try
+        for key in (:projector_idempotence_hash,
+                    :projector_orthogonality_hash,
+                    :projector_completeness_hash,
+                    :block_reconstruction_hash)
+            hash = String(node.typed_payload[key])
+            hash in node.inputs || return _bad("PSD transfer theorem missing dependency $(String(key))")
+            _is_sha256_hash(hash) || return _bad("PSD transfer theorem dependency $(String(key)) is not canonical")
+        end
+        original = Kernel.parse_sparse_matrix_object(_json_object(node.typed_payload[:original_matrix]);
+                                                     strict=true,
+                                                     path="dag.$(node.id).original_matrix")
+        return _ok(Kernel._sha256_payload((;
+            theorem="symmetry_psd_transfer",
+            original_matrix=Kernel.sparse_matrix_json(original),
+            dependencies=sort(String.(node.inputs)))))
     catch err
         return _bad(sprint(showerror, err))
     end
@@ -1012,7 +1169,7 @@ _register!(:check_sparse_sos_gram_expansion, _sos_checker)
 _register!(:check_putinar_localizing_identity, _sos_checker)
 _register!(:check_tssos_import_normalization, _tssos_import_normalization_checker)
 _register!(:check_nc_rewrite_step, _rewrite_witness_checker)
-_register!(:check_npa_moment_entry, _moment_certificate_checker)
+_register!(:check_npa_moment_entry, _moment_entry_checker)
 _register!(:check_npa_objective_functional, _quantum_objective_checker)
 _register!(:check_quantum_objective_bound, _quantum_objective_checker)
 _register!(:check_quantum_projection_relation, _quantum_projection_relation_checker)
@@ -1031,7 +1188,9 @@ _register!(:check_symmetry_group_closure, _symmetry_group_hash_checker)
 _register!(:check_symmetry_orbit_partition, _orbit_basis_hash_checker)
 _register!(:check_symmetry_projector_idempotence, _symmetry_projector_idempotence_checker)
 _register!(:check_symmetry_projector_orthogonality, _symmetry_projector_orthogonality_checker)
+_register!(:check_symmetry_projector_completeness, _symmetry_projector_completeness_checker)
 _register!(:check_symmetry_block_reconstruction, _symmetry_reconstruction_checker)
+_register!(:check_symmetry_psd_transfer, _symmetry_psd_transfer_checker)
 _register!(:check_bundle_manifest, _bundle_manifest_checker)
 _register!(:hash, _typed_hash_checker([:value]); semantics=:diagnostic_only)
 _register!(:final_accept, _final_accept_checker)

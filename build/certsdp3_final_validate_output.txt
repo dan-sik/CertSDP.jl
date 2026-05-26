@@ -1,0 +1,6 @@
+CERTSDP3_VALIDATION
+fixtures: 15
+accepted: 15
+total_runtime_seconds: 39.34
+peak_memory_mb: 1254.204
+result: PASS

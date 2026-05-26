@@ -44,6 +44,8 @@
         "bound" => "0",
         "provenance" => Dict("frontend" => "TSSOS",
                              "status" => "must_not_be_trusted"),
+        "frontend_metadata" => Dict("package" => "TSSOS-test"),
+        "solver_metadata" => Dict("solver_status" => "ignored"),
         "source_raw_hash" => "sha256:" * repeat("a", 64),
     )
     artifact["artifact_hash"] = "sha256:" * repeat("0", 64)

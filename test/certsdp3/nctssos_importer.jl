@@ -22,13 +22,16 @@
         "gram_blocks" => Any[],
         "coefficient_maps" => Any[
             Dict("block_id" => "moment_1",
-                 "terms" => Any[
-                     Dict("word" => ["A1", "A1"], "coefficient" => "1"),
-                     Dict("word" => ["A1", "B1"], "coefficient" => "1"),
+                "terms" => Any[
+                    Dict("word" => Any[], "coefficient" => "1"),
+                    Dict("word" => ["A1_star", "A1"], "coefficient" => "1"),
+                    Dict("word" => ["B1_star", "B1"], "coefficient" => "1"),
                  ])
         ],
-        "objective_bound" => "2",
+        "objective_bound" => "3",
         "provenance" => Dict("status" => "ignored"),
+        "frontend_metadata" => Dict("package" => "NCTSSOS-test"),
+        "solver_metadata" => Dict("solver_status" => "ignored"),
         "source_hash" => "sha256:" * repeat("3", 64),
     )
     matrix = K3.SparseSymmetricRationalMatrix(3, [(i, i, 1//1) for i in 1:3])
@@ -39,6 +42,26 @@
                "basis_id" => "basis_1",
                "moment_matrix" => K3.sparse_matrix_json(matrix),
                "psd_proof" => K3.low_rank_proof_json(proof)))
+    artifact["rewrite_witnesses"] = Any[
+        Dict("input_word" => Any[],
+             "steps" => Any[],
+             "final_word" => Any[],
+             "relation_ids_used" => Any[],
+             "trace_rotations" => Any[],
+             "star_steps" => Any[]),
+        Dict("input_word" => Any["A1_star", "A1"],
+             "steps" => Any[],
+             "final_word" => Any["A1_star", "A1"],
+             "relation_ids_used" => Any[],
+             "trace_rotations" => Any[],
+             "star_steps" => Any[]),
+        Dict("input_word" => Any["B1_star", "B1"],
+             "steps" => Any[],
+             "final_word" => Any["B1_star", "B1"],
+             "relation_ids_used" => Any[],
+             "trace_rotations" => Any[],
+             "star_steps" => Any[]),
+    ]
     artifact["artifact_hash"] = CertSDP.Adapters._artifact_hash(artifact)
     dir = mktempdir()
     path = joinpath(dir, "artifact.json")

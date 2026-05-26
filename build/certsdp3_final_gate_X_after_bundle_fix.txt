@@ -1,0 +1,22 @@
+CERTSDP_3_0_RELEASE_AUDIT
+environment:
+julia: 1.12.6
+cpu_threads: 1
+max_memory_gb: 12
+timeout_minutes: 30
+
+gates:
+X_paper_bundle: PASS score=10
+
+summary:
+accepted_fixtures: 1
+rejected_tamper_fixtures: 1
+schema_mutation_cases: 136
+mutation_cases: 314
+audit_report: build/certsdp3_audit_report.json
+gate_scores: build/certsdp3_gate_scores.json
+fixture_results: build/certsdp3_fixture_results.json
+cli_results: build/certsdp3_cli_results.json
+mutation_results: build/certsdp3_mutation_results.json
+coverage_report: build/certsdp3_coverage_report.json
+result: PASS_10

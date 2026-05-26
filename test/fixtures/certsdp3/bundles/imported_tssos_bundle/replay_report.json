@@ -11,7 +11,7 @@
     "block_id": null,
     "clique_id": null,
     "separator_id": null,
-    "artifact_path": "test/fixtures_real/tssos/normalized_certificate.json",
+    "artifact_path": "/Users/shani_mac/CertSDP/test/fixtures_real/tssos/normalized_certificate.json",
     "details": {
     }
 }

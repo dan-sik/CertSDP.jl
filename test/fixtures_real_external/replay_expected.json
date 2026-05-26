@@ -1,0 +1,6 @@
+{
+    "certificate_hash": "sha256:5517c1569f007e0ff5a2b8088aae4c99f8a4717320a904f466b830e9983f1cb2",
+    "problem_hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+    "accepted": true,
+    "stage": "identity_replay"
+}

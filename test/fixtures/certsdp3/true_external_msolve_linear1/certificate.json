@@ -1,0 +1,261 @@
+{
+    "certsdp_certificate_version": "3.0",
+    "certificate_type": "low_rank_psd_certificate",
+    "certificate_id": "sha256:5517c1569f007e0ff5a2b8088aae4c99f8a4717320a904f466b830e9983f1cb2",
+    "problem_hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+    "claim": {
+        "description": "external msolve raw capture normalized to exact PSD replay",
+        "external_source_hash": "sha256:86d5da99c363731730a147b57c22ad9e6455c799d8656a3d030d992808e45e6b"
+    },
+    "proof": {
+        "matrix": {
+            "n": 2,
+            "entries": [
+                {
+                    "i": 1,
+                    "j": 1,
+                    "value": "1"
+                },
+                {
+                    "i": 2,
+                    "j": 2,
+                    "value": "1"
+                }
+            ],
+            "hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5"
+        },
+        "low_rank_proof": {
+            "field": "QQ",
+            "matrix_hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+            "factor": [
+                [
+                    "1",
+                    "0"
+                ],
+                [
+                    "0",
+                    "1"
+                ]
+            ],
+            "diagonal": [
+                "1",
+                "1"
+            ],
+            "identity_proof_hash": "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8"
+        }
+    },
+    "proof_dag": {
+        "claim_type": "low_rank_psd",
+        "nodes": [
+            {
+                "id": "matrix_hash",
+                "kind": "hash",
+                "inputs": [
+                ],
+                "output_hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                "checker": "canonical_sparse_matrix_hash",
+                "status": "pending",
+                "typed_payload": {
+                    "matrix": {
+                        "hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                        "entries": [
+                            {
+                                "j": 1,
+                                "value": "1",
+                                "i": 1
+                            },
+                            {
+                                "j": 2,
+                                "value": "1",
+                                "i": 2
+                            }
+                        ],
+                        "n": 2
+                    }
+                },
+                "input_hashes": [
+                ],
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "obligation_id": "matrix_hash",
+                "version": "3.0"
+            },
+            {
+                "id": "low_rank_identity",
+                "kind": "exact_identity",
+                "inputs": [
+                    "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5"
+                ],
+                "output_hash": "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8",
+                "checker": "verify_low_rank_psd",
+                "status": "pending",
+                "typed_payload": {
+                    "proof": {
+                        "field": "QQ",
+                        "factor": [
+                            [
+                                "1",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "1"
+                            ]
+                        ],
+                        "diagonal": [
+                            "1",
+                            "1"
+                        ],
+                        "identity_proof_hash": "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8",
+                        "matrix_hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5"
+                    },
+                    "matrix": {
+                        "hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                        "entries": [
+                            {
+                                "j": 1,
+                                "value": "1",
+                                "i": 1
+                            },
+                            {
+                                "j": 2,
+                                "value": "1",
+                                "i": 2
+                            }
+                        ],
+                        "n": 2
+                    }
+                },
+                "input_hashes": [
+                    "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5"
+                ],
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "obligation_id": "low_rank_psd_identity",
+                "version": "3.0"
+            },
+            {
+                "id": "final_accept",
+                "kind": "final_accept",
+                "inputs": [
+                    "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                    "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8"
+                ],
+                "output_hash": "sha256:5e7b0434f52b809e86874d49e5b0252b624c47589cbd04117e6c50e31636cfb4",
+                "checker": "final_accept",
+                "status": "pending",
+                "typed_payload": {
+                    "required_inputs": [
+                        "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                        "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8"
+                    ],
+                    "claim_type": "low_rank_psd"
+                },
+                "input_hashes": [
+                    "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                    "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8"
+                ],
+                "arithmetic_mode": "integer",
+                "source_location": null,
+                "obligation_id": "final_accept",
+                "version": "3.0"
+            }
+        ],
+        "root_hash": "sha256:32e591378a9a469b7e220c881a570a3103526243536b29cd4a0663bd474ba2ed",
+        "schema_version": "3.0",
+        "object_store": {
+            "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5": {
+                "kind": "hash",
+                "arithmetic_mode": "rational",
+                "payload": {
+                    "matrix": {
+                        "hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                        "entries": [
+                            {
+                                "j": 1,
+                                "value": "1",
+                                "i": 1
+                            },
+                            {
+                                "j": 2,
+                                "value": "1",
+                                "i": 2
+                            }
+                        ],
+                        "n": 2
+                    }
+                },
+                "id": "matrix_hash",
+                "obligation_id": "matrix_hash",
+                "checker": "canonical_sparse_matrix_hash",
+                "version": "3.0"
+            },
+            "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8": {
+                "kind": "exact_identity",
+                "arithmetic_mode": "rational",
+                "payload": {
+                    "proof": {
+                        "field": "QQ",
+                        "factor": [
+                            [
+                                "1",
+                                "0"
+                            ],
+                            [
+                                "0",
+                                "1"
+                            ]
+                        ],
+                        "diagonal": [
+                            "1",
+                            "1"
+                        ],
+                        "identity_proof_hash": "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8",
+                        "matrix_hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5"
+                    },
+                    "matrix": {
+                        "hash": "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                        "entries": [
+                            {
+                                "j": 1,
+                                "value": "1",
+                                "i": 1
+                            },
+                            {
+                                "j": 2,
+                                "value": "1",
+                                "i": 2
+                            }
+                        ],
+                        "n": 2
+                    }
+                },
+                "id": "low_rank_identity",
+                "obligation_id": "low_rank_psd_identity",
+                "checker": "verify_low_rank_psd",
+                "version": "3.0"
+            },
+            "sha256:5e7b0434f52b809e86874d49e5b0252b624c47589cbd04117e6c50e31636cfb4": {
+                "kind": "final_accept",
+                "arithmetic_mode": "integer",
+                "payload": {
+                    "required_inputs": [
+                        "sha256:05cf8372a39d546de81dc0951cb0b643f809d0891194f3cbaec002867ed87fc5",
+                        "sha256:7edb9c0335ce256edbdb4a4d2dfff42e00c77ea749d56a8b122c4bdca56e1fe8"
+                    ],
+                    "claim_type": "low_rank_psd"
+                },
+                "id": "final_accept",
+                "obligation_id": "final_accept",
+                "checker": "final_accept",
+                "version": "3.0"
+            }
+        }
+    },
+    "metadata": {
+        "raw_source_hash": "sha256:86d5da99c363731730a147b57c22ad9e6455c799d8656a3d030d992808e45e6b",
+        "external_tool": "msolve",
+        "source_class": "true_external_raw"
+    },
+    "hash": "sha256:5517c1569f007e0ff5a2b8088aae4c99f8a4717320a904f466b830e9983f1cb2"
+}

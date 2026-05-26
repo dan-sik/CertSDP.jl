@@ -8,7 +8,7 @@
             "accepted": true,
             "stage": "objective_bound",
             "reason": "accepted",
-            "runtime_seconds": 0.185588208,
+            "runtime_seconds": 0.629845916,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -22,23 +22,23 @@
             "schema_cli_exit": 0,
             "dag": {
                 "present": true,
-                "root_hash": "sha256:8cccb5f3aa426d869665e62c84831afc8c32ab4084658a19b57ac4ff35f83ac6",
+                "root_hash": "sha256:e8f6413d37a0c1f5560b617ea0bef8ea6942835ec85683cc13df8ee3ed760db6",
                 "accepted": true,
                 "reason": "accepted"
             },
             "hashes": {
                 "problem_hash": "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa",
-                "certificate_hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6",
+                "certificate_hash": "sha256:d294e757ff135871d73f4226ecbdac7232bd2d3677c704de727468a12151e2ca",
                 "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                "dag_root_hash": "sha256:8cccb5f3aa426d869665e62c84831afc8c32ab4084658a19b57ac4ff35f83ac6",
+                "dag_root_hash": "sha256:e8f6413d37a0c1f5560b617ea0bef8ea6942835ec85683cc13df8ee3ed760db6",
                 "replay_problem_hash": "sha256:a1448158790b912c1de6c9ec4a74d043ea2abe3c5982532d3977378a20a871aa",
-                "replay_certificate_hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6",
+                "replay_certificate_hash": "sha256:d294e757ff135871d73f4226ecbdac7232bd2d3677c704de727468a12151e2ca",
                 "accepted": true
             },
             "roundtrip": {
                 "passed": true,
-                "hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6",
-                "roundtrip_hash": "sha256:d60e24099c47c56d17f4676355ff1cb5629fd435b2c80f880fe6bb582740a6c6"
+                "hash": "sha256:d294e757ff135871d73f4226ecbdac7232bd2d3677c704de727468a12151e2ca",
+                "roundtrip_hash": "sha256:d294e757ff135871d73f4226ecbdac7232bd2d3677c704de727468a12151e2ca"
             },
             "shape": {
                 "passed": true,
@@ -76,7 +76,7 @@
             "accepted": true,
             "stage": "coefficient_matching",
             "reason": "accepted",
-            "runtime_seconds": 0.560940541,
+            "runtime_seconds": 0.582582542,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -144,8 +144,8 @@
             "accepted": true,
             "stage": "chordal_replay",
             "reason": "accepted",
-            "runtime_seconds": 9.425494,
-            "allocated_bytes": 1052073472,
+            "runtime_seconds": 9.337895959,
+            "allocated_bytes": 1047185584,
             "budget_runtime": true,
             "budget_memory": true,
             "densification_count": 0,
@@ -212,7 +212,7 @@
             "accepted": true,
             "stage": "block_reconstruction",
             "reason": "accepted",
-            "runtime_seconds": 0.577277375,
+            "runtime_seconds": 1.17284375,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -226,23 +226,23 @@
             "schema_cli_exit": 0,
             "dag": {
                 "present": true,
-                "root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
+                "root_hash": "sha256:eace1290a021f73039a93d44c98045531192c35153d54cf67fbc608ade6126f1",
                 "accepted": true,
                 "reason": "accepted"
             },
             "hashes": {
                 "problem_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
-                "certificate_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef",
+                "certificate_hash": "sha256:f24bc8bf179e0e49fb1e9c81f8608f4656063a5379e7c59ae77b8632e211a6bb",
                 "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                "dag_root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
+                "dag_root_hash": "sha256:eace1290a021f73039a93d44c98045531192c35153d54cf67fbc608ade6126f1",
                 "replay_problem_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
-                "replay_certificate_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef",
+                "replay_certificate_hash": "sha256:f24bc8bf179e0e49fb1e9c81f8608f4656063a5379e7c59ae77b8632e211a6bb",
                 "accepted": true
             },
             "roundtrip": {
                 "passed": true,
-                "hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef",
-                "roundtrip_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef"
+                "hash": "sha256:f24bc8bf179e0e49fb1e9c81f8608f4656063a5379e7c59ae77b8632e211a6bb",
+                "roundtrip_hash": "sha256:f24bc8bf179e0e49fb1e9c81f8608f4656063a5379e7c59ae77b8632e211a6bb"
             },
             "shape": {
                 "passed": true,
@@ -280,7 +280,7 @@
             "accepted": true,
             "stage": "incidence_replay",
             "reason": "accepted",
-            "runtime_seconds": 4.87067775,
+            "runtime_seconds": 4.812782625,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -348,7 +348,7 @@
             "accepted": true,
             "stage": "objective_bound",
             "reason": "accepted",
-            "runtime_seconds": 4.749075584,
+            "runtime_seconds": 9.323035292,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -362,23 +362,23 @@
             "schema_cli_exit": 0,
             "dag": {
                 "present": true,
-                "root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
+                "root_hash": "sha256:e79dcac535008660d916104e0cf36cdd18f744481f8c3d7e10ded6e9cab8b737",
                 "accepted": true,
                 "reason": "accepted"
             },
             "hashes": {
                 "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                "certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
+                "certificate_hash": "sha256:87ba108f44ebf4df205870e2209f3bf2c800c4f5ba71ca69777c39dbabfdc54e",
                 "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                "dag_root_hash": "sha256:9685c01d05e7d55949e3f3d7015b9a48c39f513948d542da687e796ab157b550",
+                "dag_root_hash": "sha256:e79dcac535008660d916104e0cf36cdd18f744481f8c3d7e10ded6e9cab8b737",
                 "replay_problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
-                "replay_certificate_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
+                "replay_certificate_hash": "sha256:87ba108f44ebf4df205870e2209f3bf2c800c4f5ba71ca69777c39dbabfdc54e",
                 "accepted": true
             },
             "roundtrip": {
                 "passed": true,
-                "hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335",
-                "roundtrip_hash": "sha256:120010eb70bd9e63a217f961ed7d531d280f261cd91ef4df3c2f4ad553502335"
+                "hash": "sha256:87ba108f44ebf4df205870e2209f3bf2c800c4f5ba71ca69777c39dbabfdc54e",
+                "roundtrip_hash": "sha256:87ba108f44ebf4df205870e2209f3bf2c800c4f5ba71ca69777c39dbabfdc54e"
             },
             "shape": {
                 "passed": true,
@@ -416,7 +416,7 @@
             "accepted": true,
             "stage": "identity_replay",
             "reason": "accepted",
-            "runtime_seconds": 0.107205417,
+            "runtime_seconds": 0.109591959,
             "allocated_bytes": 211070880,
             "budget_runtime": true,
             "budget_memory": true,
@@ -484,7 +484,7 @@
             "accepted": true,
             "stage": "contradiction",
             "reason": "accepted",
-            "runtime_seconds": 0.686084291,
+            "runtime_seconds": 0.768419333,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -552,8 +552,8 @@
             "accepted": true,
             "stage": "chordal_replay",
             "reason": "accepted",
-            "runtime_seconds": 0.473812292,
-            "allocated_bytes": 192214224,
+            "runtime_seconds": 0.455264833,
+            "allocated_bytes": 192211792,
             "budget_runtime": true,
             "budget_memory": true,
             "densification_count": 0,
@@ -620,7 +620,7 @@
             "accepted": true,
             "stage": "identity_replay",
             "reason": "accepted",
-            "runtime_seconds": 0.806167417,
+            "runtime_seconds": 0.7180035,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -688,7 +688,7 @@
             "accepted": true,
             "stage": "objective_gap",
             "reason": "accepted",
-            "runtime_seconds": 0.413045041,
+            "runtime_seconds": 0.432599708,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -702,23 +702,23 @@
             "schema_cli_exit": 0,
             "dag": {
                 "present": true,
-                "root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
+                "root_hash": "sha256:1e1f0d496d64a8fdc4a7efd3e6c25a4de3051c338899ebea5ccd6c5c076c421f",
                 "accepted": true,
                 "reason": "accepted"
             },
             "hashes": {
                 "problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
-                "certificate_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
+                "certificate_hash": "sha256:b80a92096f6ca63c31aae6a460150ddfee05a634ae743ef74dd84fd7fbcffdc1",
                 "schema_hash": "sha256:e4dab79df5a46aea40ded01ec39c2b4293bee8d55e1b781cfc2dd814ad4816bb",
-                "dag_root_hash": "sha256:31a624a123857dea86cb5b019f48c378d405fad13d78703cf0cb63b7960e97e2",
+                "dag_root_hash": "sha256:1e1f0d496d64a8fdc4a7efd3e6c25a4de3051c338899ebea5ccd6c5c076c421f",
                 "replay_problem_hash": "sha256:fa1e5e6cacb71bd71c85d92cc5b85edc98eec508f31c7c6e3c746ab7ef4af587",
-                "replay_certificate_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
+                "replay_certificate_hash": "sha256:b80a92096f6ca63c31aae6a460150ddfee05a634ae743ef74dd84fd7fbcffdc1",
                 "accepted": true
             },
             "roundtrip": {
                 "passed": true,
-                "hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6",
-                "roundtrip_hash": "sha256:2da9087162e2e3e75bee2db31854802c067117408a876742b2a208de9eeaa4f6"
+                "hash": "sha256:b80a92096f6ca63c31aae6a460150ddfee05a634ae743ef74dd84fd7fbcffdc1",
+                "roundtrip_hash": "sha256:b80a92096f6ca63c31aae6a460150ddfee05a634ae743ef74dd84fd7fbcffdc1"
             },
             "shape": {
                 "passed": true,
@@ -756,7 +756,7 @@
             "accepted": true,
             "stage": "objective_bound",
             "reason": "accepted",
-            "runtime_seconds": 8.759812958,
+            "runtime_seconds": 16.681158625,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -770,23 +770,23 @@
             "schema_cli_exit": 0,
             "dag": {
                 "present": true,
-                "root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
+                "root_hash": "sha256:d36ce4ca9681cfb8da95f52fef30f50ae8c817023654825a9b3acf90c6424166",
                 "accepted": true,
                 "reason": "accepted"
             },
             "hashes": {
                 "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-                "certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
+                "certificate_hash": "sha256:cac247302c77889af8a87474588a42b505b72dce5c526fdb266f530d6438fac0",
                 "schema_hash": "sha256:d720ad50b2fd17d04de5f5a7dd93be14720fc204eb713a68ab836ffeb59a343e",
-                "dag_root_hash": "sha256:ee3ea9b78c9eca1ba07d50a43e37392b17df9c089a5aa9be19e7d16b27ddcdc8",
+                "dag_root_hash": "sha256:d36ce4ca9681cfb8da95f52fef30f50ae8c817023654825a9b3acf90c6424166",
                 "replay_problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-                "replay_certificate_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
+                "replay_certificate_hash": "sha256:cac247302c77889af8a87474588a42b505b72dce5c526fdb266f530d6438fac0",
                 "accepted": true
             },
             "roundtrip": {
                 "passed": true,
-                "hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090",
-                "roundtrip_hash": "sha256:bbe7215be0c9cf76991e4d005cd872c8c221adbdc2a9c63b71e23db70507e090"
+                "hash": "sha256:cac247302c77889af8a87474588a42b505b72dce5c526fdb266f530d6438fac0",
+                "roundtrip_hash": "sha256:cac247302c77889af8a87474588a42b505b72dce5c526fdb266f530d6438fac0"
             },
             "shape": {
                 "passed": true,
@@ -826,7 +826,7 @@
             "accepted": true,
             "stage": "coefficient_matching",
             "reason": "accepted",
-            "runtime_seconds": 0.574920167,
+            "runtime_seconds": 0.562802958,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,
@@ -896,7 +896,7 @@
             "accepted": true,
             "stage": "coefficient_matching",
             "reason": "accepted",
-            "runtime_seconds": 3.549229542,
+            "runtime_seconds": 3.507176416,
             "allocated_bytes": 0,
             "budget_runtime": true,
             "budget_memory": true,

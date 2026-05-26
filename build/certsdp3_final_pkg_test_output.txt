@@ -1,0 +1,183 @@
+     Testing CertSDP
+      Status `/private/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_ibCzNW/Project.toml`
+  [ed312aa7] CertSDP v2.1.0 `~/CertSDP`
+  [61c947e1] Clarabel v0.11.1
+  [e30172f5] Documenter v1.17.0
+⌃ [7c1d4256] DynamicPolynomials v0.6.4
+  [0f8b85d8] JSON3 v1.14.3
+  [4076af6c] JuMP v1.30.1
+  [b8f27783] MathOptInterface v1.51.0
+⌃ [102ac46a] MultivariatePolynomials v0.5.14
+  [4b9e565b] SumOfSquares v0.7.6
+  [37e2e46d] LinearAlgebra v1.12.0
+  [44cfe95a] Pkg v1.12.1
+  [9a3f8284] Random v1.11.0
+  [ea8e919c] SHA v0.7.0
+  [2f01184e] SparseArrays v1.12.0
+  [fa267f1f] TOML v1.0.3
+  [8dfed614] Test v1.11.0
+  [cf7118a7] UUIDs v1.11.0
+      Status `/private/var/folders/0c/0scrqq411q9dsnmgr_5_x0880000gn/T/jl_ibCzNW/Manifest.toml`
+  [14f7f29c] AMD v0.5.3
+  [a4c015fc] ANSIColoredPrinters v0.0.1
+  [36d08e8a] AbstractPermutations v0.3.3
+  [1520ce14] AbstractTrees v0.4.5
+  [96374032] CRlibm v1.0.2
+  [ed312aa7] CertSDP v2.1.0 `~/CertSDP`
+  [61c947e1] Clarabel v0.11.1
+  [523fee87] CodecBzip2 v0.8.5
+  [944b1d66] CodecZlib v0.7.8
+  [3da002f7] ColorTypes v0.12.1
+  [5ae59095] Colors v0.13.1
+  [38540f10] CommonSolve v0.2.6
+  [bbf7d656] CommonSubexpressions v0.3.1
+  [b7a15901] CoreMath v0.1.0
+  [a8cc5b0e] Crayons v4.1.1
+  [da8f5974] Cyclotomics v0.3.2
+  [9a962f9c] DataAPI v1.16.0
+  [864edb3b] DataStructures v0.19.4
+  [e2d170a0] DataValueInterfaces v1.0.0
+  [163ba53b] DiffResults v1.1.0
+  [b552c78f] DiffRules v1.15.1
+  [ffbed154] DocStringExtensions v0.9.5
+  [e30172f5] Documenter v1.17.0
+⌃ [7c1d4256] DynamicPolynomials v0.6.4
+  [e2ba6199] ExprTools v0.1.10
+  [53c48c17] FixedPointNumbers v0.8.5
+  [f6369f11] ForwardDiff v1.3.3
+⌅ [14197337] GenericLinearAlgebra v0.3.19
+  [d7ba0133] Git v1.5.0
+  [d5909c97] GroupsCore v0.5.2
+  [b5f81e59] IOCapture v1.0.0
+  [18e54dd8] IntegerMathUtils v0.1.3
+  [d1acc4aa] IntervalArithmetic v1.0.9
+  [92d709cd] IrrationalConstants v0.2.6
+  [82899510] IteratorInterfaceExtensions v1.0.0
+  [692b3bcd] JLLWrappers v1.8.0
+  [682c06a0] JSON v1.6.0
+  [0f8b85d8] JSON3 v1.14.3
+  [4076af6c] JuMP v1.30.1
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+  [0e77f7df] LazilyInitializedFields v1.3.0
+  [2ab3a3ac] LogExpFunctions v0.3.29
+  [1914dd2f] MacroTools v0.5.16
+  [d0879d2d] MarkdownAST v0.1.3
+  [b8f27783] MathOptInterface v1.51.0
+  [c03570c3] Memoize v0.4.4
+⌅ [be282fd4] MultivariateBases v0.2.2
+⌅ [f4abf1af] MultivariateMoments v0.4.10
+⌃ [102ac46a] MultivariatePolynomials v0.5.14
+  [d8a4904e] MutableArithmetics v1.8.0
+  [77ba4419] NaNMath v1.1.3
+  [bac558e1] OrderedCollections v1.8.1
+  [69de0a69] Parsers v2.8.4
+  [8bc5a954] PermutationGroups v0.6.4
+⌅ [ddf597a6] PolyJuMP v0.7.6
+⌃ [aea7be01] PrecompileTools v1.3.3
+  [21216c6a] Preferences v1.5.2
+  [08abe8d2] PrettyTables v3.3.2
+  [27ebfcd6] Primes v0.5.7
+  [bfc457fd] QDLDL v0.4.1
+  [3cdcf5f2] RecipesBase v1.3.4
+  [189a3867] Reexport v1.2.2
+  [2792f1a3] RegistryInstances v0.1.0
+  [5eaf0fd0] RoundingEmulator v0.2.1
+  [af85af4c] RowEchelon v0.2.1
+⌃ [8e049039] SemialgebraicSets v0.3.3
+  [66db9d55] SnoopPrecompile v1.0.3
+  [276daf66] SpecialFunctions v2.7.2
+⌅ [0c0c59c1] StarAlgebras v0.2.1
+  [90137ffa] StaticArrays v1.9.18
+  [1e83bf80] StaticArraysCore v1.4.4
+  [10745b16] Statistics v1.11.1
+  [892a3eda] StringManipulation v0.4.4
+  [856f2bd8] StructTypes v1.11.0
+  [ec057cc2] StructUtils v2.8.2
+  [4b9e565b] SumOfSquares v0.7.6
+⌅ [858aa9a9] SymbolicWedderburn v0.4.4
+  [3783bdb8] TableTraits v1.0.1
+  [bd369af6] Tables v1.12.1
+  [a759f4b9] TimerOutputs v0.5.29
+  [3bb67fe8] TranscodingStreams v0.11.3
+  [6e34b625] Bzip2_jll v1.0.9+0
+  [4e9b3aee] CRlibm_jll v1.0.1+0
+  [a38c48d9] CoreMath_jll v0.1.0+0
+  [2e619515] Expat_jll v2.8.0+0
+  [020c3dae] Git_LFS_jll v3.7.1+0
+  [f8c6e375] Git_jll v2.54.0+0
+  [94ce4f54] Libiconv_jll v1.18.0+0
+  [6cdc7f73] OpenBLASConsistentFPCSR_jll v0.3.33+0
+  [9bd350c2] OpenSSH_jll v10.3.1+0
+  [efe28fd5] OpenSpecFun_jll v0.5.6+0
+  [0dad84c5] ArgTools v1.1.2
+  [56f22d72] Artifacts v1.11.0
+  [2a0f44e3] Base64 v1.11.0
+  [ade2ca70] Dates v1.11.0
+  [f43a241f] Downloads v1.7.0
+  [7b1f6079] FileWatching v1.11.0
+  [9fa8497b] Future v1.11.0
+  [b77e0a4c] InteractiveUtils v1.11.0
+  [ac6e5ff7] JuliaSyntaxHighlighting v1.12.0
+  [b27032c2] LibCURL v0.6.4
+  [76f85450] LibGit2 v1.11.0
+  [8f399da3] Libdl v1.11.0
+  [37e2e46d] LinearAlgebra v1.12.0
+  [56ddb016] Logging v1.11.0
+  [d6f4376e] Markdown v1.11.0
+  [a63ad114] Mmap v1.11.0
+  [ca575930] NetworkOptions v1.3.0
+  [44cfe95a] Pkg v1.12.1
+  [de0858da] Printf v1.11.0
+  [3fa0cd96] REPL v1.11.0
+  [9a3f8284] Random v1.11.0
+  [ea8e919c] SHA v0.7.0
+  [9e88b42a] Serialization v1.11.0
+  [6462fe0b] Sockets v1.11.0
+  [2f01184e] SparseArrays v1.12.0
+  [f489334b] StyledStrings v1.11.0
+  [4607b0f0] SuiteSparse
+  [fa267f1f] TOML v1.0.3
+  [a4e569a6] Tar v1.10.0
+  [8dfed614] Test v1.11.0
+  [cf7118a7] UUIDs v1.11.0
+  [4ec0a83e] Unicode v1.11.0
+  [e66e0078] CompilerSupportLibraries_jll v1.3.0+1
+  [deac9b47] LibCURL_jll v8.15.0+0
+  [e37daf67] LibGit2_jll v1.9.0+0
+  [29816b5a] LibSSH2_jll v1.11.3+1
+  [14a3606d] MozillaCACerts_jll v2025.11.4
+  [4536629a] OpenBLAS_jll v0.3.29+0
+  [05823500] OpenLibm_jll v0.8.7+0
+  [458c3c95] OpenSSL_jll v3.5.4+0
+  [efcefdf7] PCRE2_jll v10.44.0+1
+  [bea87d4a] SuiteSparse_jll v7.8.3+2
+  [83775a58] Zlib_jll v1.3.1+2
+  [8e850b90] libblastrampoline_jll v5.15.0+0
+  [8e850ede] nghttp2_jll v1.64.0+1
+  [3f19e933] p7zip_jll v17.7.0+0
+        Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading.
+Precompiling for configuration --code-coverage=none --color=auto --check-bounds=yes --warn-overwrite=yes --depwarn=yes --inline=yes --startup-file=no --track-allocation=none
+   3137.7 ms  ✓ CertSDP
+   1646.9 ms  ✓ CertSDP → CertSDPJuMPExt
+   1847.1 ms  ✓ CertSDP → CertSDPClarabelExt
+   2276.2 ms  ✓ CertSDP → CertSDPSumOfSquaresExt
+  4 dependencies successfully precompiled in 6 seconds. 142 already precompiled.
+     Testing Running tests...
+Test Summary:            | Pass  Total  Time
+CertSDP package skeleton |    3      3  0.0s
+Test Summary:           | Pass  Total  Time
+Exact rational LMI core |   11     11  0.5s
+Test Summary:         | Pass  Total  Time
+LMI JSON input/output |   20     20  1.0s
+Test Summary:         | Pass  Total  Time
+Rational PSD verifier |   78     78  3.1s
+Test Summary:                     | Pass  Total  Time
+SOS exactification strategy layer |   12     12  6.4s
+Test Summary: | Pass  Total   Time
+CLI           |   84     84  42.3s
+Test Summary:                         | Pass  Total     Time
+Exact certificate compiler regression |   60     60  3m06.4s
+Test Summary:                 | Pass  Total  Time
+README and CI public snippets |    7      7  0.0s
+     Testing CertSDP tests passed 

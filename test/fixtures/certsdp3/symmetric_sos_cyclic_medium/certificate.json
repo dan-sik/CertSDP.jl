@@ -857,10 +857,401 @@
                 "version": "3.0"
             },
             {
-                "id": "block_reconstruction",
+                "id": "projector_idempotence",
                 "kind": "exact_identity",
                 "inputs": [
                     "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                ],
+                "output_hash": "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
+                "checker": "check_symmetry_projector_idempotence",
+                "status": "pending",
+                "typed_payload": {
+                    "projection_blocks": [
+                        {
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "j": 1,
+                                    "value": "1",
+                                    "i": 1
+                                },
+                                {
+                                    "j": 2,
+                                    "value": "1",
+                                    "i": 2
+                                },
+                                {
+                                    "j": 3,
+                                    "value": "1",
+                                    "i": 3
+                                },
+                                {
+                                    "j": 4,
+                                    "value": "1",
+                                    "i": 4
+                                },
+                                {
+                                    "j": 5,
+                                    "value": "1",
+                                    "i": 5
+                                },
+                                {
+                                    "j": 6,
+                                    "value": "1",
+                                    "i": 6
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "j": 7,
+                                    "value": "1",
+                                    "i": 7
+                                },
+                                {
+                                    "j": 8,
+                                    "value": "1",
+                                    "i": 8
+                                },
+                                {
+                                    "j": 9,
+                                    "value": "1",
+                                    "i": 9
+                                },
+                                {
+                                    "j": 10,
+                                    "value": "1",
+                                    "i": 10
+                                },
+                                {
+                                    "j": 11,
+                                    "value": "1",
+                                    "i": 11
+                                },
+                                {
+                                    "j": 12,
+                                    "value": "1",
+                                    "i": 12
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "j": 13,
+                                    "value": "1",
+                                    "i": 13
+                                },
+                                {
+                                    "j": 14,
+                                    "value": "1",
+                                    "i": 14
+                                },
+                                {
+                                    "j": 15,
+                                    "value": "1",
+                                    "i": 15
+                                },
+                                {
+                                    "j": 16,
+                                    "value": "1",
+                                    "i": 16
+                                },
+                                {
+                                    "j": 17,
+                                    "value": "1",
+                                    "i": 17
+                                },
+                                {
+                                    "j": 18,
+                                    "value": "1",
+                                    "i": 18
+                                }
+                            ],
+                            "n": 18
+                        }
+                    ]
+                },
+                "input_hashes": [
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                ],
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "obligation_id": "symmetry_projector_idempotence",
+                "version": "3.0"
+            },
+            {
+                "id": "projector_orthogonality",
+                "kind": "exact_identity",
+                "inputs": [
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                ],
+                "output_hash": "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99",
+                "checker": "check_symmetry_projector_orthogonality",
+                "status": "pending",
+                "typed_payload": {
+                    "projection_blocks": [
+                        {
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "j": 1,
+                                    "value": "1",
+                                    "i": 1
+                                },
+                                {
+                                    "j": 2,
+                                    "value": "1",
+                                    "i": 2
+                                },
+                                {
+                                    "j": 3,
+                                    "value": "1",
+                                    "i": 3
+                                },
+                                {
+                                    "j": 4,
+                                    "value": "1",
+                                    "i": 4
+                                },
+                                {
+                                    "j": 5,
+                                    "value": "1",
+                                    "i": 5
+                                },
+                                {
+                                    "j": 6,
+                                    "value": "1",
+                                    "i": 6
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "j": 7,
+                                    "value": "1",
+                                    "i": 7
+                                },
+                                {
+                                    "j": 8,
+                                    "value": "1",
+                                    "i": 8
+                                },
+                                {
+                                    "j": 9,
+                                    "value": "1",
+                                    "i": 9
+                                },
+                                {
+                                    "j": 10,
+                                    "value": "1",
+                                    "i": 10
+                                },
+                                {
+                                    "j": 11,
+                                    "value": "1",
+                                    "i": 11
+                                },
+                                {
+                                    "j": 12,
+                                    "value": "1",
+                                    "i": 12
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "j": 13,
+                                    "value": "1",
+                                    "i": 13
+                                },
+                                {
+                                    "j": 14,
+                                    "value": "1",
+                                    "i": 14
+                                },
+                                {
+                                    "j": 15,
+                                    "value": "1",
+                                    "i": 15
+                                },
+                                {
+                                    "j": 16,
+                                    "value": "1",
+                                    "i": 16
+                                },
+                                {
+                                    "j": 17,
+                                    "value": "1",
+                                    "i": 17
+                                },
+                                {
+                                    "j": 18,
+                                    "value": "1",
+                                    "i": 18
+                                }
+                            ],
+                            "n": 18
+                        }
+                    ]
+                },
+                "input_hashes": [
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                ],
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "obligation_id": "symmetry_projector_orthogonality",
+                "version": "3.0"
+            },
+            {
+                "id": "projector_completeness",
+                "kind": "exact_identity",
+                "inputs": [
+                    "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
+                    "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99"
+                ],
+                "output_hash": "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                "checker": "check_symmetry_projector_completeness",
+                "status": "pending",
+                "typed_payload": {
+                    "projector_matrices": [
+                        {
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "j": 1,
+                                    "value": "1",
+                                    "i": 1
+                                },
+                                {
+                                    "j": 2,
+                                    "value": "1",
+                                    "i": 2
+                                },
+                                {
+                                    "j": 3,
+                                    "value": "1",
+                                    "i": 3
+                                },
+                                {
+                                    "j": 4,
+                                    "value": "1",
+                                    "i": 4
+                                },
+                                {
+                                    "j": 5,
+                                    "value": "1",
+                                    "i": 5
+                                },
+                                {
+                                    "j": 6,
+                                    "value": "1",
+                                    "i": 6
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "j": 7,
+                                    "value": "1",
+                                    "i": 7
+                                },
+                                {
+                                    "j": 8,
+                                    "value": "1",
+                                    "i": 8
+                                },
+                                {
+                                    "j": 9,
+                                    "value": "1",
+                                    "i": 9
+                                },
+                                {
+                                    "j": 10,
+                                    "value": "1",
+                                    "i": 10
+                                },
+                                {
+                                    "j": 11,
+                                    "value": "1",
+                                    "i": 11
+                                },
+                                {
+                                    "j": 12,
+                                    "value": "1",
+                                    "i": 12
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "j": 13,
+                                    "value": "1",
+                                    "i": 13
+                                },
+                                {
+                                    "j": 14,
+                                    "value": "1",
+                                    "i": 14
+                                },
+                                {
+                                    "j": 15,
+                                    "value": "1",
+                                    "i": 15
+                                },
+                                {
+                                    "j": 16,
+                                    "value": "1",
+                                    "i": 16
+                                },
+                                {
+                                    "j": 17,
+                                    "value": "1",
+                                    "i": 17
+                                },
+                                {
+                                    "j": 18,
+                                    "value": "1",
+                                    "i": 18
+                                }
+                            ],
+                            "n": 18
+                        }
+                    ],
+                    "dimension": 18
+                },
+                "input_hashes": [
+                    "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
+                    "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99"
+                ],
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "obligation_id": "symmetry_projector_completeness",
+                "version": "3.0"
+            },
+            {
+                "id": "block_reconstruction",
+                "kind": "exact_identity",
+                "inputs": [
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                    "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe"
                 ],
                 "output_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
                 "checker": "verify_block_diagonalization_certificate",
@@ -1481,11 +1872,137 @@
                     }
                 },
                 "input_hashes": [
-                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                    "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                    "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe"
                 ],
                 "arithmetic_mode": "rational",
                 "source_location": null,
                 "obligation_id": "symmetry_block_reconstruction",
+                "version": "3.0"
+            },
+            {
+                "id": "psd_transfer_theorem",
+                "kind": "theorem_replay",
+                "inputs": [
+                    "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
+                    "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99",
+                    "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                    "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+                ],
+                "output_hash": "sha256:0a52d81fe8e331722b11bf4669c9e2a3bf2c4c1e142bf7099ba0bab016e38e07",
+                "checker": "check_symmetry_psd_transfer",
+                "status": "pending",
+                "typed_payload": {
+                    "original_matrix": {
+                        "hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "entries": [
+                            {
+                                "j": 1,
+                                "value": "1",
+                                "i": 1
+                            },
+                            {
+                                "j": 2,
+                                "value": "1",
+                                "i": 2
+                            },
+                            {
+                                "j": 3,
+                                "value": "1",
+                                "i": 3
+                            },
+                            {
+                                "j": 4,
+                                "value": "1",
+                                "i": 4
+                            },
+                            {
+                                "j": 5,
+                                "value": "1",
+                                "i": 5
+                            },
+                            {
+                                "j": 6,
+                                "value": "1",
+                                "i": 6
+                            },
+                            {
+                                "j": 7,
+                                "value": "1",
+                                "i": 7
+                            },
+                            {
+                                "j": 8,
+                                "value": "1",
+                                "i": 8
+                            },
+                            {
+                                "j": 9,
+                                "value": "1",
+                                "i": 9
+                            },
+                            {
+                                "j": 10,
+                                "value": "1",
+                                "i": 10
+                            },
+                            {
+                                "j": 11,
+                                "value": "1",
+                                "i": 11
+                            },
+                            {
+                                "j": 12,
+                                "value": "1",
+                                "i": 12
+                            },
+                            {
+                                "j": 13,
+                                "value": "1",
+                                "i": 13
+                            },
+                            {
+                                "j": 14,
+                                "value": "1",
+                                "i": 14
+                            },
+                            {
+                                "j": 15,
+                                "value": "1",
+                                "i": 15
+                            },
+                            {
+                                "j": 16,
+                                "value": "1",
+                                "i": 16
+                            },
+                            {
+                                "j": 17,
+                                "value": "1",
+                                "i": 17
+                            },
+                            {
+                                "j": 18,
+                                "value": "1",
+                                "i": 18
+                            }
+                        ],
+                        "n": 18
+                    },
+                    "projector_completeness_hash": "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                    "projector_orthogonality_hash": "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99",
+                    "block_reconstruction_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                    "projector_idempotence_hash": "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f"
+                },
+                "input_hashes": [
+                    "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
+                    "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99",
+                    "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                    "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+                ],
+                "arithmetic_mode": "rational",
+                "source_location": null,
+                "obligation_id": "symmetry_psd_transfer",
                 "version": "3.0"
             },
             {
@@ -1494,23 +2011,35 @@
                 "inputs": [
                     "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
                     "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
-                    "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+                    "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
+                    "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99",
+                    "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                    "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                    "sha256:0a52d81fe8e331722b11bf4669c9e2a3bf2c4c1e142bf7099ba0bab016e38e07"
                 ],
-                "output_hash": "sha256:faeda66d71cca281eb92ea8a5fe7d8d00c63baf8739dc6a14f6a3318effa1daf",
+                "output_hash": "sha256:5389296d1bcb096b0f933f12fbdd71cb6e9f8e8924abe2e3269a86fdbbc4691c",
                 "checker": "final_accept",
                 "status": "pending",
                 "typed_payload": {
                     "required_inputs": [
+                        "sha256:0a52d81fe8e331722b11bf4669c9e2a3bf2c4c1e142bf7099ba0bab016e38e07",
+                        "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                        "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
                         "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
                         "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
-                        "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
+                        "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                        "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99"
                     ],
                     "claim_type": "symmetry_reduction"
                 },
                 "input_hashes": [
                     "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
                     "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
-                    "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6"
+                    "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
+                    "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99",
+                    "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                    "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                    "sha256:0a52d81fe8e331722b11bf4669c9e2a3bf2c4c1e142bf7099ba0bab016e38e07"
                 ],
                 "arithmetic_mode": "integer",
                 "source_location": null,
@@ -1518,9 +2047,250 @@
                 "version": "3.0"
             }
         ],
-        "root_hash": "sha256:0dc4b73032cbfa2e8820abec97151846f9bffabc4b546416912460b29f32b8e9",
+        "root_hash": "sha256:eace1290a021f73039a93d44c98045531192c35153d54cf67fbc608ade6126f1",
         "schema_version": "3.0",
         "object_store": {
+            "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe": {
+                "kind": "exact_identity",
+                "arithmetic_mode": "rational",
+                "payload": {
+                    "projector_matrices": [
+                        {
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "j": 1,
+                                    "value": "1",
+                                    "i": 1
+                                },
+                                {
+                                    "j": 2,
+                                    "value": "1",
+                                    "i": 2
+                                },
+                                {
+                                    "j": 3,
+                                    "value": "1",
+                                    "i": 3
+                                },
+                                {
+                                    "j": 4,
+                                    "value": "1",
+                                    "i": 4
+                                },
+                                {
+                                    "j": 5,
+                                    "value": "1",
+                                    "i": 5
+                                },
+                                {
+                                    "j": 6,
+                                    "value": "1",
+                                    "i": 6
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "j": 7,
+                                    "value": "1",
+                                    "i": 7
+                                },
+                                {
+                                    "j": 8,
+                                    "value": "1",
+                                    "i": 8
+                                },
+                                {
+                                    "j": 9,
+                                    "value": "1",
+                                    "i": 9
+                                },
+                                {
+                                    "j": 10,
+                                    "value": "1",
+                                    "i": 10
+                                },
+                                {
+                                    "j": 11,
+                                    "value": "1",
+                                    "i": 11
+                                },
+                                {
+                                    "j": 12,
+                                    "value": "1",
+                                    "i": 12
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "j": 13,
+                                    "value": "1",
+                                    "i": 13
+                                },
+                                {
+                                    "j": 14,
+                                    "value": "1",
+                                    "i": 14
+                                },
+                                {
+                                    "j": 15,
+                                    "value": "1",
+                                    "i": 15
+                                },
+                                {
+                                    "j": 16,
+                                    "value": "1",
+                                    "i": 16
+                                },
+                                {
+                                    "j": 17,
+                                    "value": "1",
+                                    "i": 17
+                                },
+                                {
+                                    "j": 18,
+                                    "value": "1",
+                                    "i": 18
+                                }
+                            ],
+                            "n": 18
+                        }
+                    ],
+                    "dimension": 18
+                },
+                "id": "projector_completeness",
+                "obligation_id": "symmetry_projector_completeness",
+                "checker": "check_symmetry_projector_completeness",
+                "version": "3.0"
+            },
+            "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f": {
+                "kind": "exact_identity",
+                "arithmetic_mode": "rational",
+                "payload": {
+                    "projection_blocks": [
+                        {
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "j": 1,
+                                    "value": "1",
+                                    "i": 1
+                                },
+                                {
+                                    "j": 2,
+                                    "value": "1",
+                                    "i": 2
+                                },
+                                {
+                                    "j": 3,
+                                    "value": "1",
+                                    "i": 3
+                                },
+                                {
+                                    "j": 4,
+                                    "value": "1",
+                                    "i": 4
+                                },
+                                {
+                                    "j": 5,
+                                    "value": "1",
+                                    "i": 5
+                                },
+                                {
+                                    "j": 6,
+                                    "value": "1",
+                                    "i": 6
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "j": 7,
+                                    "value": "1",
+                                    "i": 7
+                                },
+                                {
+                                    "j": 8,
+                                    "value": "1",
+                                    "i": 8
+                                },
+                                {
+                                    "j": 9,
+                                    "value": "1",
+                                    "i": 9
+                                },
+                                {
+                                    "j": 10,
+                                    "value": "1",
+                                    "i": 10
+                                },
+                                {
+                                    "j": 11,
+                                    "value": "1",
+                                    "i": 11
+                                },
+                                {
+                                    "j": 12,
+                                    "value": "1",
+                                    "i": 12
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "j": 13,
+                                    "value": "1",
+                                    "i": 13
+                                },
+                                {
+                                    "j": 14,
+                                    "value": "1",
+                                    "i": 14
+                                },
+                                {
+                                    "j": 15,
+                                    "value": "1",
+                                    "i": 15
+                                },
+                                {
+                                    "j": 16,
+                                    "value": "1",
+                                    "i": 16
+                                },
+                                {
+                                    "j": 17,
+                                    "value": "1",
+                                    "i": 17
+                                },
+                                {
+                                    "j": 18,
+                                    "value": "1",
+                                    "i": 18
+                                }
+                            ],
+                            "n": 18
+                        }
+                    ]
+                },
+                "id": "projector_idempotence",
+                "obligation_id": "symmetry_projector_idempotence",
+                "checker": "check_symmetry_projector_idempotence",
+                "version": "3.0"
+            },
             "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6": {
                 "kind": "exact_identity",
                 "arithmetic_mode": "rational",
@@ -2144,22 +2914,6 @@
                 "checker": "verify_block_diagonalization_certificate",
                 "version": "3.0"
             },
-            "sha256:faeda66d71cca281eb92ea8a5fe7d8d00c63baf8739dc6a14f6a3318effa1daf": {
-                "kind": "final_accept",
-                "arithmetic_mode": "integer",
-                "payload": {
-                    "required_inputs": [
-                        "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
-                        "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
-                        "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb"
-                    ],
-                    "claim_type": "symmetry_reduction"
-                },
-                "id": "final_accept",
-                "obligation_id": "final_accept",
-                "checker": "final_accept",
-                "version": "3.0"
-            },
             "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb": {
                 "kind": "hash",
                 "arithmetic_mode": "rational",
@@ -2346,6 +3100,256 @@
                 "checker": "orbit_basis_hash",
                 "version": "3.0"
             },
+            "sha256:5389296d1bcb096b0f933f12fbdd71cb6e9f8e8924abe2e3269a86fdbbc4691c": {
+                "kind": "final_accept",
+                "arithmetic_mode": "integer",
+                "payload": {
+                    "required_inputs": [
+                        "sha256:0a52d81fe8e331722b11bf4669c9e2a3bf2c4c1e142bf7099ba0bab016e38e07",
+                        "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                        "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f",
+                        "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214",
+                        "sha256:bacb58ad6601c23c4a49c1ab3007ce34851ffb3eaf94e85afe932a5a2947e3eb",
+                        "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99"
+                    ],
+                    "claim_type": "symmetry_reduction"
+                },
+                "id": "final_accept",
+                "obligation_id": "final_accept",
+                "checker": "final_accept",
+                "version": "3.0"
+            },
+            "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99": {
+                "kind": "exact_identity",
+                "arithmetic_mode": "rational",
+                "payload": {
+                    "projection_blocks": [
+                        {
+                            "hash": "sha256:525ce541fdbf64ae49fed62f04c37f3f7ff630c46dda083cf3513978c274d408",
+                            "entries": [
+                                {
+                                    "j": 1,
+                                    "value": "1",
+                                    "i": 1
+                                },
+                                {
+                                    "j": 2,
+                                    "value": "1",
+                                    "i": 2
+                                },
+                                {
+                                    "j": 3,
+                                    "value": "1",
+                                    "i": 3
+                                },
+                                {
+                                    "j": 4,
+                                    "value": "1",
+                                    "i": 4
+                                },
+                                {
+                                    "j": 5,
+                                    "value": "1",
+                                    "i": 5
+                                },
+                                {
+                                    "j": 6,
+                                    "value": "1",
+                                    "i": 6
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:216824acc5d6c864077ba4c6e08a405b1dae48238b73f4e21a6e8f8f1021b6ce",
+                            "entries": [
+                                {
+                                    "j": 7,
+                                    "value": "1",
+                                    "i": 7
+                                },
+                                {
+                                    "j": 8,
+                                    "value": "1",
+                                    "i": 8
+                                },
+                                {
+                                    "j": 9,
+                                    "value": "1",
+                                    "i": 9
+                                },
+                                {
+                                    "j": 10,
+                                    "value": "1",
+                                    "i": 10
+                                },
+                                {
+                                    "j": 11,
+                                    "value": "1",
+                                    "i": 11
+                                },
+                                {
+                                    "j": 12,
+                                    "value": "1",
+                                    "i": 12
+                                }
+                            ],
+                            "n": 18
+                        },
+                        {
+                            "hash": "sha256:de0f5a27e35bc4ffe3315c4b354c36048b10150bc76d84cf3797dd088abac1ff",
+                            "entries": [
+                                {
+                                    "j": 13,
+                                    "value": "1",
+                                    "i": 13
+                                },
+                                {
+                                    "j": 14,
+                                    "value": "1",
+                                    "i": 14
+                                },
+                                {
+                                    "j": 15,
+                                    "value": "1",
+                                    "i": 15
+                                },
+                                {
+                                    "j": 16,
+                                    "value": "1",
+                                    "i": 16
+                                },
+                                {
+                                    "j": 17,
+                                    "value": "1",
+                                    "i": 17
+                                },
+                                {
+                                    "j": 18,
+                                    "value": "1",
+                                    "i": 18
+                                }
+                            ],
+                            "n": 18
+                        }
+                    ]
+                },
+                "id": "projector_orthogonality",
+                "obligation_id": "symmetry_projector_orthogonality",
+                "checker": "check_symmetry_projector_orthogonality",
+                "version": "3.0"
+            },
+            "sha256:0a52d81fe8e331722b11bf4669c9e2a3bf2c4c1e142bf7099ba0bab016e38e07": {
+                "kind": "theorem_replay",
+                "arithmetic_mode": "rational",
+                "payload": {
+                    "original_matrix": {
+                        "hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                        "entries": [
+                            {
+                                "j": 1,
+                                "value": "1",
+                                "i": 1
+                            },
+                            {
+                                "j": 2,
+                                "value": "1",
+                                "i": 2
+                            },
+                            {
+                                "j": 3,
+                                "value": "1",
+                                "i": 3
+                            },
+                            {
+                                "j": 4,
+                                "value": "1",
+                                "i": 4
+                            },
+                            {
+                                "j": 5,
+                                "value": "1",
+                                "i": 5
+                            },
+                            {
+                                "j": 6,
+                                "value": "1",
+                                "i": 6
+                            },
+                            {
+                                "j": 7,
+                                "value": "1",
+                                "i": 7
+                            },
+                            {
+                                "j": 8,
+                                "value": "1",
+                                "i": 8
+                            },
+                            {
+                                "j": 9,
+                                "value": "1",
+                                "i": 9
+                            },
+                            {
+                                "j": 10,
+                                "value": "1",
+                                "i": 10
+                            },
+                            {
+                                "j": 11,
+                                "value": "1",
+                                "i": 11
+                            },
+                            {
+                                "j": 12,
+                                "value": "1",
+                                "i": 12
+                            },
+                            {
+                                "j": 13,
+                                "value": "1",
+                                "i": 13
+                            },
+                            {
+                                "j": 14,
+                                "value": "1",
+                                "i": 14
+                            },
+                            {
+                                "j": 15,
+                                "value": "1",
+                                "i": 15
+                            },
+                            {
+                                "j": 16,
+                                "value": "1",
+                                "i": 16
+                            },
+                            {
+                                "j": 17,
+                                "value": "1",
+                                "i": 17
+                            },
+                            {
+                                "j": 18,
+                                "value": "1",
+                                "i": 18
+                            }
+                        ],
+                        "n": 18
+                    },
+                    "projector_completeness_hash": "sha256:2db1839a4c3951ab00d3d0fa88b0cddf9f05ec01bf38af78bd3973c416dc5ffe",
+                    "projector_orthogonality_hash": "sha256:d04a757908aa5a0971a088346d76afdec1b3ae182154501cbf4876e133a16f99",
+                    "block_reconstruction_hash": "sha256:a572a3a9de58242636666c828eeaccda1a858c28fe2271f1676cbc5f628dd3d6",
+                    "projector_idempotence_hash": "sha256:72654fed3db7540d314af5d3db51a9d2791619cd1143691c8b44a8733785703f"
+                },
+                "id": "psd_transfer_theorem",
+                "obligation_id": "symmetry_psd_transfer",
+                "checker": "check_symmetry_psd_transfer",
+                "version": "3.0"
+            },
             "sha256:b0cfb94539e465e695e53b6051081654a4bfc4da25994f4604a0753dc8c9f214": {
                 "kind": "hash",
                 "arithmetic_mode": "rational",
@@ -2382,5 +3386,5 @@
             }
         }
     },
-    "certificate_hash": "sha256:da83409a6746d9e16700cbea328cf051eb5fc5104d6c3c31c1cc6c18341a78ef"
+    "certificate_hash": "sha256:f24bc8bf179e0e49fb1e9c81f8608f4656063a5379e7c59ae77b8632e211a6bb"
 }

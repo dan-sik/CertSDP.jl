@@ -6,12 +6,12 @@
     "stage": "objective_bound",
     "reason": "accepted",
     "obligation_id": "exact_bound",
-    "problem_hash": "sha256:8e28c1fc091699b98a89a7b4df15ec1ec7a990e7544f7e429e196ebeee5d2e00",
-    "certificate_hash": "sha256:af08afa299d3604df018759dccb9654a0802e6ff9f0c93e935b09d718d4de4a2",
+    "problem_hash": "sha256:998d651019f43cacf93ad4aacfa289a74c5426f574d0df510c1f06582503d1ec",
+    "certificate_hash": "sha256:87ba108f44ebf4df205870e2209f3bf2c800c4f5ba71ca69777c39dbabfdc54e",
     "block_id": null,
     "clique_id": null,
     "separator_id": null,
-    "artifact_path": "test/fixtures_real/nctssos/normalized_certificate.json",
+    "artifact_path": "/Users/shani_mac/CertSDP/test/fixtures_real/quantum/normalized_npa_certificate.json",
     "details": {
     }
 }

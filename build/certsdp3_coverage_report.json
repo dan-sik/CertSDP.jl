@@ -1,11 +1,7 @@
 {
     "executed_dag_checkers_last_replay": [
-        "npa_problem_hash",
         "canonical_sparse_matrix_hash",
-        "verify_nc_rewrite_witness",
         "verify_low_rank_psd",
-        "check_npa_moment_entry",
-        "verify_quantum_bound_certificate",
         "final_accept"
     ],
     "dag_checkers": [
@@ -42,8 +38,10 @@
         "check_symmetry_block_reconstruction",
         "check_symmetry_group_closure",
         "check_symmetry_orbit_partition",
+        "check_symmetry_projector_completeness",
         "check_symmetry_projector_idempotence",
         "check_symmetry_projector_orthogonality",
+        "check_symmetry_psd_transfer",
         "check_tssos_import_normalization",
         "chordal_structure_hash",
         "final_accept",

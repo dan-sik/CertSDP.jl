@@ -345,15 +345,9 @@ function _paper_bundle(cert_path::AbstractString, out_dir::AbstractString)
     cert_text = read(cert_path, String)
     write(joinpath(out_dir, "certificate.json"), cert_text)
     parsed = JSON3.read(cert_text)
-    write(joinpath(out_dir, "problem.json"),
-          JSON3.write(Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
-                           "problem_hash" => report.problem_hash,
-                           "claim_type" => _claim_type_from_replay_artifact(parsed),
-                           "certificate_hash" => report.certificate_hash,
-                           "dag_root_hash" => _dag_root_from_replay_artifact(parsed),
-                           "replayable_from" => "certificate.json",
-                           "problem_evidence" => "certificate_embedded_claim_and_proof_objects")))
     dag_json = _proof_dag_json_from_replay_artifact(cert_text, parsed)
+    write(joinpath(out_dir, "problem.json"),
+          JSON3.write(_problem_json_from_replay_artifact(parsed, dag_json, report)))
     _write_json(joinpath(out_dir, "proof_dag.json"), dag_json)
     _write_json(joinpath(out_dir, "object_store.json"), dag_json[:object_store])
     _write_json(joinpath(out_dir, "replay_report.json"),
@@ -400,6 +394,7 @@ julia --project="\$PROJECT" --startup-file=no -e 'using CertSDP; exit(CertSDP.Ke
         cp(cert_path, joinpath(source_dir, basename(cert_path)); force=true)
         basename(cert_path)
     else
+        cp(cert_path, joinpath(source_dir, "certificate.json"); force=true)
         "certificate.json"
     end
     write(joinpath(out_dir, "CITATION.cff"),
@@ -469,6 +464,47 @@ function _proof_dag_json_from_replay_artifact(text::AbstractString, parsed)
                 "nodes" => Any[],
                 "root_hash" => "sha256:" * repeat("0", 64),
                 "schema_version" => Kernel.CERTSDP3_SCHEMA_VERSION)
+end
+
+function _problem_json_from_replay_artifact(parsed, dag_json, report)
+    if haskey(parsed, :problem)
+        return Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+                    "problem_hash" => report.problem_hash,
+                    "claim_type" => _claim_type_from_replay_artifact(parsed),
+                    "problem" => parsed[:problem])
+    end
+    object_store = haskey(dag_json, :object_store) ? dag_json[:object_store] :
+                   Dict{String, Any}()
+    object = _json_lookup(object_store, report.problem_hash)
+    if !isnothing(object)
+        return Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+                    "problem_hash" => report.problem_hash,
+                    "claim_type" => _claim_type_from_replay_artifact(parsed),
+                    "problem_object" => object)
+    end
+    matrix_hash = try
+        String(parsed[:proof][:low_rank_proof][:matrix_hash])
+    catch
+        ""
+    end
+    object = isempty(matrix_hash) ? nothing : _json_lookup(object_store, matrix_hash)
+    if !isnothing(object)
+        return Dict("certsdp_problem_version" => Kernel.CERTSDP3_SCHEMA_VERSION,
+                    "problem_hash" => report.problem_hash,
+                    "claim_type" => _claim_type_from_replay_artifact(parsed),
+                    "problem_object" => object)
+    end
+    throw(ArgumentError("certificate bundle lacks concrete problem data"))
+end
+
+function _json_lookup(object, key::AbstractString)
+    for candidate in (key, Symbol(key))
+        try
+            haskey(object, candidate) && return object[candidate]
+        catch
+        end
+    end
+    return nothing
 end
 
 function _dag_root_from_replay_artifact(parsed)

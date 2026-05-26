@@ -1,0 +1,18 @@
+{
+  "external_raw_artifact_version": "msolve-input-capture-1",
+  "external_tool": "msolve",
+  "source_path": "references/repos/msolve/input_files/linear1-qq.ms",
+  "source_hash": "sha256:86d5da99c363731730a147b57c22ad9e6455c799d8656a3d030d992808e45e6b",
+  "captured_date": "2026-05-26",
+  "raw_format": "msolve polynomial-system input",
+  "raw_lines": [
+    "x1,x2",
+    "0",
+    "x1+1267650600228229401496703205376,",
+    "x2+1267650600228229401496703205374"
+  ],
+  "untrusted_metadata": {
+    "solver_status": "not_run",
+    "solver_residuals": "ignored"
+  }
+}
